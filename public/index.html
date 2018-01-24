@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>nes emulator</title>
+    <link rel="stylesheet" type="text/css" href="css/mystyle.css">
+    <script type="text/javascript" charset="utf-8" src="js/ines.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/cpu.js"></script>
+</head>
+<body>
+<div id="nesFileDrag" style="height: 400px;width: 400px;background-color: cornflowerblue;">
+    <input type="file" id="nesFileChoose" style="height: 400px;width: 400px;opacity: 0;" onchange="chooseFile()"/>
+    <div id="nesFileStatus" style="position: absolute;left: 0;top: 180px;width: 400px;text-align: center;">Choose Or
+        Drag a File Here
+    </div>
+</div>
+
+</body>
+<script>
+    var nesFileDrag = document.getElementById("nesFileDrag");
+    var nesFileChoose = document.getElementById("nesFileChoose");
+    var nesFileStatus = document.getElementById("nesFileStatus");
+
+    function chooseFile(ev) {
+        if (nesFileChoose.files && nesFileChoose.files[0]) {
+            var file = nesFileChoose.files[0];
+            loadROM(file);
+        }
+    }
+
+    nesFileDrag.addEventListener("dragenter", function (ev) {
+        ev.preventDefault();
+    });
+    nesFileDrag.addEventListener("dragover", function (ev) {
+        ev.preventDefault();
+    });
+    nesFileDrag.addEventListener("dragleave", function (ev) {
+        ev.preventDefault();
+    });
+    nesFileDrag.addEventListener("drop", function (ev) {
+        ev.preventDefault();
+        var file = ev.dataTransfer.files[0];
+        loadROM(file);
+    }, false);
+
+    function loadROM(file) {
+        nesFileStatus.innerText = file.name;
+
+        var iNes = new INES();
+
+        if (file.size === 0) {
+            return
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+            iNes.load(this.result);
+            console.log(iNes);
+        };
+        reader.readAsBinaryString(file);
+    }
+</script>
+</html>
