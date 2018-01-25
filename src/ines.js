@@ -10,13 +10,11 @@
 // images. INES format files should have the file extension *.nes. The format provides a 16 byte
 // header at the start of the file which contains important information.
 var INES = function () {
-    this.numPRG = null; // rom
-    this.numCHR = null; // vrom
-    this.mirroring = null;
+    this.rpgRom = null; // rom
+    this.chrRom = null; // vrom
     this.mapperType = null;
-    this.numRAM = null;
-    this.rpgRom = null;
-    this.chrRom = null;
+    this.mirroring = null;
+    this.batteryRam = null;
 };
 
 INES.prototype = {
@@ -25,7 +23,7 @@ INES.prototype = {
     VERTICAL_MIRRORING: 1,
     FOURSCREEN_MIRRORING: 2,
 
-    // LoadNESFile reads an iNES file (.nes) and returns a Cartridge on success.
+    // load reads an iNES file (.nes)
     load: function (data) {
         var header = new Array(16);
         for (var i = 0; i < 16; i++) {
@@ -37,17 +35,17 @@ INES.prototype = {
             header[2] !== 0x53 ||
             header[3] !== 0x1a
         ) {
-            throw new Error("Not a valid NES ROM.");
+            throw new Error("Not a valid iNES file.");
         }
 
         // Number of 16 KB PRG-ROM banks.
         // The PRG-ROM (Program ROM) is the area of ROM used to store the program code.
-        this.numPRG = header[4];
+        var numPRG = header[4];
 
         // Number of 8 KB CHR-ROM / VROM banks.
         // The names CHR-ROM (Character ROM) and VROM are used synonymously to
         // refer to the area of ROM used to store graphics information, the pattern tables.
-        this.numCHR = header[5];
+        var numCHR = header[5];
 
         // ROM Control Byte 1:
         // • Bit 0 - Indicates the type of mirroring used by the game
@@ -67,7 +65,7 @@ INES.prototype = {
             this.mirroring = this.FOURSCREEN_MIRRORING;
         }
 
-        var batteryRam = (control1 & 2) !== 0;
+        this.batteryRam = (control1 & 2) !== 0;
 
         var trainer = (control1 & 4) !== 0;
 
@@ -81,7 +79,7 @@ INES.prototype = {
         // Number of 8 KB RAM banks. For compatibility with previous
         // versions of the iNES format, assume 1 page of RAM when
         // this is 0.
-        this.numRAM = header[8];
+        var numRAM = header[8];
 
         // Reserved for future usage and should all be 0.
         for (var i = 9; i < 16; i++) {
@@ -94,9 +92,9 @@ INES.prototype = {
         // begin here, starting with PRG-ROM then CHR-ROM.
 
         // Load PRG-ROM banks:
-        this.rpgRom = new Array(this.numPRG);
+        this.rpgRom = new Array(numPRG);
         var offset = 16;
-        for (var i = 0; i < this.numPRG; i++) {
+        for (var i = 0; i < numPRG; i++) {
             this.rpgRom[i] = new Array(0x4000);
             for (var j = 0; j < 0x4000; j++) {
                 if (offset + j >= data.length) {
@@ -108,8 +106,8 @@ INES.prototype = {
         }
 
         // Load CHR-ROM banks:
-        this.chrRom = new Array(this.numCHR);
-        for (i = 0; i < this.numCHR; i++) {
+        this.chrRom = new Array(numCHR);
+        for (i = 0; i < numCHR; i++) {
             this.chrRom[i] = new Array(0x1000);
             for (j = 0; j < 0x1000; j++) {
                 if (offset + j >= data.length) {
@@ -123,3 +121,4 @@ INES.prototype = {
     }
 };
 
+module.exports = INES;
