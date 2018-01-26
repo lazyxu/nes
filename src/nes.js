@@ -1,8 +1,11 @@
 var INES = require("./ines");
 var CPU = require("./cpu");
 
-var NES = function () {
-    this.cpu = new CPU();
+var NES = function (data) {
+    this.ines = null;
+    this.load(data);
+    console.log(this);
+    this.cpu = new CPU(this);
 };
 
 NES.prototype = {

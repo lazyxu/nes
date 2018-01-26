@@ -12,6 +12,8 @@
 var INES = function () {
     this.rpgRom = null; // rom
     this.chrRom = null; // vrom
+    this.numRam = null;
+    this.sram = new Array(0x2000);
     this.mapperType = null;
     this.mirroring = null;
     this.batteryRam = null;
@@ -25,6 +27,7 @@ INES.prototype = {
 
     // load reads an iNES file (.nes)
     load: function (data) {
+        this.data = data;
         var header = new Array(16);
         for (var i = 0; i < 16; i++) {
             header[i] = data.charCodeAt(i) & 0xff;

@@ -1,4 +1,3 @@
 module.exports = {
-    NES: require("./nes"),
-    CPU: require("./cpu")
+    NES: require("./nes")
 };

@@ -13,6 +13,8 @@
         Drag a File Here
     </div>
 </div>
+<button onclick="step()">next</button>
+<textarea id="result"></textarea>
 
 </body>
 <script>
@@ -42,20 +44,42 @@
         loadROM(file);
     }, false);
 
+    var nes = null;
+
     function loadROM(file) {
         nesFileStatus.innerText = file.name;
-
-        var nes = new nesEmulator.NES();
 
         if (file.size === 0) {
             return
         }
         var reader = new FileReader();
         reader.onload = function () {
-            nes.load(this.result);
+            console.log(this.result);
+            nes = new nesEmulator.NES(this.result);
+            nes.cpu.PC = 0xC000;
             console.log(nes);
+            var result = '';
+            for (var i = 0; i < 8991; i++) {
+                result += nes.cpu.printInstruction();
+                document.getElementById("result").innerText = result;
+                nes.cpu.step();
+            }
+            document.getElementById("result").innerText = result;
+            // for (var i=0;i<8991;i++) {
+            //     nes.cpu.step();
+            //     nes.cpu.printInstruction();
+            // }
+            // if (nes.cpu.read(0x6000) < 0x80) {
+            //     console.log(nes.cpu.cycles);
+            // }
+            // console.log(nes.cpu.read(0x6004));
         };
         reader.readAsBinaryString(file);
+    }
+
+    function step(ev) {
+        nes.cpu.printInstruction();
+        nes.cpu.step();
     }
 </script>
 </html>
