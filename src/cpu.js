@@ -157,7 +157,6 @@ CPU.prototype = {
         var opcode = this.read(this.PC);
         var bytes = instructionSizes[opcode];
         var name = instructionNames[opcode];
-        var w0 = this.read(this.PC + 0).toString(16);
         var w1 = "  ";
         var w2 = "  ";
         if (bytes > 1) {
@@ -166,11 +165,9 @@ CPU.prototype = {
         if (bytes > 2) {
             w2 = this.read(this.PC + 2).toString(16);
         }
-        console.log(this.PC, w0, w1, w2, name, "",
-            this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341);
         return util.sprintf("%4X  %02s %02s %02s  %s %28s" +
             "A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3d\n",
-            this.PC, w0, w1, w2, name, "",
+            this.PC, opcode.toString(16), w1, w2, name, "",
             this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341);
     },
 
@@ -218,10 +215,10 @@ CPU.prototype = {
                 address = 0;
                 break;
             case modeIndexedIndirect:
-                address = this.read16(this.read(this.PC + 1) + this.X);
+                address = this.read16bug((this.read(this.PC + 1) + this.X) & 0xff);
                 break;
             case modeIndirect:
-                address = this.read16(this.read16(this.PC + 1));
+                address = this.read16bug(this.read16(this.PC + 1));
                 break;
             case modeIndirectIndexed:
                 address = this.read16bug(this.read(this.PC + 1)) + this.Y;
@@ -230,19 +227,19 @@ CPU.prototype = {
             case modeRelative:
                 var offset = this.read(this.PC + 1);
                 if (offset < 0x80) {
-                    address = this.PC + 2 + offset;
+                    address = (this.PC + 2 + offset) & 0xFFFF;
                 } else {
-                    address = this.PC + 2 + offset - 0x100;
+                    address = (this.PC + 2 + offset - 0x100) & 0xFFFF;
                 }
                 break;
             case modeZeroPage:
                 address = this.read(this.PC + 1);
                 break;
             case modeZeroPageX:
-                address = this.read(this.PC + 1) + this.X & 0xff;
+                address = (this.read(this.PC + 1) + this.X) & 0xff;
                 break;
             case modeZeroPageY:
-                address = this.read(this.PC + 1) + this.Y & 0xff;
+                address = (this.read(this.PC + 1) + this.Y) & 0xff;
                 break;
         }
         this.PC += instructionSizes[opcode];
@@ -250,7 +247,7 @@ CPU.prototype = {
         if (pageCrossed) {
             this.cycles += instructionPagecycles[opcode];
         }
-        console.log(instructionNames[opcode], address, mode);
+        console.log(instructionNames[opcode], address.toString(16), mode, pageCrossed, instructionPagecycles[opcode]);
         eval('this.' + instructionNames[opcode] + '(address, this.PC, mode)');
 
         return this.cycles - cycles;
@@ -284,6 +281,15 @@ CPU.prototype = {
         this.push16(this.PC);
         this.PHP(null);
         this.PC = this.read16(0xFFFE);
+        this.I = 1;
+        this.cycles += 7;
+    },
+
+    // RESET - RESET Interrupt
+    RESET: function () {
+        this.push16(this.PC);
+        this.PHP(null);
+        this.PC = this.read16(0xFFFC);
         this.I = 1;
         this.cycles += 7;
     },
@@ -334,31 +340,34 @@ CPU.prototype = {
     /* memory ------------------------------------------------------------------------------------------------------- */
     // pagesDiffer returns true if the two addresses reference different pages
     pagesDiffer: function (a, b) {
-        return a & 0xFF00 !== b & 0xFF00
+        return (a & 0xFF00) !== (b & 0xFF00);
     },
 
     read: function (address) {
-        // console.log(address.toString(16));
+        address &= 0xFFFF;
+        console.warn('read', address.toString(16));
         if (address < 0x2000) {
-            return this.nes.ines.chrRom[0][address];
+            return this.nes.ines.chrRom[0][address] & 0xff;
         }
         if (address >= 0xc000) {
             if (this.nes.ines.rpgRom.length === 1) {
-                return this.nes.ines.rpgRom[0][address - 0xc000];
+                return this.nes.ines.rpgRom[0][address - 0xc000] & 0xff;
             }
-            return this.nes.ines.rpgRom[1][address - 0xc000];
+            return this.nes.ines.rpgRom[1][address - 0xc000] & 0xff;
         }
         if (address >= 0x8000) {
-            console.log('read:', address.toString(16));
-            return this.nes.ines.rpgRom[0][address - 0x8000];
+            return this.nes.ines.rpgRom[0][address - 0x8000] & 0xff;
         }
         if (address >= 0x6000) {
-            return this.nes.ines.sram[address - 0x6000];
+            return this.nes.ines.sram[address - 0x6000] & 0xff;
         }
         throw new Error("unhandled mapper2 read at address: " + address.toString(16));
     },
 
     write: function (address, value) {
+        address &= 0xFFFF;
+        value &= 0xff;
+        console.warn('write', address.toString(16), value.toString(16));
         if (address < 0x2000) {
             this.nes.ines.chrRom[0][address] = value;
             return;
@@ -372,7 +381,6 @@ CPU.prototype = {
             return;
         }
         if (address >= 0x8000) {
-            console.log('write', address.toString(16), value.toString(16));
             this.nes.ines.rpgRom[0][address - 0x8000] = value;
             return;
         }
@@ -394,7 +402,7 @@ CPU.prototype = {
     // incrementing the high byte
     read16bug: function (address) {
         var a = address;
-        var b = (a & 0xFF00) | ((a & 0xff + 1) & 0xffff);
+        var b = (a & 0xFF00) | ((a + 1) & 0xff);
         var lo = this.read(a);
         var hi = this.read(b);
         return ((hi & 0xff) << 8) | (lo & 0xff);
@@ -403,12 +411,12 @@ CPU.prototype = {
     // push pushes a byte onto the stack
     push: function (value) {
         this.write(0x100 | this.SP, value);
-        this.SP--;
+        this.SP = (this.SP - 1) & 0xFF;
     },
 
     // pull pops a byte from the stack
     pull: function () {
-        this.SP++;
+        this.SP = (this.SP + 1) & 0xFF;
         return this.read(0x100 | this.SP);
     },
 
@@ -596,7 +604,7 @@ CPU.prototype = {
 
     // DEC - Decrement Memory
     DEC: function (address, pc, mode) {
-        var value = this.read(address) - 1;
+        var value = (this.read(address) - 1) & 0XFF;
         this.write(address, value);
         this.setZN(value);
     },
@@ -621,7 +629,7 @@ CPU.prototype = {
 
     // INC - Increment Memory
     INC: function (address, pc, mode) {
-        var value = this.read(address) + 1;
+        var value = (this.read(address) + 1) & 0XFF;
         this.write(address, value);
         this.setZN(value);
     },
@@ -651,7 +659,7 @@ CPU.prototype = {
 
     // LDA - Load Accumulator
     LDA: function (address, pc, mode) {
-        console.log("LDA", this.A, address);
+        console.log("LDA", this.A.toString(16), address.toString(16));
         this.A = this.read(address);
         this.setZN(this.A);
     },

@@ -7,15 +7,16 @@
     <script type="text/javascript" charset="utf-8" src="js/nes.js"></script>
 </head>
 <body>
-<div id="nesFileDrag" style="height: 400px;width: 400px;background-color: cornflowerblue;">
+<div id="nesFileDrag" style="float: left;height: 400px;width: 400px;background-color: cornflowerblue;">
     <input type="file" id="nesFileChoose" style="height: 400px;width: 400px;opacity: 0;" onchange="chooseFile()"/>
     <div id="nesFileStatus" style="position: absolute;left: 0;top: 180px;width: 400px;text-align: center;">Choose Or
         Drag a File Here
     </div>
 </div>
-<button onclick="step()">next</button>
-<textarea id="result"></textarea>
-
+<div style="float: right">
+    <button onclick="step()">next</button>
+    <textarea id="result"></textarea>
+</div>
 </body>
 <script>
     var nesFileDrag = document.getElementById("nesFileDrag");
@@ -60,7 +61,10 @@
             console.log(nes);
             var result = '';
             for (var i = 0; i < 8991; i++) {
-                result += nes.cpu.printInstruction();
+                console.log("--------------------------------------------------------");
+                var info = nes.cpu.printInstruction();
+                console.log(i+1, info);
+                result += info;
                 document.getElementById("result").innerText = result;
                 nes.cpu.step();
             }

@@ -5,3 +5,9 @@
     -moz-box-sizing: border-box;
     box-sizing: border-box;
 }
+#result {
+    width: 586px;
+    height: 400px;
+    font-family: Consolas, monaco, "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", "Microsoft YaHei", 微软雅黑, STHeiti, "WenQuanYi Micro Hei", sans-serif;
+    font-size: 12px;
+}
