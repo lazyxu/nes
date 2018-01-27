@@ -333,10 +333,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    "BEQ", "SBC", "KIL", "ISC", "NOP", "SBC", "INC", "ISC", "SED", "SBC", "NOP", "ISC", "NOP", "SBC", "INC", "ISC"
 	];
 
-	function uint16(x) {
-	    return x & 0xFFFF;
-	}
-
 	const CPUFrequency = 1789773;
 
 	// interrupt types
@@ -388,9 +384,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (bytes > 2) {
 	            w2 = this.read(this.PC + 2).toString(16);
 	        }
-	        return util.sprintf("%4X  %02s %02s %02s  %s %28s" +
+	        return util.sprintf("%04X  %02s %02s %02s %01s%s %28s" +
 	            "A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3d\n",
-	            this.PC, opcode.toString(16), w1, w2, name, "",
+	            this.PC, opcode.toString(16), w1, w2, name === "NOP" && opcode !== 0xEA ? "*" : " ", name, "",
 	            this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341);
 	    },
 
@@ -470,7 +466,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (pageCrossed) {
 	            this.cycles += instructionPagecycles[opcode];
 	        }
-	        console.log(instructionNames[opcode], address.toString(16), mode, pageCrossed, instructionPagecycles[opcode]);
+	        console.log(instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
 	        eval('this.' + instructionNames[opcode] + '(address, this.PC, mode)');
 
 	        return this.cycles - cycles;
@@ -1102,6 +1098,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        throw new Error("illegal instruction");
 	    },
 	    LAX: function (address, pc, mode) {
+	        // var value = this.read(address);
+	        // this.A = value;
+	        // this.X = value;
+	        // this.setZN(value);
 	        throw new Error("illegal instruction");
 	    },
 	    RLA: function (address, pc, mode) {
