@@ -12,8 +12,10 @@
 var INES = function () {
     this.rpgRom = null; // rom
     this.chrRom = null; // vrom
-    this.numRam = null;
-    this.sram = new Array(0x2000);
+    this.sram = new Array(0x2000); // save ram
+    for (var i = 0; i < this.sram.length; i++) {
+        this.sram[i] = 0;
+    }
     this.mapperType = null;
     this.mirroring = null;
     this.batteryRam = null;
@@ -43,12 +45,12 @@ INES.prototype = {
 
         // Number of 16 KB PRG-ROM banks.
         // The PRG-ROM (Program ROM) is the area of ROM used to store the program code.
-        var numPRG = header[4];
+        var numPpgRom = header[4];
 
         // Number of 8 KB CHR-ROM / VROM banks.
         // The names CHR-ROM (Character ROM) and VROM are used synonymously to
         // refer to the area of ROM used to store graphics information, the pattern tables.
-        var numCHR = header[5];
+        var numChrRom = header[5];
 
         // ROM Control Byte 1:
         // • Bit 0 - Indicates the type of mirroring used by the game
@@ -82,7 +84,7 @@ INES.prototype = {
         // Number of 8 KB RAM banks. For compatibility with previous
         // versions of the iNES format, assume 1 page of RAM when
         // this is 0.
-        var numRAM = header[8];
+        var numRpgRam = header[8];
 
         // Reserved for future usage and should all be 0.
         for (var i = 9; i < 16; i++) {
@@ -95,9 +97,9 @@ INES.prototype = {
         // begin here, starting with PRG-ROM then CHR-ROM.
 
         // Load PRG-ROM banks:
-        this.rpgRom = new Array(numPRG);
+        this.rpgRom = new Array(numPpgRom);
         var offset = 16;
-        for (var i = 0; i < numPRG; i++) {
+        for (var i = 0; i < numPpgRom; i++) {
             this.rpgRom[i] = new Array(0x4000);
             for (var j = 0; j < 0x4000; j++) {
                 if (offset + j >= data.length) {
@@ -109,8 +111,8 @@ INES.prototype = {
         }
 
         // Load CHR-ROM banks:
-        this.chrRom = new Array(numCHR);
-        for (i = 0; i < numCHR; i++) {
+        this.chrRom = new Array(numChrRom);
+        for (var i = 0; i < numChrRom; i++) {
             this.chrRom[i] = new Array(0x1000);
             for (j = 0; j < 0x1000; j++) {
                 if (offset + j >= data.length) {

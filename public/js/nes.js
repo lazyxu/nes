@@ -64,18 +64,37 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var INES = __webpack_require__(2);
 	var CPU = __webpack_require__(3);
+	var PPU = __webpack_require__(5);
+	var Mapper2 = __webpack_require__(6);
 
 	var NES = function (data) {
 	    this.ines = null;
-	    this.load(data);
+	    this.mapper = null;
+	    this.reset(data);
 	    console.log(this);
-	    this.cpu = new CPU(this);
 	};
 
 	NES.prototype = {
-	    load: function (data) {
+	    reset: function (data) {
 	        this.ines = new INES();
 	        this.ines.load(data);
+	        this.setMapper(this.ines.mapperType);
+	        console.log(this);
+	        this.cpu = new CPU(this);
+	        this.ppu = new PPU(this);
+	    },
+
+	    setMapper: function (mapperType) {
+	        switch (mapperType) {
+	            case 0:
+	                this.mapper = new Mapper2(this);
+	                break;
+	            case 2:
+	                this.mapper = new Mapper2(this);
+	                break;
+	            default:
+	                throw new Error("unsupported mapper " + mapperType);
+	        }
 	    }
 	};
 
@@ -99,8 +118,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var INES = function () {
 	    this.rpgRom = null; // rom
 	    this.chrRom = null; // vrom
-	    this.numRam = null;
-	    this.sram = new Array(0x2000);
+	    this.sram = new Array(0x2000); // save ram
+	    for (var i = 0; i < this.sram.length; i++) {
+	        this.sram[i] = 0;
+	    }
 	    this.mapperType = null;
 	    this.mirroring = null;
 	    this.batteryRam = null;
@@ -130,12 +151,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        // Number of 16 KB PRG-ROM banks.
 	        // The PRG-ROM (Program ROM) is the area of ROM used to store the program code.
-	        var numPRG = header[4];
+	        var numPpgRom = header[4];
 
 	        // Number of 8 KB CHR-ROM / VROM banks.
 	        // The names CHR-ROM (Character ROM) and VROM are used synonymously to
 	        // refer to the area of ROM used to store graphics information, the pattern tables.
-	        var numCHR = header[5];
+	        var numChrRom = header[5];
 
 	        // ROM Control Byte 1:
 	        // • Bit 0 - Indicates the type of mirroring used by the game
@@ -169,7 +190,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // Number of 8 KB RAM banks. For compatibility with previous
 	        // versions of the iNES format, assume 1 page of RAM when
 	        // this is 0.
-	        var numRAM = header[8];
+	        var numRpgRam = header[8];
 
 	        // Reserved for future usage and should all be 0.
 	        for (var i = 9; i < 16; i++) {
@@ -182,9 +203,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // begin here, starting with PRG-ROM then CHR-ROM.
 
 	        // Load PRG-ROM banks:
-	        this.rpgRom = new Array(numPRG);
+	        this.rpgRom = new Array(numPpgRom);
 	        var offset = 16;
-	        for (var i = 0; i < numPRG; i++) {
+	        for (var i = 0; i < numPpgRom; i++) {
 	            this.rpgRom[i] = new Array(0x4000);
 	            for (var j = 0; j < 0x4000; j++) {
 	                if (offset + j >= data.length) {
@@ -196,8 +217,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        // Load CHR-ROM banks:
-	        this.chrRom = new Array(numCHR);
-	        for (i = 0; i < numCHR; i++) {
+	        this.chrRom = new Array(numChrRom);
+	        for (var i = 0; i < numChrRom; i++) {
 	            this.chrRom[i] = new Array(0x1000);
 	            for (j = 0; j < 0x1000; j++) {
 	                if (offset + j >= data.length) {
@@ -344,6 +365,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var CPU = function (nes) {
 	    this.nes = nes;
 	    this.ram = new Array(2048);
+	    for (var i = 0; i < this.ram.length; i++) {
+	        this.ram = 0;
+	    }
 	    this.cycles = null;
 	    this.stall = null;
 	    this.A = 0;
@@ -564,50 +588,59 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    read: function (address) {
 	        address &= 0xFFFF;
-	        console.warn('read', address.toString(16));
+	        console.warn('cpu memory read', address.toString(16));
 	        if (address < 0x2000) {
-	            return this.nes.ines.chrRom[0][address] & 0xff;
+	            return this.ram[address % 0x800];
 	        }
-	        if (address >= 0xc000) {
-	            if (this.nes.ines.rpgRom.length === 1) {
-	                return this.nes.ines.rpgRom[0][address - 0xc000] & 0xff;
+	        if (address < 0x4000) {
+	            switch ((address - 0x2000) % 8) {
+	                default:
+	                    throw new Error("unhandled I/O Registers I read at address: " + address.toString(16));
 	            }
-	            return this.nes.ines.rpgRom[1][address - 0xc000] & 0xff;
 	        }
-	        if (address >= 0x8000) {
-	            return this.nes.ines.rpgRom[0][address - 0x8000] & 0xff;
+	        if (address < 0x4020) {
+	            switch (address - 0x4000) {
+	                default:
+	                    throw new Error("unhandled I/O Registers II read at address: " + address.toString(16));
+	            }
+	        }
+	        if (address < 0x6000) {
+	            throw new Error("unhandled Expansion ROM read at address: " + address.toString(16));
 	        }
 	        if (address >= 0x6000) {
-	            return this.nes.ines.sram[address - 0x6000] & 0xff;
+	            return this.nes.mapper.read(address);
 	        }
-	        throw new Error("unhandled mapper2 read at address: " + address.toString(16));
+	        throw new Error("unhandled cpu memory read at address: " + address.toString(16));
 	    },
 
 	    write: function (address, value) {
 	        address &= 0xFFFF;
 	        value &= 0xff;
-	        console.warn('write', address.toString(16), value.toString(16));
+	        console.warn('cpu memory write', address.toString(16), value.toString(16));
 	        if (address < 0x2000) {
-	            this.nes.ines.chrRom[0][address] = value;
+	            this.ram[address % 0x800] = value;
 	            return;
 	        }
-	        if (address >= 0xc000) {
-	            if (this.nes.ines.rpgRom.length === 1) {
-	                this.nes.ines.rpgRom[0][address - 0xc000] = value;
-	            } else {
-	                this.nes.ines.rpgRom[1][address - 0xc000] = value;
+	        if (address < 0x4000) {
+	            switch ((address - 0x2000) % 8) {
+	                default:
+	                    throw new Error("unhandled I/O Registers I write at address: " + address.toString(16));
 	            }
-	            return;
 	        }
-	        if (address >= 0x8000) {
-	            this.nes.ines.rpgRom[0][address - 0x8000] = value;
-	            return;
+	        if (address < 0x4020) {
+	            switch (address - 0x4000) {
+	                default:
+	                    throw new Error("unhandled I/O Registers II write at address: " + address.toString(16));
+	            }
+	        }
+	        if (address < 0x6000) {
+	            throw new Error("unhandled Expansion ROM write at address: " + address.toString(16));
 	        }
 	        if (address >= 0x6000) {
-	            this.nes.ines.sram[address - 0x6000] = value;
+	            this.nes.mapper.write(address, value);
 	            return;
 	        }
-	        throw new Error("unhandled mapper2 write at address: " + address.toString(16));
+	        throw new Error("unhandled cpu memory write at address: " + address.toString(16));
 	    },
 
 	    // read16 reads two bytes using read to return a double-word value
@@ -1205,6 +1238,92 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return o.join('');
 	}
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+	var PPU = function (nes) {
+	    this.cycle = 0;    // 0-340
+	    this.scanLine = 0; // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
+	    this.frame = 0;    // frame counter
+	    this.reset();
+	};
+
+	PPU.prototype = {
+	    reset: function () {
+	        this.cycle = 340;
+	        this.scanLine = 240;
+	        this.frame = 0;
+	    },
+
+	    step: function () {
+
+	    },
+
+	    read: function (address) {
+
+	    },
+
+	    write: function (address, value) {
+
+	    }
+	};
+
+	module.exports = PPU;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+	var Mapper2 = function (nes) {
+	    this.nes = nes;
+	    this.rpgRomBanks = this.nes.ines.rpgRom.length;
+	    this.rpgRomUpperBank = this.rpgRomBanks - 1;
+	    this.rpgRomLowerBank = 0;
+	};
+
+	Mapper2.prototype = {
+
+	    read: function (address) {
+	        address &= 0xFFFF;
+	        console.warn('read', address.toString(16));
+	        if (address < 0x2000) {
+	            return this.nes.ines.chrRom[0][address] & 0xff;
+	        }
+	        if (address >= 0xc000) {
+	            return this.nes.ines.rpgRom[this.rpgRomUpperBank][address - 0xc000] & 0xff;
+	        }
+	        if (address >= 0x8000) {
+	            return this.nes.ines.rpgRom[this.rpgRomLowerBank][address - 0x8000] & 0xff;
+	        }
+	        if (address >= 0x6000) {
+	            return this.nes.ines.sram[address - 0x6000] & 0xff;
+	        }
+	        throw new Error("unhandled mapper2 read at address: " + address.toString(16));
+	    },
+
+	    write: function (address, value) {
+	        address &= 0xFFFF;
+	        value &= 0xff;
+	        console.warn('write', address.toString(16), value.toString(16));
+	        if (address < 0x2000) {
+	            this.nes.ines.chrRom[0][address] = value;
+	            return;
+	        }
+	        if (address >= 0x8000) {
+	            this.rpgRomLowerBank = value % this.rpgRomBanks;
+	            return;
+	        }
+	        if (address >= 0x6000) {
+	            this.nes.ines.sram[address - 0x6000] = value;
+	            return;
+	        }
+	        throw new Error("unhandled mapper2 write at address: " + address.toString(16));
+	    }
+	};
+
+	module.exports = Mapper2;
 
 /***/ })
 /******/ ])

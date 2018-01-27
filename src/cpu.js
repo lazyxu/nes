@@ -125,6 +125,9 @@ const interruptRESET = 3;
 var CPU = function (nes) {
     this.nes = nes;
     this.ram = new Array(2048);
+    for (var i = 0; i < this.ram.length; i++) {
+        this.ram = 0;
+    }
     this.cycles = null;
     this.stall = null;
     this.A = 0;
@@ -345,50 +348,59 @@ CPU.prototype = {
 
     read: function (address) {
         address &= 0xFFFF;
-        console.warn('read', address.toString(16));
+        console.warn('cpu memory read', address.toString(16));
         if (address < 0x2000) {
-            return this.nes.ines.chrRom[0][address] & 0xff;
+            return this.ram[address % 0x800];
         }
-        if (address >= 0xc000) {
-            if (this.nes.ines.rpgRom.length === 1) {
-                return this.nes.ines.rpgRom[0][address - 0xc000] & 0xff;
+        if (address < 0x4000) {
+            switch ((address - 0x2000) % 8) {
+                default:
+                    throw new Error("unhandled I/O Registers I read at address: " + address.toString(16));
             }
-            return this.nes.ines.rpgRom[1][address - 0xc000] & 0xff;
         }
-        if (address >= 0x8000) {
-            return this.nes.ines.rpgRom[0][address - 0x8000] & 0xff;
+        if (address < 0x4020) {
+            switch (address - 0x4000) {
+                default:
+                    throw new Error("unhandled I/O Registers II read at address: " + address.toString(16));
+            }
+        }
+        if (address < 0x6000) {
+            throw new Error("unhandled Expansion ROM read at address: " + address.toString(16));
         }
         if (address >= 0x6000) {
-            return this.nes.ines.sram[address - 0x6000] & 0xff;
+            return this.nes.mapper.read(address);
         }
-        throw new Error("unhandled mapper2 read at address: " + address.toString(16));
+        throw new Error("unhandled cpu memory read at address: " + address.toString(16));
     },
 
     write: function (address, value) {
         address &= 0xFFFF;
         value &= 0xff;
-        console.warn('write', address.toString(16), value.toString(16));
+        console.warn('cpu memory write', address.toString(16), value.toString(16));
         if (address < 0x2000) {
-            this.nes.ines.chrRom[0][address] = value;
+            this.ram[address % 0x800] = value;
             return;
         }
-        if (address >= 0xc000) {
-            if (this.nes.ines.rpgRom.length === 1) {
-                this.nes.ines.rpgRom[0][address - 0xc000] = value;
-            } else {
-                this.nes.ines.rpgRom[1][address - 0xc000] = value;
+        if (address < 0x4000) {
+            switch ((address - 0x2000) % 8) {
+                default:
+                    throw new Error("unhandled I/O Registers I write at address: " + address.toString(16));
             }
-            return;
         }
-        if (address >= 0x8000) {
-            this.nes.ines.rpgRom[0][address - 0x8000] = value;
-            return;
+        if (address < 0x4020) {
+            switch (address - 0x4000) {
+                default:
+                    throw new Error("unhandled I/O Registers II write at address: " + address.toString(16));
+            }
+        }
+        if (address < 0x6000) {
+            throw new Error("unhandled Expansion ROM write at address: " + address.toString(16));
         }
         if (address >= 0x6000) {
-            this.nes.ines.sram[address - 0x6000] = value;
+            this.nes.mapper.write(address, value);
             return;
         }
-        throw new Error("unhandled mapper2 write at address: " + address.toString(16));
+        throw new Error("unhandled cpu memory write at address: " + address.toString(16));
     },
 
     // read16 reads two bytes using read to return a double-word value
