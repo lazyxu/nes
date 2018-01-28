@@ -4,3 +4,9 @@ package-lock.json
 .DS_Store
 public/.DS_Store
 src/.DS_Store
+public/debugger.js
+public/manifest.js
+public/react.js
+public/nes.js
+public/nes.min.js
+debugger

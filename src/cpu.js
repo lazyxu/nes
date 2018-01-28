@@ -250,7 +250,7 @@ CPU.prototype = {
         if (pageCrossed) {
             this.cycles += instructionPagecycles[opcode];
         }
-        console.log(instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
+        // console.log(instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
         eval('this.' + instructionNames[opcode] + '(address, this.PC, mode)');
 
         return this.cycles - cycles;
@@ -348,7 +348,7 @@ CPU.prototype = {
 
     read: function (address) {
         address &= 0xFFFF;
-        console.warn('cpu memory read', address.toString(16));
+        // console.warn('cpu memory read', address.toString(16));
         if (address < 0x2000) {
             return this.ram[address % 0x800];
         }
@@ -375,7 +375,7 @@ CPU.prototype = {
     write: function (address, value) {
         address &= 0xFFFF;
         value &= 0xff;
-        console.warn('cpu memory write', address.toString(16), value.toString(16));
+        // console.warn('cpu memory write', address.toString(16), value.toString(16));
         if (address < 0x2000) {
             this.ram[address % 0x800] = value;
             return;
@@ -671,7 +671,6 @@ CPU.prototype = {
 
     // LDA - Load Accumulator
     LDA: function (address, pc, mode) {
-        console.log("LDA", this.A.toString(16), address.toString(16));
         this.A = this.read(address);
         this.setZN(this.A);
     },

@@ -17,7 +17,18 @@
     <button onclick="step()">next</button>
     <textarea id="result"></textarea>
 </div>
+
+<div class="Palette">
+    <div id="imagePalette">
+        <div>imagePalette:</div>
+    </div>
+    <div id="spritePalette">
+        <div>spritePalette:</div>
+    </div>
+</div>
+
 </body>
+<script type="text/javascript" charset="utf-8" src="js/ppuDebug.js"></script>
 <script>
     var nesFileDrag = document.getElementById("nesFileDrag");
     var nesFileChoose = document.getElementById("nesFileChoose");
@@ -58,24 +69,19 @@
             nes = new nesEmulator.NES(this.result);
             // nes.cpu.PC = 0xC000;
             console.log(nes);
-            var result = '';
+            // var result = '';
             for (var i = 0; i < 8991; i++) {
-                console.log("--------------------------------------------------------");
-                var info = nes.cpu.printInstruction();
-                console.log(i+1, info);
-                result += info;
-                document.getElementById("result").innerText = result;
-                nes.cpu.step();
+                // console.log("--------------------------------------------------------");
+                // var info = nes.cpu.printInstruction();
+                // console.log(i + 1, info);
+                // result += info;
+                // document.getElementById("result").innerText = result;
+                nes.step();
+                // if (i % 100 == 0) {
+                //     updatePalette(nes);
+                // }
             }
-            document.getElementById("result").innerText = result;
-            // for (var i=0;i<8991;i++) {
-            //     nes.cpu.step();
-            //     nes.cpu.printInstruction();
-            // }
-            // if (nes.cpu.read(0x6000) < 0x80) {
-            //     console.log(nes.cpu.cycles);
-            // }
-            // console.log(nes.cpu.read(0x6004));
+            // document.getElementById("result").innerText = result;
         };
         reader.readAsBinaryString(file);
     }

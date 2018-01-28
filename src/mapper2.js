@@ -9,7 +9,7 @@ Mapper2.prototype = {
 
     read: function (address) {
         address &= 0xFFFF;
-        console.warn('read', address.toString(16));
+        // console.warn('mapper2 read', address.toString(16));
         if (address < 0x2000) {
             return this.nes.ines.chrRom[0][address] & 0xff;
         }
@@ -28,7 +28,7 @@ Mapper2.prototype = {
     write: function (address, value) {
         address &= 0xFFFF;
         value &= 0xff;
-        console.warn('write', address.toString(16), value.toString(16));
+        // console.warn('mapper2 write', address.toString(16), value.toString(16));
         if (address < 0x2000) {
             this.nes.ines.chrRom[0][address] = value;
             return;

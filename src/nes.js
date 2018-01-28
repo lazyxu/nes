@@ -20,6 +20,15 @@ NES.prototype = {
         this.ppu = new PPU(this);
     },
 
+    step: function () {
+        var i;
+        var cpuCycles = this.cpu.step();
+        for (i = 0; i < cpuCycles * 3; i++) {
+            this.ppu.step();
+        }
+        return cpuCycles;
+    },
+
     setMapper: function (mapperType) {
         switch (mapperType) {
             case 0:

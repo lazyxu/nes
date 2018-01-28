@@ -11,3 +11,20 @@
     font-family: Consolas, monaco, "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB", "Microsoft YaHei", 微软雅黑, STHeiti, "WenQuanYi Micro Hei", sans-serif;
     font-size: 12px;
 }
+.Palette {
+    float: left;
+    width: 144px;
+    line-height: 18px;
+    font-size: 10px;
+}
+.Palette .line{
+    height: 12px;
+    margin-bottom: 1px;
+}
+.Palette .rect {
+    float: left;
+    height: 8px;
+    width: 8px;
+    margin: 1px 1px 0 0;
+    display: inline-flex;
+}
