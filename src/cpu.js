@@ -353,13 +353,12 @@ CPU.prototype = {
             return this.ram[address % 0x800];
         }
         if (address < 0x4000) {
-            switch ((address - 0x2000) % 8) {
-                default:
-                    throw new Error("unhandled I/O Registers I read at address: " + address.toString(16));
-            }
+            return this.nes.ppu.readRegister(0x2000 + (address - 0x2000) % 8);
         }
         if (address < 0x4020) {
             switch (address - 0x4000) {
+                case 4014:
+                    return this.nes.ppu.readRegister(address);
                 default:
                     throw new Error("unhandled I/O Registers II read at address: " + address.toString(16));
             }
@@ -382,13 +381,14 @@ CPU.prototype = {
             return;
         }
         if (address < 0x4000) {
-            switch ((address - 0x2000) % 8) {
-                default:
-                    throw new Error("unhandled I/O Registers I write at address: " + address.toString(16));
-            }
+            this.nes.ppu.writeRegister(0x2000 + (address - 0x2000) % 8, value);
+            return;
         }
         if (address < 0x4020) {
             switch (address - 0x4000) {
+                case 4014:
+                    this.nes.ppu.writeRegister(address, value);
+                    return;
                 default:
                     throw new Error("unhandled I/O Registers II write at address: " + address.toString(16));
             }

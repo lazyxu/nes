@@ -56,7 +56,7 @@
         var reader = new FileReader();
         reader.onload = function () {
             nes = new nesEmulator.NES(this.result);
-            nes.cpu.PC = 0xC000;
+            // nes.cpu.PC = 0xC000;
             console.log(nes);
             var result = '';
             for (var i = 0; i < 8991; i++) {
