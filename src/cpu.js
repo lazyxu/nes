@@ -149,10 +149,13 @@ var util = require('./util');
 CPU.prototype = {
     // reset resets the CPU to its initial power_up state
     reset: function () {
-        this.PC = this.read16(0xFFFC);
         this.SP = 0xFD;
         this.setFlags(0x24);
         this.interrupt = interruptNone;
+    },
+
+    load: function () {
+        this.PC = this.read16(0xFFFC);
     },
 
     // PrintInstruction prints the current CPU state

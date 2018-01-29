@@ -3,21 +3,23 @@ var CPU = require("./cpu");
 var PPU = require("./ppu");
 var Mapper2 = require("./mapper2");
 
-var NES = function (data) {
+var NES = function () {
     this.ines = null;
     this.mapper = null;
-    this.reset(data);
-    console.log(this);
+    this.reset();
 };
 
 NES.prototype = {
-    reset: function (data) {
+    reset: function () {
         this.ines = new INES();
-        this.ines.load(data);
-        this.setMapper(this.ines.mapperType);
-        console.log(this);
         this.cpu = new CPU(this);
         this.ppu = new PPU(this);
+    },
+
+    load: function (data) {
+        this.ines.load(data);
+        this.setMapper(this.ines.mapperType);
+        this.cpu.load();
     },
 
     step: function () {
