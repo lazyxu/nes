@@ -1,6 +1,6 @@
 import { createStore } from 'redux'
 
-import reducers from './reducers/index'
+import reducers from './reducers'
 
 const initialState = window.__INITIAL_STATE__;
 window.store = createStore(reducers, initialState,

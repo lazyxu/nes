@@ -51,14 +51,14 @@ module.exports = {
         }),
         // new webpack.HotModuleReplacementPlugin(),
         new webpack.NoErrorsPlugin(),
-        new webpack.optimize.UglifyJsPlugin({
-            output: {
-                comments: false,  // remove all comments
-            },
-            compress: {
-                warnings: false
-            }
-        }),
+        // new webpack.optimize.UglifyJsPlugin({
+        //     output: {
+        //         comments: false,  // remove all comments
+        //     },
+        //     compress: {
+        //         warnings: false
+        //     }
+        // }),
         new webpack.DefinePlugin({
             "process.env": {
                 NODE_ENV: JSON.stringify("development")

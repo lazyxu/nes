@@ -90,21 +90,23 @@ var CPU = __webpack_require__(3);
 var PPU = __webpack_require__(5);
 var Mapper2 = __webpack_require__(6);
 
-var NES = function (data) {
+var NES = function () {
     this.ines = null;
     this.mapper = null;
-    this.reset(data);
-    console.log(this);
+    this.reset();
 };
 
 NES.prototype = {
-    reset: function (data) {
+    reset: function () {
         this.ines = new INES();
-        this.ines.load(data);
-        this.setMapper(this.ines.mapperType);
-        console.log(this);
         this.cpu = new CPU(this);
         this.ppu = new PPU(this);
+    },
+
+    load: function (data) {
+        this.ines.load(data);
+        this.setMapper(this.ines.mapperType);
+        this.cpu.load();
     },
 
     step: function () {
@@ -421,10 +423,13 @@ var util = __webpack_require__(4);
 CPU.prototype = {
     // reset resets the CPU to its initial power_up state
     reset: function () {
-        this.PC = this.read16(0xFFFC);
         this.SP = 0xFD;
         this.setFlags(0x24);
         this.interrupt = interruptNone;
+    },
+
+    load: function () {
+        this.PC = this.read16(0xFFFC);
     },
 
     // PrintInstruction prints the current CPU state
@@ -522,7 +527,7 @@ CPU.prototype = {
         if (pageCrossed) {
             this.cycles += instructionPagecycles[opcode];
         }
-        // console.log(instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
+        // console.log(opcode, instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
         eval('this.' + instructionNames[opcode] + '(address, this.PC, mode)');
 
         return this.cycles - cycles;

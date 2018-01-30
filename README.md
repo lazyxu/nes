@@ -1,6 +1,9 @@
 # nes
 NES emulator written in JavaScript.
 
+### utils
+- [HexViewer](https://hexed.it/)
+
 ### tests
 - [nestest.txt](http://www.qmtpro.com/~nes/misc/nestest.txt)
 - [nestest.log](http://www.qmtpro.com/~nes/misc/nestest.log)

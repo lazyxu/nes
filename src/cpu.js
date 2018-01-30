@@ -130,18 +130,19 @@ var CPU = function (nes) {
     }
     this.cycles = null;
     this.stall = null;
+    this.PC = 0;
     this.A = 0;
     this.X = 0;
     this.Y = 0;
-    this.SP = null;
-    this.N = null;
-    this.V = null;
-    this.U = null;
-    this.B = null;
-    this.D = null;
-    this.I = null;
-    this.Z = null;
-    this.C = null;
+    this.SP = 0;
+    this.N = 0;
+    this.V = 0;
+    this.U = 0;
+    this.B = 0;
+    this.D = 0;
+    this.I = 0;
+    this.Z = 0;
+    this.C = 0;
     this.reset();
 };
 var util = require('./util');
@@ -253,7 +254,7 @@ CPU.prototype = {
         if (pageCrossed) {
             this.cycles += instructionPagecycles[opcode];
         }
-        // console.log(instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
+        // console.log(opcode, instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
         eval('this.' + instructionNames[opcode] + '(address, this.PC, mode)');
 
         return this.cycles - cycles;

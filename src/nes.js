@@ -7,6 +7,7 @@ var NES = function () {
     this.ines = null;
     this.mapper = null;
     this.reset();
+    this.isRunning = false;
 };
 
 NES.prototype = {
@@ -20,15 +21,35 @@ NES.prototype = {
         this.ines.load(data);
         this.setMapper(this.ines.mapperType);
         this.cpu.load();
+        this.isRunning = true;
     },
 
+    // cpu step
     step: function () {
-        var i;
-        var cpuCycles = this.cpu.step();
+        let i;
+        let cpuCycles = this.cpu.step();
         for (i = 0; i < cpuCycles * 3; i++) {
             this.ppu.step();
         }
         return cpuCycles;
+    },
+
+    run: function () {
+        for (; this.isRunning === true;) {
+            this.step();
+        }
+    },
+
+    stop: function () {
+        this.isRunning = false;
+    },
+
+    continue: function () {
+        this.isRunning = true;
+    },
+
+    exit: function () {
+
     },
 
     setMapper: function (mapperType) {

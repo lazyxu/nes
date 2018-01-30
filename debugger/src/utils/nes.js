@@ -21,4 +21,3 @@ exports.loadROM = function(nes, file) {
     };
     reader.readAsBinaryString(file);
 };
-
