@@ -1,55 +1,58 @@
-const modeAbsolute = 1;
-const modeAbsoluteX = 2;
-const modeAbsoluteY = 3;
-const modeAccumulator = 4;
-const modeImmediate = 5;
-const modeImplied = 6;
-const modeIndexedIndirect = 7;
-const modeIndirect = 8;
-const modeIndirectIndexed = 9;
-const modeRelative = 10;
-const modeZeroPage = 11;
-const modeZeroPageX = 12;
-const modeZeroPageY = 13;
+const modeAbsolute = 0;
+const modeAbsoluteX = 1;
+const modeAbsoluteY = 2;
+const modeAccumulator = 3;
+const modeImmediate = 4;
+const modeImplied = 5;
+const modeIndexedIndirect = 6;
+const modeIndirect = 7;
+const modeIndirectIndexed = 8;
+const modeRelative = 9;
+const modeZeroPage = 10;
+const modeZeroPageX = 11;
+const modeZeroPageY = 12;
 
+var modeSize = [
+    3, 3, 3, 1, 2, 1, 2, 3, 2, 2, 2, 2, 2
+];
 // instructionModes indicates the addressing mode for each instruction
 var instructionModes = [
-    6, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    1, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    6, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    6, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 8, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    5, 7, 5, 7, 11, 11, 11, 11, 6, 5, 6, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 13, 13, 6, 3, 6, 3, 2, 2, 3, 3,
-    5, 7, 5, 7, 11, 11, 11, 11, 6, 5, 6, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 13, 13, 6, 3, 6, 3, 2, 2, 3, 3,
-    5, 7, 5, 7, 11, 11, 11, 11, 6, 5, 6, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    5, 7, 5, 7, 11, 11, 11, 11, 6, 5, 6, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2
+    5, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    0, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    5, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    5, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 7, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    4, 6, 4, 6, 10, 10, 10, 10, 5, 4, 5, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 12, 12, 5, 2, 5, 2, 1, 1, 2, 2,
+    4, 6, 4, 6, 10, 10, 10, 10, 5, 4, 5, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 12, 12, 5, 2, 5, 2, 1, 1, 2, 2,
+    4, 6, 4, 6, 10, 10, 10, 10, 5, 4, 5, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    4, 6, 4, 6, 10, 10, 10, 10, 5, 4, 5, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1
 ];
 
 // instructionSizes indicates the size of each instruction in bytes
 var instructionSizes = [
-    1, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    3, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    1, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    1, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 0, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 0, 3, 0, 0,
-    2, 2, 2, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0
+    1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    3, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3
 ];
 
 // instructioncycles indicates the number of cycles used by each instruction,
@@ -157,15 +160,18 @@ CPU.prototype = {
 
     load: function () {
         this.PC = this.read16(0xFFFC);
+        console.log(this.PC.toString(16))
     },
+
+    /* debug -------------------------------------------------------------------------------------------------------- */
 
     // PrintInstruction prints the current CPU state
     printInstruction: function () {
-        var opcode = this.read(this.PC);
-        var bytes = instructionSizes[opcode];
-        var name = instructionNames[opcode];
-        var w1 = "  ";
-        var w2 = "  ";
+        let opcode = this.read(this.PC);
+        let bytes = instructionSizes[opcode];
+        let name = instructionNames[opcode];
+        let w1 = "  ";
+        let w2 = "  ";
         if (bytes > 1) {
             w1 = this.read(this.PC + 1).toString(16);
         }
@@ -178,28 +184,51 @@ CPU.prototype = {
             this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341);
     },
 
-    // step executes a single CPU instruction
-    step: function () {
-        if (this.stall > 0) {
-            this.stall--;
-            return 1;
+    decode(start) {
+        let decode = [];
+        for (let i = 0; i < start.length; i++) {
+            let PC = start[i];
+            let run = true;
+            let konwnAddress = [];
+            for (; run;) {
+                if (PC in konwnAddress) {
+                    break;
+                }
+                if (PC >= 0xFFFA) {
+                    break;
+                }
+                let opcode = this.read(PC);
+                let size = instructionSizes[opcode];
+                let hexDump;
+                switch (size) {
+                    case 0:
+                        throw new Error("invalid instruction");
+                    case 1:
+                        hexDump = util.sprintf("%02X", opcode);
+                        break;
+                    case 2:
+                        hexDump = util.sprintf("%02X %02X", opcode, this.read(PC + 1));
+                        break;
+                    case 3:
+                        hexDump = util.sprintf("%02X %02X %02X", opcode, this.read(PC + 1), this.read(PC + 2));
+                        break;
+                }
+                decode[PC] = {
+                    hexDump,
+                };
+                console.log(util.sprintf("%04X: %s", PC, hexDump));
+                konwnAddress.push(PC);
+                let mode = instructionModes[opcode];
+                // eval('this.' + instructionNames[opcode] + 'DISASSEMBLY(this.PC, mode)');
+                PC += size;
+            }
         }
+        return decode;
+    },
 
-        var cycles = this.cycles;
-
-        // interrupt
-        switch (this.interrupt) {
-            case interruptIRQ:
-                this.irq();
-            case interruptNMI:
-                this.nmi();
-        }
-        this.interrupt = interruptNone;
-        var opcode = this.read(this.PC);
-        var mode = instructionModes[opcode];
-
-        var address = null;
-        var pageCrossed = null;
+    addressing: function (mode) {
+        let address = null;
+        let pageCrossed = null;
         switch (mode) {
             case modeAbsolute:
                 address = this.read16(this.PC + 1);
@@ -249,11 +278,36 @@ CPU.prototype = {
                 address = (this.read(this.PC + 1) + this.Y) & 0xff;
                 break;
         }
-        this.PC += instructionSizes[opcode];
-        this.cycles += instructioncycles[opcode];
         if (pageCrossed) {
             this.cycles += instructionPagecycles[opcode];
         }
+        return address;
+    },
+
+    // step executes a single CPU instruction
+    step: function () {
+        if (this.stall > 0) {
+            this.stall--;
+            return 1;
+        }
+
+        var cycles = this.cycles;
+
+        // interrupt
+        switch (this.interrupt) {
+            case interruptIRQ:
+                this.irq();
+            case interruptNMI:
+                this.nmi();
+        }
+        this.interrupt = interruptNone;
+        let opcode = this.read(this.PC);
+
+        let mode = instructionModes[opcode];
+        let address = this.addressing(mode);
+
+        this.PC += instructionSizes[opcode];
+        this.cycles += instructioncycles[opcode];
         // console.log(opcode, instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
         eval('this.' + instructionNames[opcode] + '(address, this.PC, mode)');
 
@@ -930,3 +984,5 @@ CPU.prototype = {
 };
 
 module.exports = CPU;
+
+// http://obelisk.me.uk/6502/reference.html
