@@ -1,20 +1,39 @@
 .CPU {
   .ToolBar {
-
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 170px;
+    height: 30px;
+    padding: 4px;
+  }
+  .Instructions {
+    overflow: scroll;
+    position: absolute;
+    left: 0;
+    top: 30px;
+    height: 338px;
+    right: 170px;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
   }
   .Interrupts {
     position: fixed;
     right: 0;
     top: 0;
-    height: 88px;
+    height: 80px;
     width: 170px;
-    border: 1px solid black;
+    border-left: 1px solid black;
+    overflow: scroll;
   }
   .Registers {
     position: fixed;
     right: 0;
-    top: 87px;
+    top: 80px;
     width: 170px;
-    border: 1px solid black;
+    border-bottom: 1px solid black;
+    border-left: 1px solid black;
+    overflow: scroll;
+    height: 288px;
   }
 }

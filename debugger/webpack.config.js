@@ -50,7 +50,7 @@ module.exports = {
             minChunks: Infinity,
         }),
         // new webpack.HotModuleReplacementPlugin(),
-        new webpack.NoErrorsPlugin(),
+        // new webpack.NoErrorsPlugin(),
         // new webpack.optimize.UglifyJsPlugin({
         //     output: {
         //         comments: false,  // remove all comments

@@ -129,7 +129,7 @@ var CPU = function (nes) {
     this.nes = nes;
     this.ram = new Array(2048);
     for (var i = 0; i < this.ram.length; i++) {
-        this.ram = 0;
+        this.ram[i] = 0;
     }
     this.cycles = null;
     this.stall = null;
@@ -188,17 +188,19 @@ CPU.prototype = {
         let disasm = [];
         let konwnAddress = [];
         for (let i = 0; i < start.length; i++) {
-            let PC = start[i];
+            this.PC = start[i];
+            console.log("start", start[i].toString(16));
             let run = true;
             for (; run;) {
-                if (PC in konwnAddress) {
+                if (konwnAddress.indexOf(this.PC) > -1) {
+                    console.log("exit", this.PC.toString(16));
                     break;
                 }
-                if (PC >= 0xFFFA) {
+                if (this.PC >= 0xFFFA) {
                     break;
                 }
-                konwnAddress.push(PC);
-                let opcode = this.read(PC);
+                konwnAddress.push(this.PC);
+                let opcode = this.read(this.PC);
                 let size = instructionSizes[opcode];
                 let hexDump;
                 switch (size) {
@@ -208,39 +210,60 @@ CPU.prototype = {
                         hexDump = util.sprintf("%02X", opcode);
                         break;
                     case 2:
-                        hexDump = util.sprintf("%02X %02X", opcode, this.read(PC + 1));
+                        hexDump = util.sprintf("%02X %02X", opcode, this.read(this.PC + 1));
                         break;
                     case 3:
-                        hexDump = util.sprintf("%02X %02X %02X", opcode, this.read(PC + 1), this.read(PC + 2));
+                        hexDump = util.sprintf("%02X %02X %02X", opcode, this.read(this.PC + 1), this.read(this.PC + 2));
                         break;
                 }
-                console.log(util.sprintf("%04X: %s", PC, hexDump));
+                console.log(util.sprintf("%04X: %s", this.PC, hexDump));
                 let name = instructionNames[opcode];
                 let mode = instructionModes[opcode];
-                let address = this.addressing(mode);
+                let address = this.addressing(opcode, mode);
                 // let res = eval('this.' + instructionNames[opcode] + 'address(address, PC, size)');
-                disasm[PC] = {
-                    PC: util.sprintf("%02X", PC),
+                if (name === "NOP") {
+                    hexDump = "";
+                }
+                disasm[this.PC - 0xC000] = {
+                    PC: util.sprintf("%02X", this.PC),
                     hexDump,
                     operator: name,
-                    opdata: this.disasmOpdata(PC, mode),
+                    opdata: this.disasmOpdata(this.PC, mode),
                 };
+                this.PC += size;
                 switch (name) {
                     case "JMP":
-                        PC = this.read16(address);
+                        if (mode === modeAbsolute) {
+                            console.log("JMP", address.toString(16));
+                            this.PC = address;
+                        }
                         break;
                     case "JSR":
-                        this.push16(PC - 1);
-                        PC = address;
+                        console.log("JSR", address.toString(16));
+                        this.push16(this.PC - 1);
+                        this.PC = address;
+                        break;
+                    case "BCC":
+                    case "BCS":
+                    case "BEQ":
+                    case "BMI":
+                    case "BNE":
+                    case "BPL":
+                    case "BVC":
+                    case "BVS":
+                        // if (mode === modeRelative) {
+                            start.push(address);
+                        // }
                         break;
                     case "RTI":
                         run = false;
                         break;
                     case "RTS":
-                        PC = this.pull16() + 1;
+                        let add = this.pull16() + 1;
+                        console.log("RTS", add.toString(16));
+                        this.PC = add;
                         break;
                     default:
-                        PC += size;
                 }
             }
         }
@@ -262,11 +285,11 @@ CPU.prototype = {
             case modeImplied:
                 return "";
             case modeIndexedIndirect:
-                return util.sprintf("(%04X, X)", this.read16(PC + 1));
+                return util.sprintf("($%04X, X)", this.read16(PC + 1));
             case modeIndirect:
-                return util.sprintf("(%04X)", this.read16(PC + 1));
+                return util.sprintf("($%04X)", this.read16(PC + 1));
             case modeIndirectIndexed:
-                return util.sprintf("(%04X), Y", this.read16(PC + 1));
+                return util.sprintf("($%04X), Y", this.read16(PC + 1));
             case modeRelative:
                 let address;
                 let offset = this.read(PC + 1);
@@ -279,13 +302,13 @@ CPU.prototype = {
             case modeZeroPage:
                 return util.sprintf("$%02X", this.read(PC + 1));
             case modeZeroPageX:
-                return util.sprintf("%02X, X", this.read(PC + 1));
+                return util.sprintf("$%02X, X", this.read(PC + 1));
             case modeZeroPageY:
-                return util.sprintf("%02X, Y", this.read(PC + 1));
+                return util.sprintf("$%02X, Y", this.read(PC + 1));
         }
     },
 
-    addressing: function (mode) {
+    addressing: function (opcode, mode) {
         let address = null;
         let pageCrossed = null;
         switch (mode) {
@@ -350,20 +373,22 @@ CPU.prototype = {
             return 1;
         }
 
-        var cycles = this.cycles;
+        let cycles = this.cycles;
 
         // interrupt
         switch (this.interrupt) {
             case interruptIRQ:
                 this.irq();
+                break;
             case interruptNMI:
                 this.nmi();
+                break;
         }
         this.interrupt = interruptNone;
         let opcode = this.read(this.PC);
 
         let mode = instructionModes[opcode];
-        let address = this.addressing(mode);
+        let address = this.addressing(opcode, mode);
 
         this.PC += instructionSizes[opcode];
         this.cycles += instructioncycles[opcode];

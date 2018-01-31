@@ -5,6 +5,7 @@ import './cpu.scss'
 import ToolBar from './toolBar'
 import Registers from './registers'
 import Interrupts from './interrupts'
+import Instructions from './instructions'
 import util from '../../../../src/util'
 
 class component extends React.Component {
@@ -17,6 +18,7 @@ class component extends React.Component {
         return (
             <div className="CPU">
                 <ToolBar/>
+                <Instructions/>
                 <Interrupts/>
                 <Registers/>
             </div>
