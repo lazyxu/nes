@@ -4,10 +4,11 @@ import {
     CPU_EXIT,
     CPU_RESTART,
     CPU_RUN,
-    CPU_STOP
+    CPU_STOP,
+    INES_LOADED
 } from './actions'
 
-function cpu(state = 0, action) {
+function cpu(state = -1, action) {
     switch (action.type) {
         case CPU_STEP:
             return state + 1;
@@ -16,6 +17,16 @@ function cpu(state = 0, action) {
     }
 }
 
+function iNesLoaded(state = -1, action) {
+    switch (action.type) {
+        case INES_LOADED:
+            return state + 1;
+        default:
+            return state;
+    }
+}
+
 export default combineReducers({
-    cpu
+    cpu,
+    iNesLoaded
 })

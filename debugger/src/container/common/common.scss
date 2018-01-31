@@ -1,0 +1,19 @@
+.Common {
+  border-right: 2px solid black;
+  .Header {
+    height: 30px;
+    padding: 5px;
+    .Link {
+      margin-left: 4px;
+      margin-right: 4px;
+    }
+  }
+  .FileSelector {
+
+  }
+  .INesInfo {
+    position: absolute;
+    top: 286px;
+    width: 100%;
+  }
+}

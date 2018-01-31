@@ -3,7 +3,7 @@ import React from 'react';
 import './toolBar.scss'
 import {
     cpuStep
-} from "../utils/actions";
+} from "../../utils/actions";
 import {connect} from "react-redux";
 
 class component extends React.Component {

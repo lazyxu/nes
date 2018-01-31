@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { Provider } from 'react-redux'
-import {HashRouter, Link, Route} from 'react-router-dom'
+import {Provider} from 'react-redux'
+import {HashRouter, Route} from 'react-router-dom'
 
-import Index from './container/index'
-import cpu from './container/cpu'
+import './app.scss'
+import cpu from './container/cpu/cpu'
 import ppu from './container/ppu'
 import apu from './container/apu'
 import mem from './container/mem'
@@ -12,7 +12,7 @@ import joystick from './container/joystick'
 import store from './utils/store.js'
 import nesEmulator from '../../src/index'
 
-import FileSelector from './components/fileSelector/fileSelector';
+import Common from './container/common/common';
 
 window.nes = new nesEmulator.NES();
 
@@ -23,20 +23,16 @@ ReactDOM.render(
     <div>
         <Provider store={store}>
             <HashRouter>
-                <div>
-                    <Link to="/">index</Link> |
-                    <Link to="/cpu">cpu</Link> |
-                    <Link to="/ppu">ppu</Link> |
-                    <Link to="/apu">apu</Link> |
-                    <Link to="/mem">mem</Link> |
-                    <Link to="/joystick">joystick</Link>
-                    <FileSelector/>
-                    <Route exact path="/" component={Index}/>
-                    <Route path="/cpu" component={cpu}/>
-                    <Route path="/ppu" component={ppu}/>
-                    <Route path="/apu" component={apu}/>
-                    <Route path="/mem" component={mem}/>
-                    <Route path="/joystick" component={joystick}/>
+                <div className="App">
+                    <Common/>
+                    <div className="Page">
+                        <Route exact path="/" component={cpu}/>
+                        <Route path="/cpu" component={cpu}/>
+                        <Route path="/ppu" component={ppu}/>
+                        <Route path="/apu" component={apu}/>
+                        <Route path="/mem" component={mem}/>
+                        <Route path="/joystick" component={joystick}/>
+                    </div>
                 </div>
             </HashRouter>
         </Provider>
