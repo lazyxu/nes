@@ -184,12 +184,12 @@ CPU.prototype = {
             this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341);
     },
 
-    decode(start) {
-        let decode = [];
+    disasm(start) {
+        let disasm = [];
+        let konwnAddress = [];
         for (let i = 0; i < start.length; i++) {
             let PC = start[i];
             let run = true;
-            let konwnAddress = [];
             for (; run;) {
                 if (PC in konwnAddress) {
                     break;
@@ -197,6 +197,7 @@ CPU.prototype = {
                 if (PC >= 0xFFFA) {
                     break;
                 }
+                konwnAddress.push(PC);
                 let opcode = this.read(PC);
                 let size = instructionSizes[opcode];
                 let hexDump;
@@ -213,17 +214,75 @@ CPU.prototype = {
                         hexDump = util.sprintf("%02X %02X %02X", opcode, this.read(PC + 1), this.read(PC + 2));
                         break;
                 }
-                decode[PC] = {
-                    hexDump,
-                };
                 console.log(util.sprintf("%04X: %s", PC, hexDump));
-                konwnAddress.push(PC);
+                let name = instructionNames[opcode];
                 let mode = instructionModes[opcode];
-                // eval('this.' + instructionNames[opcode] + 'DISASSEMBLY(this.PC, mode)');
-                PC += size;
+                let address = this.addressing(mode);
+                // let res = eval('this.' + instructionNames[opcode] + 'address(address, PC, size)');
+                disasm[PC] = {
+                    PC: util.sprintf("%02X", PC),
+                    hexDump,
+                    operator: name,
+                    opdata: this.disasmOpdata(PC, mode),
+                };
+                switch (name) {
+                    case "JMP":
+                        PC = this.read16(address);
+                        break;
+                    case "JSR":
+                        this.push16(PC - 1);
+                        PC = address;
+                        break;
+                    case "RTI":
+                        run = false;
+                        break;
+                    case "RTS":
+                        PC = this.pull16() + 1;
+                        break;
+                    default:
+                        PC += size;
+                }
             }
         }
-        return decode;
+        return disasm;
+    },
+
+    disasmOpdata: function (PC, mode) {
+        switch (mode) {
+            case modeAbsolute:
+                return util.sprintf("$%04X", this.read16(PC + 1));
+            case modeAbsoluteX:
+                return util.sprintf("$%04X, X", this.read16(PC + 1));
+            case modeAbsoluteY:
+                return util.sprintf("$%04X, Y", this.read16(PC + 1));
+            case modeAccumulator:
+                return "A";
+            case modeImmediate:
+                return util.sprintf("#%02X", this.read(PC + 1));
+            case modeImplied:
+                return "";
+            case modeIndexedIndirect:
+                return util.sprintf("(%04X, X)", this.read16(PC + 1));
+            case modeIndirect:
+                return util.sprintf("(%04X)", this.read16(PC + 1));
+            case modeIndirectIndexed:
+                return util.sprintf("(%04X), Y", this.read16(PC + 1));
+            case modeRelative:
+                let address;
+                let offset = this.read(PC + 1);
+                if (offset < 0x80) {
+                    address = (PC + 2 + offset) & 0xFFFF;
+                } else {
+                    address = (PC + 2 + offset - 0x100) & 0xFFFF;
+                }
+                return util.sprintf("$%04X", address);
+            case modeZeroPage:
+                return util.sprintf("$%02X", this.read(PC + 1));
+            case modeZeroPageX:
+                return util.sprintf("%02X, X", this.read(PC + 1));
+            case modeZeroPageY:
+                return util.sprintf("%02X, Y", this.read(PC + 1));
+        }
     },
 
     addressing: function (mode) {
@@ -517,6 +576,9 @@ CPU.prototype = {
         } else {
             this.V = 0;
         }
+    },
+    address: function (PC, size) {
+        return [PC + size]
     },
 
     // AND - Logical AND
@@ -948,11 +1010,10 @@ CPU.prototype = {
         throw new Error("illegal instruction");
     },
     LAX: function (address, pc, mode) {
-        // var value = this.read(address);
-        // this.A = value;
-        // this.X = value;
-        // this.setZN(value);
-        throw new Error("illegal instruction");
+        var value = this.read(address);
+        this.A = value;
+        this.X = value;
+        this.setZN(value);
     },
     RLA: function (address, pc, mode) {
         throw new Error("illegal instruction");
