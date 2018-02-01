@@ -99,22 +99,38 @@ var instructionPagecycles = [
 
 // instructionNames indicates the name of each instruction
 var instructionNames = [
-    "BRK", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO", "PHP", "ORA", "ASL", "ANC", "NOP", "ORA", "ASL", "SLO",
-    "BPL", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO", "CLC", "ORA", "NOP", "SLO", "NOP", "ORA", "ASL", "SLO",
-    "JSR", "AND", "KIL", "RLA", "BIT", "AND", "ROL", "RLA", "PLP", "AND", "ROL", "ANC", "BIT", "AND", "ROL", "RLA",
-    "BMI", "AND", "KIL", "RLA", "NOP", "AND", "ROL", "RLA", "SEC", "AND", "NOP", "RLA", "NOP", "AND", "ROL", "RLA",
-    "RTI", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE", "PHA", "EOR", "LSR", "ALR", "JMP", "EOR", "LSR", "SRE",
-    "BVC", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE", "CLI", "EOR", "NOP", "SRE", "NOP", "EOR", "LSR", "SRE",
-    "RTS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA", "PLA", "ADC", "ROR", "ARR", "JMP", "ADC", "ROR", "RRA",
-    "BVS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA", "SEI", "ADC", "NOP", "RRA", "NOP", "ADC", "ROR", "RRA",
-    "NOP", "STA", "NOP", "SAX", "STY", "STA", "STX", "SAX", "DEY", "NOP", "TXA", "XAA", "STY", "STA", "STX", "SAX",
-    "BCC", "STA", "KIL", "AHX", "STY", "STA", "STX", "SAX", "TYA", "STA", "TXS", "TAS", "SHY", "STA", "SHX", "AHX",
-    "LDY", "LDA", "LDX", "LAX", "LDY", "LDA", "LDX", "LAX", "TAY", "LDA", "TAX", "LAX", "LDY", "LDA", "LDX", "LAX",
-    "BCS", "LDA", "KIL", "LAX", "LDY", "LDA", "LDX", "LAX", "CLV", "LDA", "TSX", "LAS", "LDY", "LDA", "LDX", "LAX",
-    "CPY", "CMP", "NOP", "DCP", "CPY", "CMP", "DEC", "DCP", "INY", "CMP", "DEX", "AXS", "CPY", "CMP", "DEC", "DCP",
-    "BNE", "CMP", "KIL", "DCP", "NOP", "CMP", "DEC", "DCP", "CLD", "CMP", "NOP", "DCP", "NOP", "CMP", "DEC", "DCP",
-    "CPX", "SBC", "NOP", "ISC", "CPX", "SBC", "INC", "ISC", "INX", "SBC", "NOP", "SBC", "CPX", "SBC", "INC", "ISC",
-    "BEQ", "SBC", "KIL", "ISC", "NOP", "SBC", "INC", "ISC", "SED", "SBC", "NOP", "ISC", "NOP", "SBC", "INC", "ISC"
+    "BRK", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
+    "PHP", "ORA", "ASL", "ANC", "NOP", "ORA", "ASL", "SLO",
+    "BPL", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
+    "CLC", "ORA", "NOP", "SLO", "NOP", "ORA", "ASL", "SLO",
+    "JSR", "AND", "KIL", "RLA", "BIT", "AND", "ROL", "RLA",
+    "PLP", "AND", "ROL", "ANC", "BIT", "AND", "ROL", "RLA",
+    "BMI", "AND", "KIL", "RLA", "NOP", "AND", "ROL", "RLA",
+    "SEC", "AND", "NOP", "RLA", "NOP", "AND", "ROL", "RLA",
+    "RTI", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE",
+    "PHA", "EOR", "LSR", "ALR", "JMP", "EOR", "LSR", "SRE",
+    "BVC", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE",
+    "CLI", "EOR", "NOP", "SRE", "NOP", "EOR", "LSR", "SRE",
+    "RTS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA",
+    "PLA", "ADC", "ROR", "ARR", "JMP", "ADC", "ROR", "RRA",
+    "BVS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA",
+    "SEI", "ADC", "NOP", "RRA", "NOP", "ADC", "ROR", "RRA",
+    "NOP", "STA", "NOP", "SAX", "STY", "STA", "STX", "SAX",
+    "DEY", "NOP", "TXA", "XAA", "STY", "STA", "STX", "SAX",
+    "BCC", "STA", "KIL", "AHX", "STY", "STA", "STX", "SAX",
+    "TYA", "STA", "TXS", "TAS", "SHY", "STA", "SHX", "AHX",
+    "LDY", "LDA", "LDX", "LAX", "LDY", "LDA", "LDX", "LAX",
+    "TAY", "LDA", "TAX", "LAX", "LDY", "LDA", "LDX", "LAX",
+    "BCS", "LDA", "KIL", "LAX", "LDY", "LDA", "LDX", "LAX",
+    "CLV", "LDA", "TSX", "LAS", "LDY", "LDA", "LDX", "LAX",
+    "CPY", "CMP", "NOP", "DCP", "CPY", "CMP", "DEC", "DCP",
+    "INY", "CMP", "DEX", "AXS", "CPY", "CMP", "DEC", "DCP",
+    "BNE", "CMP", "KIL", "DCP", "NOP", "CMP", "DEC", "DCP",
+    "CLD", "CMP", "NOP", "DCP", "NOP", "CMP", "DEC", "DCP",
+    "CPX", "SBC", "NOP", "ISB", "CPX", "SBC", "INC", "ISB",
+    "INX", "SBC", "NOP", "SBC", "CPX", "SBC", "INC", "ISB",
+    "BEQ", "SBC", "KIL", "ISB", "NOP", "SBC", "INC", "ISB",
+    "SED", "SBC", "NOP", "ISB", "NOP", "SBC", "INC", "ISB"
 ];
 
 const CPUFrequency = 1789773;
@@ -160,7 +176,7 @@ CPU.prototype = {
 
     load: function () {
         this.PC = this.read16(0xFFFC);
-        console.log(this.PC.toString(16))
+        console.log(this.PC.toString(16));
     },
 
     /* debug -------------------------------------------------------------------------------------------------------- */
@@ -184,23 +200,18 @@ CPU.prototype = {
             this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341);
     },
 
-    disasm(start) {
+    // https://zhuanlan.zhihu.com/p/21330930
+    linearScanDisassembly(start) {
         let disasm = [];
-        let konwnAddress = [];
+        start.sort(function (a, b) {
+            return a > b;
+        });
         for (let i = 0; i < start.length; i++) {
-            this.PC = start[i];
+            let PC = start[i];
             console.log("start", start[i].toString(16));
-            let run = true;
-            for (; run;) {
-                if (konwnAddress.indexOf(this.PC) > -1) {
-                    console.log("exit", this.PC.toString(16));
-                    break;
-                }
-                if (this.PC >= 0xFFFA) {
-                    break;
-                }
-                konwnAddress.push(this.PC);
-                let opcode = this.read(this.PC);
+            let end = i === start.length - 1 ? 0xFFFA : start[i + 1];
+            for (; PC < end;) {
+                let opcode = this.read(PC);
                 let size = instructionSizes[opcode];
                 let hexDump;
                 switch (size) {
@@ -210,67 +221,32 @@ CPU.prototype = {
                         hexDump = util.sprintf("%02X", opcode);
                         break;
                     case 2:
-                        hexDump = util.sprintf("%02X %02X", opcode, this.read(this.PC + 1));
+                        hexDump = util.sprintf("%02X %02X", opcode, this.read(PC + 1));
                         break;
                     case 3:
-                        hexDump = util.sprintf("%02X %02X %02X", opcode, this.read(this.PC + 1), this.read(this.PC + 2));
+                        hexDump = util.sprintf("%02X %02X %02X", opcode, this.read(PC + 1), this.read(PC + 2));
                         break;
                 }
-                console.log(util.sprintf("%04X: %s", this.PC, hexDump));
-                let name = instructionNames[opcode];
+                let operator = instructionNames[opcode];
                 let mode = instructionModes[opcode];
-                let address = this.addressing(opcode, mode);
-                // let res = eval('this.' + instructionNames[opcode] + 'address(address, PC, size)');
-                if (name === "NOP") {
-                    hexDump = "";
+                let opdata = this.opdataDisassembly(PC, mode);
+                if (operator === "NOP") {
+                    opdata = "";
                 }
-                disasm[this.PC - 0xC000] = {
-                    PC: util.sprintf("%02X", this.PC),
+                console.log(util.sprintf("%04X: %8s %s %s", PC, hexDump, operator, opdata));
+                disasm[PC - 0xC000] = {
+                    PC: util.sprintf("%02X", PC),
                     hexDump,
-                    operator: name,
-                    opdata: this.disasmOpdata(this.PC, mode),
+                    operator,
+                    opdata,
                 };
-                this.PC += size;
-                switch (name) {
-                    case "JMP":
-                        if (mode === modeAbsolute) {
-                            console.log("JMP", address.toString(16));
-                            this.PC = address;
-                        }
-                        break;
-                    case "JSR":
-                        console.log("JSR", address.toString(16));
-                        this.push16(this.PC - 1);
-                        this.PC = address;
-                        break;
-                    case "BCC":
-                    case "BCS":
-                    case "BEQ":
-                    case "BMI":
-                    case "BNE":
-                    case "BPL":
-                    case "BVC":
-                    case "BVS":
-                        // if (mode === modeRelative) {
-                            start.push(address);
-                        // }
-                        break;
-                    case "RTI":
-                        run = false;
-                        break;
-                    case "RTS":
-                        let add = this.pull16() + 1;
-                        console.log("RTS", add.toString(16));
-                        this.PC = add;
-                        break;
-                    default:
-                }
+                PC += size;
             }
         }
         return disasm;
     },
 
-    disasmOpdata: function (PC, mode) {
+    opdataDisassembly: function (PC, mode) {
         switch (mode) {
             case modeAbsolute:
                 return util.sprintf("$%04X", this.read16(PC + 1));
@@ -285,11 +261,11 @@ CPU.prototype = {
             case modeImplied:
                 return "";
             case modeIndexedIndirect:
-                return util.sprintf("($%04X, X)", this.read16(PC + 1));
+                return util.sprintf("($%02X, X)", this.read(PC + 1));
             case modeIndirect:
                 return util.sprintf("($%04X)", this.read16(PC + 1));
             case modeIndirectIndexed:
-                return util.sprintf("($%04X), Y", this.read16(PC + 1));
+                return util.sprintf("($%02X), Y", this.read(PC + 1));
             case modeRelative:
                 let address;
                 let offset = this.read(PC + 1);
@@ -1025,7 +1001,7 @@ CPU.prototype = {
     DCP: function (address, pc, mode) {
         throw new Error("illegal instruction");
     },
-    ISC: function (address, pc, mode) {
+    ISB: function (address, pc, mode) {
         throw new Error("illegal instruction");
     },
     KIL: function (address, pc, mode) {

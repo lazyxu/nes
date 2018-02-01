@@ -9,14 +9,18 @@ class component extends React.Component {
         super(props);
         this.state = {
             breaks: [],
-            dump: null
+            dump: null,
+            loaded: false
         }
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.iNesLoaded >= 0) {
+        if (nextProps.iNesLoaded >= 0 && !this.state.loaded) {
             let nes = window.nes;
-            this.setState({dump: nes.cpu.disasm([nes.cpu.PC, nes.cpu.read16(0XFFFA), nes.cpu.read16(0XFFFE)])});
+            this.setState({
+                loaded: true,
+                dump: nes.cpu.linearScanDisassembly([nes.cpu.read16(0XFFFA), nes.cpu.read16(0XFFFC), nes.cpu.read16(0XFFFE)])
+            });
         }
     }
 
@@ -41,7 +45,7 @@ class component extends React.Component {
                 }
             }
         }
-        console.log(list);
+        // console.log(list);
         return (
             <div className="Instructions">
                 <table>
@@ -64,6 +68,7 @@ class component extends React.Component {
 function mapStateToProps(state) {
     return {
         iNesLoaded: state.iNesLoaded,
+        cpu: state.cpu,
     }
 }
 

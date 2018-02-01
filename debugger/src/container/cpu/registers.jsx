@@ -8,10 +8,13 @@ class component extends React.Component {
     constructor(props) {
         super(props);
         this.state = this.getCpuState();
+        this.cpu = -1;
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.iNesLoaded >= 0) {
+        if (nextProps.iNesLoaded >= 0||
+            (this.props.iNesLoaded>=0 && nextProps.cpu!==this.cpu)) {
+            this.cpu = nextProps.cpu;
             this.setState(this.getCpuState());
         }
     }
