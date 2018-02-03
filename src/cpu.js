@@ -162,7 +162,6 @@ var CPU = function (nes) {
     this.I = 0;
     this.Z = 0;
     this.C = 0;
-    this.reset();
 };
 var util = require('./util');
 
@@ -172,11 +171,7 @@ CPU.prototype = {
         this.SP = 0xFD;
         this.setFlags(0x24);
         this.interrupt = interruptNone;
-    },
-
-    load: function () {
         this.PC = this.read16(0xFFFC);
-        console.log(this.PC.toString(16));
     },
 
     /* debug -------------------------------------------------------------------------------------------------------- */

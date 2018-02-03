@@ -50,7 +50,6 @@ var PPU = function (nes) {
     this.x = 0; // fine x scroll (3 bit)
     this.w = 0; // write toggle (1 bit)
     this.f = 0; // even/odd frame flag (1 bit)
-    this.reset();
 };
 
 PPU.prototype = {

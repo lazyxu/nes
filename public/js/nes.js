@@ -93,29 +93,52 @@ var Mapper2 = __webpack_require__(6);
 var NES = function () {
     this.ines = null;
     this.mapper = null;
+    this.ines = new INES();
+    this.cpu = new CPU(this);
+    this.ppu = new PPU(this);
+    this.isRunning = false;
     this.reset();
 };
 
 NES.prototype = {
     reset: function () {
-        this.ines = new INES();
-        this.cpu = new CPU(this);
-        this.ppu = new PPU(this);
+        this.cpu.reset();
+        this.ppu.reset();
     },
 
     load: function (data) {
         this.ines.load(data);
         this.setMapper(this.ines.mapperType);
         this.cpu.load();
+        this.isRunning = true;
     },
 
+    // cpu step
     step: function () {
-        var i;
-        var cpuCycles = this.cpu.step();
+        let i;
+        let cpuCycles = this.cpu.step();
         for (i = 0; i < cpuCycles * 3; i++) {
             this.ppu.step();
         }
         return cpuCycles;
+    },
+
+    run: function () {
+        for (; this.isRunning === true;) {
+            this.step();
+        }
+    },
+
+    stop: function () {
+        this.isRunning = false;
+    },
+
+    continue: function () {
+        this.isRunning = true;
+    },
+
+    exit: function () {
+
     },
 
     setMapper: function (mapperType) {
@@ -272,58 +295,61 @@ module.exports = INES;
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const modeAbsolute = 1;
-const modeAbsoluteX = 2;
-const modeAbsoluteY = 3;
-const modeAccumulator = 4;
-const modeImmediate = 5;
-const modeImplied = 6;
-const modeIndexedIndirect = 7;
-const modeIndirect = 8;
-const modeIndirectIndexed = 9;
-const modeRelative = 10;
-const modeZeroPage = 11;
-const modeZeroPageX = 12;
-const modeZeroPageY = 13;
+const modeAbsolute = 0;
+const modeAbsoluteX = 1;
+const modeAbsoluteY = 2;
+const modeAccumulator = 3;
+const modeImmediate = 4;
+const modeImplied = 5;
+const modeIndexedIndirect = 6;
+const modeIndirect = 7;
+const modeIndirectIndexed = 8;
+const modeRelative = 9;
+const modeZeroPage = 10;
+const modeZeroPageX = 11;
+const modeZeroPageY = 12;
 
+var modeSize = [
+    3, 3, 3, 1, 2, 1, 2, 3, 2, 2, 2, 2, 2
+];
 // instructionModes indicates the addressing mode for each instruction
 var instructionModes = [
-    6, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    1, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    6, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    6, 7, 6, 7, 11, 11, 11, 11, 6, 5, 4, 5, 8, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    5, 7, 5, 7, 11, 11, 11, 11, 6, 5, 6, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 13, 13, 6, 3, 6, 3, 2, 2, 3, 3,
-    5, 7, 5, 7, 11, 11, 11, 11, 6, 5, 6, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 13, 13, 6, 3, 6, 3, 2, 2, 3, 3,
-    5, 7, 5, 7, 11, 11, 11, 11, 6, 5, 6, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2,
-    5, 7, 5, 7, 11, 11, 11, 11, 6, 5, 6, 5, 1, 1, 1, 1,
-    10, 9, 6, 9, 12, 12, 12, 12, 6, 3, 6, 3, 2, 2, 2, 2
+    5, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    0, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    5, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    5, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 7, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    4, 6, 4, 6, 10, 10, 10, 10, 5, 4, 5, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 12, 12, 5, 2, 5, 2, 1, 1, 2, 2,
+    4, 6, 4, 6, 10, 10, 10, 10, 5, 4, 5, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 12, 12, 5, 2, 5, 2, 1, 1, 2, 2,
+    4, 6, 4, 6, 10, 10, 10, 10, 5, 4, 5, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
+    4, 6, 4, 6, 10, 10, 10, 10, 5, 4, 5, 4, 0, 0, 0, 0,
+    9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1
 ];
 
 // instructionSizes indicates the size of each instruction in bytes
 var instructionSizes = [
-    1, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    3, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    1, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    1, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 0, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 0, 3, 0, 0,
-    2, 2, 2, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
-    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0
+    1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    3, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
+    2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3
 ];
 
 // instructioncycles indicates the number of cycles used by each instruction,
@@ -370,22 +396,38 @@ var instructionPagecycles = [
 
 // instructionNames indicates the name of each instruction
 var instructionNames = [
-    "BRK", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO", "PHP", "ORA", "ASL", "ANC", "NOP", "ORA", "ASL", "SLO",
-    "BPL", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO", "CLC", "ORA", "NOP", "SLO", "NOP", "ORA", "ASL", "SLO",
-    "JSR", "AND", "KIL", "RLA", "BIT", "AND", "ROL", "RLA", "PLP", "AND", "ROL", "ANC", "BIT", "AND", "ROL", "RLA",
-    "BMI", "AND", "KIL", "RLA", "NOP", "AND", "ROL", "RLA", "SEC", "AND", "NOP", "RLA", "NOP", "AND", "ROL", "RLA",
-    "RTI", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE", "PHA", "EOR", "LSR", "ALR", "JMP", "EOR", "LSR", "SRE",
-    "BVC", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE", "CLI", "EOR", "NOP", "SRE", "NOP", "EOR", "LSR", "SRE",
-    "RTS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA", "PLA", "ADC", "ROR", "ARR", "JMP", "ADC", "ROR", "RRA",
-    "BVS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA", "SEI", "ADC", "NOP", "RRA", "NOP", "ADC", "ROR", "RRA",
-    "NOP", "STA", "NOP", "SAX", "STY", "STA", "STX", "SAX", "DEY", "NOP", "TXA", "XAA", "STY", "STA", "STX", "SAX",
-    "BCC", "STA", "KIL", "AHX", "STY", "STA", "STX", "SAX", "TYA", "STA", "TXS", "TAS", "SHY", "STA", "SHX", "AHX",
-    "LDY", "LDA", "LDX", "LAX", "LDY", "LDA", "LDX", "LAX", "TAY", "LDA", "TAX", "LAX", "LDY", "LDA", "LDX", "LAX",
-    "BCS", "LDA", "KIL", "LAX", "LDY", "LDA", "LDX", "LAX", "CLV", "LDA", "TSX", "LAS", "LDY", "LDA", "LDX", "LAX",
-    "CPY", "CMP", "NOP", "DCP", "CPY", "CMP", "DEC", "DCP", "INY", "CMP", "DEX", "AXS", "CPY", "CMP", "DEC", "DCP",
-    "BNE", "CMP", "KIL", "DCP", "NOP", "CMP", "DEC", "DCP", "CLD", "CMP", "NOP", "DCP", "NOP", "CMP", "DEC", "DCP",
-    "CPX", "SBC", "NOP", "ISC", "CPX", "SBC", "INC", "ISC", "INX", "SBC", "NOP", "SBC", "CPX", "SBC", "INC", "ISC",
-    "BEQ", "SBC", "KIL", "ISC", "NOP", "SBC", "INC", "ISC", "SED", "SBC", "NOP", "ISC", "NOP", "SBC", "INC", "ISC"
+    "BRK", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
+    "PHP", "ORA", "ASL", "ANC", "NOP", "ORA", "ASL", "SLO",
+    "BPL", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
+    "CLC", "ORA", "NOP", "SLO", "NOP", "ORA", "ASL", "SLO",
+    "JSR", "AND", "KIL", "RLA", "BIT", "AND", "ROL", "RLA",
+    "PLP", "AND", "ROL", "ANC", "BIT", "AND", "ROL", "RLA",
+    "BMI", "AND", "KIL", "RLA", "NOP", "AND", "ROL", "RLA",
+    "SEC", "AND", "NOP", "RLA", "NOP", "AND", "ROL", "RLA",
+    "RTI", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE",
+    "PHA", "EOR", "LSR", "ALR", "JMP", "EOR", "LSR", "SRE",
+    "BVC", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE",
+    "CLI", "EOR", "NOP", "SRE", "NOP", "EOR", "LSR", "SRE",
+    "RTS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA",
+    "PLA", "ADC", "ROR", "ARR", "JMP", "ADC", "ROR", "RRA",
+    "BVS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA",
+    "SEI", "ADC", "NOP", "RRA", "NOP", "ADC", "ROR", "RRA",
+    "NOP", "STA", "NOP", "SAX", "STY", "STA", "STX", "SAX",
+    "DEY", "NOP", "TXA", "XAA", "STY", "STA", "STX", "SAX",
+    "BCC", "STA", "KIL", "AHX", "STY", "STA", "STX", "SAX",
+    "TYA", "STA", "TXS", "TAS", "SHY", "STA", "SHX", "AHX",
+    "LDY", "LDA", "LDX", "LAX", "LDY", "LDA", "LDX", "LAX",
+    "TAY", "LDA", "TAX", "LAX", "LDY", "LDA", "LDX", "LAX",
+    "BCS", "LDA", "KIL", "LAX", "LDY", "LDA", "LDX", "LAX",
+    "CLV", "LDA", "TSX", "LAS", "LDY", "LDA", "LDX", "LAX",
+    "CPY", "CMP", "NOP", "DCP", "CPY", "CMP", "DEC", "DCP",
+    "INY", "CMP", "DEX", "AXS", "CPY", "CMP", "DEC", "DCP",
+    "BNE", "CMP", "KIL", "DCP", "NOP", "CMP", "DEC", "DCP",
+    "CLD", "CMP", "NOP", "DCP", "NOP", "CMP", "DEC", "DCP",
+    "CPX", "SBC", "NOP", "ISB", "CPX", "SBC", "INC", "ISB",
+    "INX", "SBC", "NOP", "SBC", "CPX", "SBC", "INC", "ISB",
+    "BEQ", "SBC", "KIL", "ISB", "NOP", "SBC", "INC", "ISB",
+    "SED", "SBC", "NOP", "ISB", "NOP", "SBC", "INC", "ISB"
 ];
 
 const CPUFrequency = 1789773;
@@ -400,23 +442,23 @@ var CPU = function (nes) {
     this.nes = nes;
     this.ram = new Array(2048);
     for (var i = 0; i < this.ram.length; i++) {
-        this.ram = 0;
+        this.ram[i] = 0;
     }
     this.cycles = null;
     this.stall = null;
+    this.PC = 0;
     this.A = 0;
     this.X = 0;
     this.Y = 0;
-    this.SP = null;
-    this.N = null;
-    this.V = null;
-    this.U = null;
-    this.B = null;
-    this.D = null;
-    this.I = null;
-    this.Z = null;
-    this.C = null;
-    this.reset();
+    this.SP = 0;
+    this.N = 0;
+    this.V = 0;
+    this.U = 0;
+    this.B = 0;
+    this.D = 0;
+    this.I = 0;
+    this.Z = 0;
+    this.C = 0;
 };
 var util = __webpack_require__(4);
 
@@ -430,15 +472,18 @@ CPU.prototype = {
 
     load: function () {
         this.PC = this.read16(0xFFFC);
+        console.log(this.PC.toString(16));
     },
+
+    /* debug -------------------------------------------------------------------------------------------------------- */
 
     // PrintInstruction prints the current CPU state
     printInstruction: function () {
-        var opcode = this.read(this.PC);
-        var bytes = instructionSizes[opcode];
-        var name = instructionNames[opcode];
-        var w1 = "  ";
-        var w2 = "  ";
+        let opcode = this.read(this.PC);
+        let bytes = instructionSizes[opcode];
+        let name = instructionNames[opcode];
+        let w1 = "  ";
+        let w2 = "  ";
         if (bytes > 1) {
             w1 = this.read(this.PC + 1).toString(16);
         }
@@ -451,28 +496,93 @@ CPU.prototype = {
             this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341);
     },
 
-    // step executes a single CPU instruction
-    step: function () {
-        if (this.stall > 0) {
-            this.stall--;
-            return 1;
+    // https://zhuanlan.zhihu.com/p/21330930
+    linearScanDisassembly(start) {
+        let disasm = {};
+        start.sort(function (a, b) {
+            return a > b;
+        });
+        for (let i = 0; i < start.length; i++) {
+            let PC = start[i];
+            console.log("start", start[i].toString(16));
+            let end = i === start.length - 1 ? 0xFFFA : start[i + 1];
+            for (; PC < end;) {
+                let opcode = this.read(PC);
+                let size = instructionSizes[opcode];
+                let hexDump;
+                switch (size) {
+                    case 0:
+                        throw new Error("invalid instruction");
+                    case 1:
+                        hexDump = util.sprintf("%02X", opcode);
+                        break;
+                    case 2:
+                        hexDump = util.sprintf("%02X %02X", opcode, this.read(PC + 1));
+                        break;
+                    case 3:
+                        hexDump = util.sprintf("%02X %02X %02X", opcode, this.read(PC + 1), this.read(PC + 2));
+                        break;
+                }
+                let operator = instructionNames[opcode];
+                let mode = instructionModes[opcode];
+                let opdata = this.opdataDisassembly(PC, mode);
+                if (operator === "NOP") {
+                    opdata = "";
+                }
+                console.log(util.sprintf("%04X: %8s %s %s", PC, hexDump, operator, opdata));
+                var hexAddr = util.sprintf("%02X", PC);
+                disasm[hexAddr] = {
+                    hexDump,
+                    operator,
+                    opdata,
+                };
+                PC += size;
+            }
         }
+        return disasm;
+    },
 
-        var cycles = this.cycles;
-
-        // interrupt
-        switch (this.interrupt) {
-            case interruptIRQ:
-                this.irq();
-            case interruptNMI:
-                this.nmi();
+    opdataDisassembly: function (PC, mode) {
+        switch (mode) {
+            case modeAbsolute:
+                return util.sprintf("$%04X", this.read16(PC + 1));
+            case modeAbsoluteX:
+                return util.sprintf("$%04X, X", this.read16(PC + 1));
+            case modeAbsoluteY:
+                return util.sprintf("$%04X, Y", this.read16(PC + 1));
+            case modeAccumulator:
+                return "A";
+            case modeImmediate:
+                return util.sprintf("#%02X", this.read(PC + 1));
+            case modeImplied:
+                return "";
+            case modeIndexedIndirect:
+                return util.sprintf("($%02X, X)", this.read(PC + 1));
+            case modeIndirect:
+                return util.sprintf("($%04X)", this.read16(PC + 1));
+            case modeIndirectIndexed:
+                return util.sprintf("($%02X), Y", this.read(PC + 1));
+            case modeRelative:
+                let address;
+                let offset = this.read(PC + 1);
+                if (offset < 0x80) {
+                    address = (PC + 2 + offset) & 0xFFFF;
+                } else {
+                    address = (PC + 2 + offset - 0x100) & 0xFFFF;
+                }
+                return util.sprintf("$%04X", address);
+            case modeZeroPage:
+                return util.sprintf("$%02X", this.read(PC + 1));
+            case modeZeroPageX:
+                return util.sprintf("$%02X, X", this.read(PC + 1));
+            case modeZeroPageY:
+                return util.sprintf("$%02X, Y", this.read(PC + 1));
         }
-        this.interrupt = interruptNone;
-        var opcode = this.read(this.PC);
-        var mode = instructionModes[opcode];
+    },
 
-        var address = null;
-        var pageCrossed = null;
+    addressing: function (opcode, mode) {
+        let address = null;
+        let pageCrossed = null;
         switch (mode) {
             case modeAbsolute:
                 address = this.read16(this.PC + 1);
@@ -522,11 +632,38 @@ CPU.prototype = {
                 address = (this.read(this.PC + 1) + this.Y) & 0xff;
                 break;
         }
-        this.PC += instructionSizes[opcode];
-        this.cycles += instructioncycles[opcode];
         if (pageCrossed) {
             this.cycles += instructionPagecycles[opcode];
         }
+        return address;
+    },
+
+    // step executes a single CPU instruction
+    step: function () {
+        if (this.stall > 0) {
+            this.stall--;
+            return 1;
+        }
+
+        let cycles = this.cycles;
+
+        // interrupt
+        switch (this.interrupt) {
+            case interruptIRQ:
+                this.irq();
+                break;
+            case interruptNMI:
+                this.nmi();
+                break;
+        }
+        this.interrupt = interruptNone;
+        let opcode = this.read(this.PC);
+
+        let mode = instructionModes[opcode];
+        let address = this.addressing(opcode, mode);
+
+        this.PC += instructionSizes[opcode];
+        this.cycles += instructioncycles[opcode];
         // console.log(opcode, instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
         eval('this.' + instructionNames[opcode] + '(address, this.PC, mode)');
 
@@ -736,6 +873,9 @@ CPU.prototype = {
         } else {
             this.V = 0;
         }
+    },
+    address: function (PC, size) {
+        return [PC + size]
     },
 
     // AND - Logical AND
@@ -1157,7 +1297,7 @@ CPU.prototype = {
     DCP: function (address, pc, mode) {
         throw new Error("illegal instruction");
     },
-    ISC: function (address, pc, mode) {
+    ISB: function (address, pc, mode) {
         throw new Error("illegal instruction");
     },
     KIL: function (address, pc, mode) {
@@ -1167,11 +1307,10 @@ CPU.prototype = {
         throw new Error("illegal instruction");
     },
     LAX: function (address, pc, mode) {
-        // var value = this.read(address);
-        // this.A = value;
-        // this.X = value;
-        // this.setZN(value);
-        throw new Error("illegal instruction");
+        var value = this.read(address);
+        this.A = value;
+        this.X = value;
+        this.setZN(value);
     },
     RLA: function (address, pc, mode) {
         throw new Error("illegal instruction");
@@ -1204,6 +1343,8 @@ CPU.prototype = {
 
 module.exports = CPU;
 
+// http://obelisk.me.uk/6502/reference.html
+
 /***/ }),
 /* 4 */
 /***/ (function(module, exports) {
@@ -1224,6 +1365,7 @@ exports.sprintf = function() {
         }
         else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f)) {
             if (((a = arguments[m[1] || i++]) == null) || (a == undefined)) {
+                console.log(arguments);
                 throw('Too few arguments.');
             }
             if (/[^s]/.test(m[7]) && (typeof(a) != 'number')) {
@@ -1331,7 +1473,6 @@ var PPU = function (nes) {
     this.x = 0; // fine x scroll (3 bit)
     this.w = 0; // write toggle (1 bit)
     this.f = 0; // even/odd frame flag (1 bit)
-    this.reset();
 };
 
 PPU.prototype = {

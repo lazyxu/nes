@@ -8,17 +8,25 @@ export const INES_LOADED = 'INES_LOADED';
 
 export function loadiNes() {
     let nes = window.nes;
+    nes.cpu.PC = 0xC000;
     return {
         type: newPC,
         PC:  util.sprintf("%04X", nes.cpu.PC)
     }
 }
 
-export function step() {
+export function stepIn() {
     let nes = window.nes;
-    if (nes.isRunning === true) {
         nes.step();
+    return {
+        type: newPC,
+        PC:  util.sprintf("%04X", nes.cpu.PC)
     }
+}
+
+export function reset() {
+    let nes = window.nes;
+    nes.reset();
     return {
         type: newPC,
         PC:  util.sprintf("%04X", nes.cpu.PC)

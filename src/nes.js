@@ -6,21 +6,22 @@ var Mapper2 = require("./mapper2");
 var NES = function () {
     this.ines = null;
     this.mapper = null;
-    this.reset();
+    this.ines = new INES();
+    this.cpu = new CPU(this);
+    this.ppu = new PPU(this);
     this.isRunning = false;
 };
 
 NES.prototype = {
     reset: function () {
-        this.ines = new INES();
-        this.cpu = new CPU(this);
-        this.ppu = new PPU(this);
+        this.cpu.reset();
+        this.ppu.reset();
     },
 
     load: function (data) {
         this.ines.load(data);
         this.setMapper(this.ines.mapperType);
-        this.cpu.load();
+        this.reset();
         this.isRunning = true;
     },
 

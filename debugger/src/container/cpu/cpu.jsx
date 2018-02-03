@@ -17,7 +17,7 @@ class component extends React.Component {
     render() {
         return (
             <div className="CPU">
-                <ToolBar/>
+                {this.props.pc !== null ? <ToolBar/> : <div/>}
                 {this.props.pc !== null ? <Instructions/> : <div/>}
                 {this.props.pc !== null ? <Interrupts/> : <div/>}
                 {this.props.pc !== null ? <Registers/> : <div/>}
