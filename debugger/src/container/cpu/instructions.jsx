@@ -22,7 +22,13 @@ class component extends React.PureComponent {
             if (this.lastPC != null && this.refs.hasOwnProperty(this.lastPC)) {
                 this.refs[this.lastPC].style.backgroundColor = "";
             }
-            this.refs[nextProps.pc].style.backgroundColor = "red";
+            let elem = this.refs[nextProps.pc];
+            elem.style.backgroundColor = "red";
+            if (typeof(elem.scrollIntoViewIfNeeded) !== 'undefined') {
+                elem.scrollIntoViewIfNeeded();
+            } else {
+                elem.scrollIntoView();
+            }
             this.lastPC = nextProps.pc;
         }
     }
