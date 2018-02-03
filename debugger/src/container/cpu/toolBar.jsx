@@ -2,7 +2,7 @@ import React from 'react';
 
 import './toolBar.scss'
 import {
-    cpuStep
+    step
 } from "../../utils/actions";
 import {connect} from "react-redux";
 
@@ -18,10 +18,11 @@ class component extends React.Component {
         return (
             <div className="ToolBar">
                 <button onClick={this.step}>↻</button>
-                <button onClick={cpuStep}>▶</button>
+                <button onClick={step}>▶</button>
                 <button onClick={this.props.cpuStep}>⇩</button>
                 <button onClick={this.step}>||</button>
-                <button onClick={this.step}>■</button>
+                <button onClick={this.step}>▇</button>
+                <input type="text"/><button>goto</button>
             </div>
         )
     }
@@ -33,4 +34,4 @@ function mapStateToProps(state) {
     }
 }
 
-export default connect(mapStateToProps, {cpuStep})(component)
+export default connect(mapStateToProps, {cpuStep: step})(component)

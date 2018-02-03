@@ -23,10 +23,16 @@ class component extends React.Component {
                     <Link className="Link" to="/joystick">joystick</Link>
                 </div>
                 <FileSelector/>
-                <INesInfo/>
+                {this.props.pc !== null ? <INesInfo/> : <div/>}
             </div>
         )
     }
 }
 
-export default component
+function mapStateToProps(state) {
+    return {
+        pc: state.pc,
+    }
+}
+
+export default connect(mapStateToProps)(component)

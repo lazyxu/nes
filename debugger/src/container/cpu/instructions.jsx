@@ -4,48 +4,29 @@ import {connect} from 'react-redux'
 import './instructions.scss'
 import util from '../../../../src/util'
 
-class component extends React.Component {
+class component extends React.PureComponent {
     constructor(props) {
         super(props);
-        this.state = {
-            breaks: [],
-            dump: null,
-            loaded: false
-        }
+        let nes = window.nes;
+        this.dump = nes.cpu.linearScanDisassembly([nes.cpu.read16(0XFFFA), nes.cpu.read16(0XFFFC), nes.cpu.read16(0XFFFE)]);
+        this.lastPC = util.sprintf("%04X", nes.cpu.PC);
+    }
+
+    shouldComponentUpdate(nexProps) {
+        return false;
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.iNesLoaded >= 0 && !this.state.loaded) {
-            let nes = window.nes;
-            this.setState({
-                loaded: true,
-                dump: nes.cpu.linearScanDisassembly([nes.cpu.read16(0XFFFA), nes.cpu.read16(0XFFFC), nes.cpu.read16(0XFFFE)])
-            });
+        if (this.refs.hasOwnProperty(nextProps.pc)) {
+            if (this.lastPC != null) {
+                this.refs[this.lastPC].style.backgroundColor = "";
+            }
+            this.refs[nextProps.pc].style.backgroundColor = "red";
+            this.lastPC = nextProps.pc;
         }
     }
 
     render() {
-        let list = [];
-        if (this.state.dump != null) {
-            for (var i = 0; i < this.state.dump.length; i++) {
-                if (typeof(i) !== 'undefined' && i !== null &&
-                    typeof(this.state.dump[i]) !== 'undefined' && this.state.dump[i] !== null) {
-                    list.push(
-                        <tbody key={i}>
-                        <tr>
-                            <td className="Break"><input type="checkbox" name="Break" value={i}/></td>
-                            <td className="Address">{this.state.dump[i].PC}</td>
-                            <td className="HexDump">{this.state.dump[i].hexDump}</td>
-                            <td className="Operator">{this.state.dump[i].operator}</td>
-                            <td className="Opdata">{this.state.dump[i].opdata}</td>
-                            <td className="Comment"><input type="text"/></td>
-                        </tr>
-                        </tbody>
-                    )
-                }
-            }
-        }
-        // console.log(list);
         return (
             <div className="Instructions">
                 <table>
@@ -54,11 +35,31 @@ class component extends React.Component {
                         <th className="Break">B</th>
                         <th className="Address">Address</th>
                         <th className="HexDump">Hex dump</th>
-                        <th className="Disassembly" colSpan="2">Disassembly</th>
+                        <td className="Disassembly">Disassembly</td>
                         <th className="Comment">Comment</th>
                     </tr>
                     </thead>
-                    {list}
+                    {Object.keys(this.dump).map(key =>
+                        key !== this.lastPC ?
+                            <tbody key={key} ref={key}>
+                            <tr>
+                                <td className="Break"><input type="checkbox" name="Break" value={key}/></td>
+                                <td className="Address">{key}</td>
+                                <td className="HexDump">{this.dump[key].hexDump}</td>
+                                <td className="Disassembly">{this.dump[key].operator} {this.dump[key].opdata}</td>
+                                <td className="Comment"><input type="text"/></td>
+                            </tr>
+                            </tbody> :
+                            <tbody key={key} ref={key} style={{backgroundColor: "red"}}>
+                            <tr>
+                                <td className="Break"><input type="checkbox" name="Break" value={key}/></td>
+                                <td className="Address">{key}</td>
+                                <td className="HexDump">{this.dump[key].hexDump}</td>
+                                <td className="Disassembly">{this.dump[key].operator} {this.dump[key].opdata}</td>
+                                <td className="Comment"><input type="text"/></td>
+                            </tr>
+                            </tbody>
+                    )}
                 </table>
             </div>
         )
@@ -67,8 +68,7 @@ class component extends React.Component {
 
 function mapStateToProps(state) {
     return {
-        iNesLoaded: state.iNesLoaded,
-        cpu: state.cpu,
+        pc: state.pc,
     }
 }
 

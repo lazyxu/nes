@@ -1,6 +1,6 @@
 import {combineReducers} from 'redux'
 import {
-    CPU_STEP,
+    newPC,
     CPU_EXIT,
     CPU_RESTART,
     CPU_RUN,
@@ -8,25 +8,15 @@ import {
     INES_LOADED
 } from './actions'
 
-function cpu(state = -1, action) {
+function pc(state = null, action) {
     switch (action.type) {
-        case CPU_STEP:
-            return state + 1;
-        default:
-            return state;
-    }
-}
-
-function iNesLoaded(state = -1, action) {
-    switch (action.type) {
-        case INES_LOADED:
-            return state + 1;
+        case newPC:
+            return action.PC;
         default:
             return state;
     }
 }
 
 export default combineReducers({
-    cpu,
-    iNesLoaded
+    pc,
 })

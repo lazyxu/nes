@@ -15,9 +15,6 @@ class component extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        if (nextProps.iNesLoaded >= 0) {
-            // this.setState(this.getCpuState());
-        }
     }
 
     // getCpuState() {
@@ -51,7 +48,7 @@ class component extends React.Component {
 
 function mapStateToProps(state) {
     return {
-        iNesLoaded: state.iNesLoaded,
+        pc: state.pc,
     }
 }
 

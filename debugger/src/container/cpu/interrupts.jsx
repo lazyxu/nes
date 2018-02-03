@@ -1,5 +1,4 @@
 import React from 'react'
-import {connect} from 'react-redux'
 
 import './interrupts.scss'
 import util from '../../../../src/util'
@@ -7,29 +6,10 @@ import util from '../../../../src/util'
 class component extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            reset: 0,
-            nmi: 0,
-            irq: 0
-        };
-    }
-
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.iNesLoaded >= 0) {
-            this.setState(this.getCpuState());
-        }
-    }
-
-    getCpuState() {
-        let nes = window.nes;
-        return {
-            reset: util.sprintf("%04X", nes.cpu.read16(0xFFFC)),
-            nmi: util.sprintf("%04X", nes.cpu.read16(0xFFFA)),
-            irq: util.sprintf("%04X", nes.cpu.read16(0xFFFE)),
-        };
     }
 
     render() {
+        let nes = window.nes;
         return (
             <table className="Interrupts">
                 <thead>
@@ -39,16 +19,16 @@ class component extends React.Component {
                 </thead>
                 <tbody>
                 <tr>
-                    <td>reset</td>
-                    <td>FFFC => {this.state.reset}</td>
+                    <td width="50px">reset</td>
+                    <td>FFFC => {util.sprintf("%04X", nes.cpu.read16(0xFFFC))}</td>
                 </tr>
                 <tr>
                     <td>nmi</td>
-                    <td>FFFA => {this.state.nmi}</td>
+                    <td>FFFA => {util.sprintf("%04X", nes.cpu.read16(0xFFFA))}</td>
                 </tr>
                 <tr>
                     <td>irq</td>
-                    <td>FFFE => {this.state.irq}</td>
+                    <td>FFFE => {util.sprintf("%04X", nes.cpu.read16(0xFFFE))}</td>
                 </tr>
                 </tbody>
             </table>
@@ -56,10 +36,4 @@ class component extends React.Component {
     }
 }
 
-function mapStateToProps(state) {
-    return {
-        iNesLoaded: state.iNesLoaded,
-    }
-}
-
-export default connect(mapStateToProps)(component)
+export default component

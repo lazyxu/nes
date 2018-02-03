@@ -18,9 +18,9 @@ class component extends React.Component {
         return (
             <div className="CPU">
                 <ToolBar/>
-                <Instructions/>
-                <Interrupts/>
-                <Registers/>
+                {this.props.pc !== null ? <Instructions/> : <div/>}
+                {this.props.pc !== null ? <Interrupts/> : <div/>}
+                {this.props.pc !== null ? <Registers/> : <div/>}
             </div>
         )
     }
@@ -28,7 +28,7 @@ class component extends React.Component {
 
 function mapStateToProps(state) {
     return {
-        cpu: state.cpu,
+        pc: state.pc,
     }
 }
 

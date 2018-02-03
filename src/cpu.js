@@ -202,7 +202,7 @@ CPU.prototype = {
 
     // https://zhuanlan.zhihu.com/p/21330930
     linearScanDisassembly(start) {
-        let disasm = [];
+        let disasm = {};
         start.sort(function (a, b) {
             return a > b;
         });
@@ -234,8 +234,8 @@ CPU.prototype = {
                     opdata = "";
                 }
                 console.log(util.sprintf("%04X: %8s %s %s", PC, hexDump, operator, opdata));
-                disasm[PC - 0xC000] = {
-                    PC: util.sprintf("%02X", PC),
+                var hexAddr = util.sprintf("%02X", PC);
+                disasm[hexAddr] = {
                     hexDump,
                     operator,
                     opdata,
