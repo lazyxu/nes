@@ -4,11 +4,13 @@ package-lock.json
 .DS_Store
 public/.DS_Store
 src/.DS_Store
+
 public/js/debugger.js
 public/js/manifest.js
 public/js/react.js
 public/js/nes.js
 public/js/nes.min.js
+public/roms
 debugger/node_modules
 nes-test-roms
 /test

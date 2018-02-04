@@ -10,7 +10,7 @@ import {connect} from "react-redux";
 class component extends React.Component {
     constructor(props) {
         super(props);
-        let autoStep = null;
+        this.autoStepInterval = null;
         document.onkeydown = event => {
             let e = event || window.event || arguments.callee.caller.arguments[0];
             if (e) {
@@ -20,22 +20,15 @@ class component extends React.Component {
                         if (!ctrlKey) { // F7
                             this.props.stepIn();
                         } else { // Ctrl+F7
-                            if (autoStep != null) {
-                                clearInterval(autoStep);
-                            }
-                            autoStep = setInterval(() => {
-                                this.props.stepIn();
-                            }, 1000);
+                            this.autoStep();
                         }
+                        break;
+                    case 27: // ESC
+                        this.exitAutoStep();
                         break;
                     case 113: // F2
                         if (ctrlKey) { // Ctrl+F2
                             this.props.reset();
-                        }
-                        break;
-                    case 27: // ESC
-                        if (autoStep != null) {
-                            clearInterval(autoStep);
                         }
                         break;
                 }
@@ -43,22 +36,34 @@ class component extends React.Component {
             }
             // TODO:
             // F8 - step over
-            // F9 - run
             // Ctrl+F9 - run till return
-            // F12 - stop
+            // break
         };
+    }
+
+    autoStep() {
+        if (this.autoStepInterval != null) {
+            clearInterval(this.autoStepInterval);
+        }
+        this.autoStepInterval = setInterval(() => {
+            this.props.stepIn();
+        }, 1000);
+    }
+
+    exitAutoStep() {
+        if (this.autoStepInterval != null) {
+            clearInterval(this.autoStepInterval);
+        }
     }
 
     render() {
         return (
             <div className="ToolBar">
-                <button onClick={this.props.reset}>↻</button>
-                <button onClick={this.props.stepIn}>▶</button>
-                <button onClick={this.props.stepIn}>⇩</button>
-                <button onClick={this.props.stepIn}>||</button>
-                <button onClick={this.props.stepIn}>▇</button>
+                <button title="reset(Ctrl+F2)" onClick={this.props.reset}>↻</button>
+                <button title="autoStep(Ctrl+F7)" onClick={this.autoStep.bind(this)}>▶</button>
+                <button title="stepIn(F7)" onClick={this.props.stepIn}>⇩</button>
+                <button title="exitAutoStep(ESC)" onClick={this.exitAutoStep.bind(this)}>||</button>
                 <input type="text"/>
-                <button>goto</button>
             </div>
         )
     }
@@ -66,7 +71,7 @@ class component extends React.Component {
 
 function mapStateToProps(state) {
     return {
-        cpu: state.cpu,
+        pc: state.pc,
     }
 }
 

@@ -30,8 +30,8 @@ class component extends React.Component {
                     <td>{nes.ines.chrRom.length}</td>
                 </tr>
                 <tr>
-                    <td>numRpgRom</td>
-                    <td>{nes.ines.rpgRom.length}</td>
+                    <td>numPrgRom</td>
+                    <td>{nes.ines.prgRom.length}</td>
                 </tr>
                 </tbody>
             </table>

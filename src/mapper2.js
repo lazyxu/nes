@@ -1,8 +1,8 @@
 var Mapper2 = function (nes) {
     this.nes = nes;
-    this.rpgRomBanks = this.nes.ines.rpgRom.length;
-    this.rpgRomUpperBank = this.rpgRomBanks - 1;
-    this.rpgRomLowerBank = 0;
+    this.prgRomBanks = this.nes.ines.prgRom.length;
+    this.prgRomUpperBank = this.prgRomBanks - 1;
+    this.prgRomLowerBank = 0;
 };
 
 Mapper2.prototype = {
@@ -14,10 +14,10 @@ Mapper2.prototype = {
             return this.nes.ines.chrRom[0][address] & 0xff;
         }
         if (address >= 0xc000) {
-            return this.nes.ines.rpgRom[this.rpgRomUpperBank][address - 0xc000] & 0xff;
+            return this.nes.ines.prgRom[this.prgRomUpperBank][address - 0xc000] & 0xff;
         }
         if (address >= 0x8000) {
-            return this.nes.ines.rpgRom[this.rpgRomLowerBank][address - 0x8000] & 0xff;
+            return this.nes.ines.prgRom[this.prgRomLowerBank][address - 0x8000] & 0xff;
         }
         if (address >= 0x6000) {
             return this.nes.ines.sram[address - 0x6000] & 0xff;
@@ -34,7 +34,7 @@ Mapper2.prototype = {
             return;
         }
         if (address >= 0x8000) {
-            this.rpgRomLowerBank = value % this.rpgRomBanks;
+            this.prgRomLowerBank = value % this.prgRomBanks;
             return;
         }
         if (address >= 0x6000) {
