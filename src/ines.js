@@ -96,7 +96,7 @@ INES.prototype = {
         // Following the header is the 512-byte trainer, if one is present, otherwise the ROM banks
         // begin here, starting with PRG-ROM then CHR-ROM.
         if (trainerExist) {
-            this.trainer = new Array(0x200); // 512
+            this.trainer = new Array(512);
             for (i = 0; i < 0x200; i++) {
                 this.trainer[i] = data.charCodeAt(i) & 0xff;
             }
@@ -106,7 +106,7 @@ INES.prototype = {
         this.prgRom = new Array(numPrgRom);
         let offset = 16;
         for (i = 0; i < numPrgRom; i++) {
-            this.prgRom[i] = new Array(0x4000); // 16384
+            this.prgRom[i] = new Array(16384);
             for (j = 0; j < 0x4000; j++) {
                 if (offset + j >= data.length) {
                     break;
@@ -120,7 +120,7 @@ INES.prototype = {
             // Load CHR-ROM banks:
             this.chrRom = new Array(numChrRom);
             for (i = 0; i < numChrRom; i++) {
-                this.chrRom[i] = new Array(0x1000); // 8192
+                this.chrRom[i] = new Array(8192);
                 for (j = 0; j < 0x1000; j++) {
                     if (offset + j >= data.length) {
                         break;
@@ -130,7 +130,7 @@ INES.prototype = {
                 offset += 0x1000;
             }
         } else {
-            this.chrRam = new Array(0x1000); // 8192
+            this.chrRam = new Array(8192);
             for (i = 0; i < 0x1000; i++) {
                 this.chrRam[i] = data.charCodeAt(i) & 0xff;
             }

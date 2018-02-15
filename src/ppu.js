@@ -274,7 +274,7 @@ PPU.prototype = {
             // t: ........ ...HGFED = d: HGFED...
             // x:               CBA = d: .....CBA
             // w:                   = 1
-            this.t = (ppu.t & 0xFFE0) | (value >> 3);
+            this.t = (this.t & 0xFFE0) | (value >> 3);
             this.x = value & 0x07;
             this.w = 1;
         } else {
@@ -310,7 +310,7 @@ PPU.prototype = {
         var value = this.read(this.v);
         // emulate buffered reads
         if (this.v % 0x4000 < 0x3F00) {
-            var buffered = ppu.bufferedData;
+            var buffered = this.bufferedData;
             this.bufferedData = value;
             value = buffered;
         } else {
@@ -341,7 +341,7 @@ PPU.prototype = {
         var cpu = this.nes.cpu;
         var address = value << 8;
         for (var i = 0; i < 256; i++) {
-            this.oamData[ppu.oamAddress] = cpu.read(address);
+            this.oamData[this.oamAddress] = cpu.read(address);
             this.oamAddress++;
             address++;
         }

@@ -16,14 +16,14 @@
 //     CPU $C000-$FFFF: 16 KB PRG ROM bank, fixed to the last bank
 
 
-let Mapper0 = function (nes) {
+let Mapper = function (nes) {
     this.nes = nes;
     this.prgRomBanks = this.nes.ines.prgRom.length;
     this.prgRomUpperBank = this.prgRomBanks - 1;
     this.prgRomLowerBank = 0;
 };
 
-Mapper0.prototype = {
+Mapper.prototype = {
 
     read: function (address) {
         address &= 0xFFFF;
@@ -82,4 +82,4 @@ Mapper0.prototype = {
     }
 };
 
-module.exports = Mapper0;
+module.exports = Mapper;

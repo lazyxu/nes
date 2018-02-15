@@ -18,7 +18,7 @@ class component extends React.Component {
                 </thead>
                 <tbody>
                 <tr>
-                    <td>mapperType</td>
+                    <td>mapper</td>
                     <td>{nes.ines.mapperType}</td>
                 </tr>
                 <tr>
@@ -26,11 +26,15 @@ class component extends React.Component {
                     <td>{nes.ines.mirroring}</td>
                 </tr>
                 <tr>
-                    <td>numChrRom</td>
-                    <td>{nes.ines.chrRom === null ? 0 : nes.ines.chrRom.length}</td>
+                    <td>CHR ROM</td>
+                    <td>{nes.ines.chrRom === null ? 0 : nes.ines.chrRom.length} * 8K</td>
                 </tr>
                 <tr>
-                    <td>numPrgRom</td>
+                    <td>CHR RAM</td>
+                    <td>{nes.ines.chrRam === null ? 0 : (nes.ines.chrRam.length / 1024)} K</td>
+                </tr>
+                <tr>
+                    <td>PRG ROM</td>
                     <td>{nes.ines.prgRom.length}</td>
                 </tr>
                 </tbody>
