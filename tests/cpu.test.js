@@ -20,17 +20,17 @@ function officlalInstructions() {
                     if (nes.cpu.read(0x6000) < 0x80) {
                         break;
                     }
-                    let message = "";
-                    for (let address = 0x6004; ; address++) {
-                        let c = nes.cpu.read(address);
-                        if (c === 0) {
-                            break;
-                        }
-                        message += String.fromCharCode(c);
+                }
+                let message = "";
+                for (let address = 0x6004; ; address++) {
+                    let c = nes.cpu.read(address);
+                    if (c === 0) {
+                        break;
                     }
-                    if (message.length > 0) {
-                        console.log(message);
-                    }
+                    message += String.fromCharCode(c);
+                }
+                if (message.length > 0) {
+                    console.log(message);
                 }
             }
         }

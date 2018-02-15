@@ -166,8 +166,10 @@ PPU.prototype = {
                 this.writeOAMAddress(value);
                 return;
             case 0x2004:
-                // ???
-                throw new Error("invalid ppu register write at address: " + address.toString(16));
+                this.writeOAMData(value);
+                return;
+                // // ???
+                // throw new Error("invalid ppu register write at address: " + address.toString(16));
             case 0x2005:
                 this.writeScroll(value);
                 return;

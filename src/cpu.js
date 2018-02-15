@@ -12,11 +12,11 @@ const modeZeroPage = 10;
 const modeZeroPageX = 11;
 const modeZeroPageY = 12;
 
-var modeSize = [
+let modeSize = [
     3, 3, 3, 1, 2, 1, 2, 3, 2, 2, 2, 2, 2
 ];
 // instructionModes indicates the addressing mode for each instruction
-var instructionModes = [
+let instructionModes = [
     5, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
     9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
     0, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
@@ -36,7 +36,7 @@ var instructionModes = [
 ];
 
 // instructionSizes indicates the size of each instruction in bytes
-var instructionSizes = [
+let instructionSizes = [
     1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
     2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
     3, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
@@ -57,7 +57,7 @@ var instructionSizes = [
 
 // instructioncycles indicates the number of cycles used by each instruction,
 // not including conditional cycles
-var instructioncycles = [
+let instructioncycles = [
     7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,
     2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
     6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6,
@@ -78,7 +78,7 @@ var instructioncycles = [
 
 // instructionPagecycles indicates the number of cycles used by each
 // instruction when a page is crossed
-var instructionPagecycles = [
+let instructionPagecycles = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -98,7 +98,7 @@ var instructionPagecycles = [
 ];
 
 // instructionNames indicates the name of each instruction
-var instructionNames = [
+let instructionNames = [
     "BRK", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
     "PHP", "ORA", "ASL", "ANC", "NOP", "ORA", "ASL", "SLO",
     "BPL", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
@@ -141,10 +141,10 @@ const interruptNMI = 1;
 const interruptIRQ = 2;
 const interruptRESET = 3;
 
-var CPU = function (nes) {
+let CPU = function (nes) {
     this.nes = nes;
     this.ram = new Array(2048);
-    for (var i = 0; i < this.ram.length; i++) {
+    for (let i = 0; i < this.ram.length; i++) {
         this.ram[i] = 0;
     }
     this.cycles = null;
@@ -163,7 +163,7 @@ var CPU = function (nes) {
     this.Z = 0;
     this.C = 0;
 };
-var util = require('./util');
+let util = require('./util');
 
 CPU.prototype = {
     // reset resets the CPU to its initial power_up state
@@ -261,7 +261,7 @@ CPU.prototype = {
                     opdata = "";
                 }
                 // console.log(util.sprintf("%04X: %8s %s %s", PC, hexDump, operator, opdata));
-                var hexAddr = util.sprintf("%02X", PC);
+                let hexAddr = util.sprintf("%02X", PC);
                 disasm[hexAddr] = {
                     hexDump,
                     operator,
@@ -556,18 +556,18 @@ CPU.prototype = {
 
     // read16 reads two bytes using read to return a double-word value
     read16: function (address) {
-        var lo = this.read(address);
-        var hi = this.read(address + 1);
+        let lo = this.read(address);
+        let hi = this.read(address + 1);
         return ((hi & 0xff) << 8) | (lo & 0xff);
     },
 
     // read16bug emulates a 6502 bug that caused the low byte to wrap without
     // incrementing the high byte
     read16bug: function (address) {
-        var a = address;
-        var b = (a & 0xFF00) | ((a + 1) & 0xff);
-        var lo = this.read(a);
-        var hi = this.read(b);
+        let a = address;
+        let b = (a & 0xFF00) | ((a + 1) & 0xff);
+        let lo = this.read(a);
+        let hi = this.read(b);
         return ((hi & 0xff) << 8) | (lo & 0xff);
     },
 
@@ -584,24 +584,24 @@ CPU.prototype = {
     },
 
     push16: function (value) {
-        var hi = (value >> 8) & 0xff;
-        var lo = value & 0xff;
+        let hi = (value >> 8) & 0xff;
+        let lo = value & 0xff;
         this.push(hi);
         this.push(lo);
     },
 
     pull16: function () {
-        var lo = this.pull();
-        var hi = this.pull();
+        let lo = this.pull();
+        let hi = this.pull();
         return ((hi & 0xff) << 8) | (lo & 0xff);
     },
 
     /* instruction -------------------------------------------------------------------------------------------------- */
     // ADC - Add with Carry
     ADC: function (address, pc, mode) {
-        var a = this.A;
-        var b = this.read(address);
-        var c = this.C;
+        let a = this.A;
+        let b = this.read(address);
+        let c = this.C;
         this.A = (a + b + c) & 0XFF;
         this.setZN(this.A);
         this.C = (a + b + c) > 0xFF ? 1 : 0;
@@ -628,7 +628,7 @@ CPU.prototype = {
             this.A = (this.A << 1) & 0xff;
             this.setZN(this.A);
         } else {
-            var value = this.read(address);
+            let value = this.read(address);
             this.C = (value >> 7) & 1;
             // value <<= 1;
             value = (value << 1) & 0xff;
@@ -752,25 +752,25 @@ CPU.prototype = {
 
     // CMP - Compare
     CMP: function (address, pc, mode) {
-        var value = this.read(address);
+        let value = this.read(address);
         this.compare(this.A, value);
     },
 
     // CPX - Compare X Register
     CPX: function (address, pc, mode) {
-        var value = this.read(address);
+        let value = this.read(address);
         this.compare(this.X, value);
     },
 
     // CPY - Compare Y Register
     CPY: function (address, pc, mode) {
-        var value = this.read(address);
+        let value = this.read(address);
         this.compare(this.Y, value);
     },
 
     // DEC - Decrement Memory
     DEC: function (address, pc, mode) {
-        var value = (this.read(address) - 1) & 0XFF;
+        let value = (this.read(address) - 1) & 0XFF;
         this.write(address, value);
         this.setZN(value);
     },
@@ -795,7 +795,7 @@ CPU.prototype = {
 
     // INC - Increment Memory
     INC: function (address, pc, mode) {
-        var value = (this.read(address) + 1) & 0XFF;
+        let value = (this.read(address) + 1) & 0XFF;
         this.write(address, value);
         this.setZN(value);
     },
@@ -848,7 +848,7 @@ CPU.prototype = {
             this.A >>= 1;
             this.setZN(this.A);
         } else {
-            var value = this.read(address);
+            let value = this.read(address);
             this.C = value & 1;
             value >>= 1;
             this.write(address, value);
@@ -889,13 +889,13 @@ CPU.prototype = {
 
     // ROL - Rotate Left
     ROL: function (address, pc, mode) {
-        var c = this.C;
+        let c = this.C;
         if (mode === modeAccumulator) {
             this.C = (this.A >> 7) & 1;
             this.A = ((this.A << 1) | c) & 0xff;
             this.setZN(this.A);
         } else {
-            var value = this.read(address);
+            let value = this.read(address);
             this.C = (value >> 7) & 1;
             value = ((value << 1) | c) & 0xff;
             this.write(address, value);
@@ -905,13 +905,13 @@ CPU.prototype = {
 
     // ROR - Rotate Right
     ROR: function (address, pc, mode) {
-        var c = this.C;
+        let c = this.C;
         if (mode === modeAccumulator) {
             this.C = this.A & 1;
             this.A = ((this.A >> 1) | (c << 7)) & 0xff;
             this.setZN(this.A);
         } else {
-            var value = this.read(address);
+            let value = this.read(address);
             this.C = value & 1;
             value = ((value >> 1) | (c << 7)) & 0xff;
             this.write(address, value);
@@ -932,9 +932,9 @@ CPU.prototype = {
 
     // SBC - Subtract with Carry
     SBC: function (address, pc, mode) {
-        var a = this.A;
-        var b = this.read(address);
-        var c = this.C;
+        let a = this.A;
+        let b = this.read(address);
+        let c = this.C;
         this.A = (a - b - (1 - c)) & 0XFF;
         this.setZN(this.A);
         if ((a - b - (1 - c)) >= 0) {

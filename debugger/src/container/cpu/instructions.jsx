@@ -8,8 +8,8 @@ class component extends React.PureComponent {
     constructor(props) {
         super(props);
         let nes = window.nes;
-        // this.dump = nes.cpu.linearScanDisassembly([nes.cpu.read16(0XFFFA), nes.cpu.read16(0XFFFC), nes.cpu.read16(0XFFFE)]);
-        this.dump = nes.cpu.linearScanDisassembly([0XC000]);
+        this.dump = nes.cpu.linearScanDisassembly([nes.cpu.read16(0XFFFA), nes.cpu.read16(0XFFFC), nes.cpu.read16(0XFFFE)]);
+        // this.dump = nes.cpu.linearScanDisassembly([0XC000]);
         this.lastPC = util.sprintf("%04X", nes.cpu.PC);
     }
 
