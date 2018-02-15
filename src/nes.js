@@ -12,6 +12,7 @@ let NES = function () {
     this.cpu = new CPU(this);
     this.ppu = new PPU(this);
     this.isRunning = false;
+    this.breakPoints = [];
 };
 
 NES.prototype = {
@@ -35,6 +36,15 @@ NES.prototype = {
             this.ppu.step();
         }
         return cpuCycles;
+    },
+
+    runWithBreakPoints: function () {
+        for (; ;) {
+            this.step();
+            if (this.breakPoints.indexOf(this.cpu.PC) > -1) {
+                break;
+            }
+        }
     },
 
     run: function () {

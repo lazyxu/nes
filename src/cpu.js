@@ -261,7 +261,7 @@ CPU.prototype = {
                     opdata = "";
                 }
                 // console.log(util.sprintf("%04X: %8s %s %s", PC, hexDump, operator, opdata));
-                let hexAddr = util.sprintf("%02X", PC);
+                let hexAddr = util.sprintf("%04X", PC);
                 disasm[hexAddr] = {
                     hexDump,
                     operator,

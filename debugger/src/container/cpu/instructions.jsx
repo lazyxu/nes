@@ -13,6 +13,16 @@ class component extends React.PureComponent {
         this.lastPC = util.sprintf("%04X", nes.cpu.PC);
     }
 
+    componentDidMount() {
+        let elem = this.refs[this.lastPC];
+        elem.style.backgroundColor = "red";
+        if (typeof(elem.scrollIntoViewIfNeeded) !== 'undefined') {
+            elem.scrollIntoViewIfNeeded();
+        } else {
+            elem.scrollIntoView();
+        }
+    }
+
     shouldComponentUpdate(nexProps) {
         return false;
     }
@@ -33,6 +43,19 @@ class component extends React.PureComponent {
         }
     }
 
+    breakPoint(key, event) {
+        let nes = window.nes;
+        let address = parseInt(key, 16);
+        if (event.target.checked) {
+            nes.breakPoints.push(address);
+        } else {
+            let index = nes.breakPoints.indexOf(address);
+            if (index >= 0) {
+                nes.breakPoints.splice(index, 1);
+            }
+        }
+    }
+
     render() {
         return (
             <div className="Instructions">
@@ -50,7 +73,7 @@ class component extends React.PureComponent {
                         key !== this.lastPC ?
                             <tbody key={key} ref={key}>
                             <tr>
-                                <td className="Break"><input type="checkbox" name="Break" value={key}/></td>
+                                <td className="Break"><input type="checkbox" name="Break" value={key} onChange={this.breakPoint.bind(this, key)}/></td>
                                 <td className="Address">{key}</td>
                                 <td className="HexDump">{this.dump[key].hexDump}</td>
                                 <td className="Disassembly">{this.dump[key].operator} {this.dump[key].opdata}</td>
@@ -59,7 +82,7 @@ class component extends React.PureComponent {
                             </tbody> :
                             <tbody key={key} ref={key} style={{backgroundColor: "red"}}>
                             <tr>
-                                <td className="Break"><input type="checkbox" name="Break" value={key}/></td>
+                                <td className="Break"><input type="checkbox" name="Break" value={key} onChange={this.breakPoint.bind(this, key)}/></td>
                                 <td className="Address">{key}</td>
                                 <td className="HexDump">{this.dump[key].hexDump}</td>
                                 <td className="Disassembly">{this.dump[key].operator} {this.dump[key].opdata}</td>

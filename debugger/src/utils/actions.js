@@ -25,6 +25,14 @@ export function stepIn() {
     }
 }
 
+export function showPC() {
+    let nes = window.nes;
+    return {
+        type: newPC,
+        PC: util.sprintf("%04X", nes.cpu.PC)
+    }
+}
+
 export function reset() {
     let nes = window.nes;
     nes.reset();

@@ -3,7 +3,8 @@ import React from 'react';
 import './toolBar.scss'
 import {
     stepIn,
-    reset
+    reset,
+    showPC
 } from "../../utils/actions";
 import {connect} from "react-redux";
 
@@ -22,6 +23,9 @@ class component extends React.Component {
                         } else { // Ctrl+F7
                             this.autoStep();
                         }
+                        break;
+                    case 120: // F9
+                        this.run();
                         break;
                     case 27: // ESC
                         this.exitAutoStep();
@@ -56,13 +60,20 @@ class component extends React.Component {
         }
     }
 
+    run() {
+        let nes = window.nes;
+        nes.runWithBreakPoints();
+        this.props.showPC();
+    }
+
     render() {
         return (
             <div className="ToolBar">
                 <button title="reset(Ctrl+F2)" onClick={this.props.reset}>↻</button>
-                <button title="autoStep(Ctrl+F7)" onClick={this.autoStep.bind(this)}>▶</button>
-                <button title="stepIn(F7)" onClick={this.props.stepIn}>⇩</button>
+                <button title="run(F9)" onClick={this.run.bind(this)}>▶</button>
+                <button title="autoStep(Ctrl+F7)" onClick={this.autoStep.bind(this)}>⇊</button>
                 <button title="exitAutoStep(ESC)" onClick={this.exitAutoStep.bind(this)}>||</button>
+                <button title="stepIn(F7)" onClick={this.props.stepIn}>↓</button>
                 <input type="text"/>
             </div>
         )
@@ -75,4 +86,4 @@ function mapStateToProps(state) {
     }
 }
 
-export default connect(mapStateToProps, {stepIn, reset})(component)
+export default connect(mapStateToProps, {stepIn, reset, showPC})(component)

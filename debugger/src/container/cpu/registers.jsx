@@ -14,7 +14,6 @@ class component extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        console.log(nextProps);
         if (nextProps.pc !== this.PC) {
             this.updateRegisters();
         }
