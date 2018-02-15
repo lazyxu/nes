@@ -177,7 +177,7 @@ CPU.prototype = {
     /* debug -------------------------------------------------------------------------------------------------------- */
 
     // PrintInstruction prints the current CPU state
-    printInstruction: function () {
+    printInstruction: function (showOpdata = true) {
         let opcode = this.read(this.PC);
         let bytes = instructionSizes[opcode];
         let operator = instructionNames[opcode];
@@ -189,13 +189,21 @@ CPU.prototype = {
         if (bytes > 2) {
             w2 = this.read(this.PC + 2).toString(16).toUpperCase();
         }
+        let mode = instructionModes[opcode];
+
         let prefix = " ";
-        if (operator === "NOP" && opcode !== 0xEA ||
+        if ((operator === "NOP" && opcode !== 0xEA) ||
             operator === "LAX" ||
-            operator === "SAX") {
+            operator === "SAX" ||
+            operator === "DCP" ||
+            operator === "ISB" ||
+            operator === "SLO" ||
+            operator === "RLA" ||
+            operator === "SRE" ||
+            operator === "RRA" ||
+            (opcode===0xEB)) {
             prefix = "*";
         }
-        let mode = instructionModes[opcode];
         let opdata = this.opdataDisassembly(this.PC, mode);
         let address = this.addressing(opcode, mode, false);
         if (operator === "STA") {
@@ -215,7 +223,7 @@ CPU.prototype = {
         }
         return console.log(util.sprintf("%04X  %02s %02s %02s %01s%s %-28s" +
             "A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3d",
-            this.PC, opcode.toString(16).toUpperCase(), w1, w2, prefix, operator, opdata,
+            this.PC, opcode.toString(16).toUpperCase(), w1, w2, prefix, operator, showOpdata ? opdata : "",
             this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341));
     },
 
@@ -504,7 +512,8 @@ CPU.prototype = {
             }
         }
         if (address < 0x6000) {
-            throw new Error("unhandled Expansion ROM read at address: " + address.toString(16));
+            console.warn("unhandled Expansion ROM read at address: " + address.toString(16));
+            return;
         }
         if (address >= 0x6000) {
             return this.nes.mapper.read(address);
@@ -530,11 +539,13 @@ CPU.prototype = {
                     this.nes.ppu.writeRegister(address, value);
                     return;
                 default:
-                    throw new Error("unhandled I/O Registers II write at address: " + address.toString(16));
+                    console.warn("unhandled I/O Registers II write at address: " + address.toString(16));
+                    return;
             }
         }
         if (address < 0x6000) {
-            throw new Error("unhandled Expansion ROM write at address: " + address.toString(16));
+            console.warn("unhandled Expansion ROM write at address: " + address.toString(16));
+            return;
         }
         if (address >= 0x6000) {
             this.nes.mapper.write(address, value);
@@ -1021,10 +1032,12 @@ CPU.prototype = {
         throw new Error("illegal instruction");
     },
     DCP: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        this.DEC(address, pc, mode);
+        this.CMP(address, pc, mode);
     },
     ISB: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        this.INC(address, pc, mode);
+        this.SBC(address, pc, mode);
     },
     KIL: function (address, pc, mode) {
         throw new Error("illegal instruction");
@@ -1033,19 +1046,21 @@ CPU.prototype = {
         throw new Error("illegal instruction");
     },
     LAX: function (address, pc, mode) {
-        var value = this.read(address);
+        let value = this.read(address);
         this.A = value;
         this.X = value;
         this.setZN(value);
     },
     RLA: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        this.ROL(address, pc, mode);
+        this.AND(address, pc, mode);
     },
     RRA: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        this.ROR(address, pc, mode);
+        this.ADC(address, pc, mode);
     },
     SAX: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        this.write(address, this.A & this.X);
     },
     SHX: function (address, pc, mode) {
         throw new Error("illegal instruction");
@@ -1054,10 +1069,12 @@ CPU.prototype = {
         throw new Error("illegal instruction");
     },
     SLO: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        this.ASL(address, pc, mode);
+        this.ORA(address, pc, mode);
     },
     SRE: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        this.LSR(address, pc, mode);
+        this.EOR(address, pc, mode);
     },
     TAS: function (address, pc, mode) {
         throw new Error("illegal instruction");

@@ -46,8 +46,8 @@ function nestest() {
                 nes.load(file);
                 nes.reset();
                 nes.cpu.PC = 0xC000;
-                for (i = 0; i < 65536; i++) {
-                    nes.cpu.printInstruction();
+                for (; nes.cpu.PC !== 1;) {
+                    nes.cpu.printInstruction(true);
                     nes.cpu.step();
                 }
             }
@@ -56,9 +56,9 @@ function nestest() {
 }
 
 let arguments = process.argv.splice(2);
-if (arguments.indexOf("-official")>-1) {
+if (arguments.indexOf("-official") > -1) {
     officlalInstructions();
 }
-if (arguments.indexOf("-nestest")>-1) {
+if (arguments.indexOf("-nestest") > -1) {
     nestest();
 }
