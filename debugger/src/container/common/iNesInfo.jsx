@@ -27,7 +27,7 @@ class component extends React.Component {
                 </tr>
                 <tr>
                     <td>numChrRom</td>
-                    <td>{nes.ines.chrRom.length}</td>
+                    <td>{nes.ines.chrRom === null ? 0 : nes.ines.chrRom.length}</td>
                 </tr>
                 <tr>
                     <td>numPrgRom</td>

@@ -1,9 +1,10 @@
-var INES = require("./ines");
-var CPU = require("./cpu");
-var PPU = require("./ppu");
-var Mapper2 = require("./mapper2");
+let INES = require("./ines");
+let CPU = require("./cpu");
+let PPU = require("./ppu");
+let Mapper0 = require("./mapper0");
+let Mapper2 = require("./mapper2");
 
-var NES = function () {
+let NES = function () {
     this.ines = null;
     this.mapper = null;
     this.ines = new INES();
@@ -56,7 +57,7 @@ NES.prototype = {
     setMapper: function (mapperType) {
         switch (mapperType) {
             case 0:
-                this.mapper = new Mapper2(this);
+                this.mapper = new Mapper0(this);
                 break;
             case 2:
                 this.mapper = new Mapper2(this);

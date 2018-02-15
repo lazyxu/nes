@@ -14,10 +14,6 @@ let INES = function () {
     this.prgRom = null; // rom
     this.chrRom = null; // vrom
     this.chrRam = null;
-    this.sram = new Array(0x2000); // save ram
-    for (i = 0; i < this.sram.length; i++) {
-        this.sram[i] = 0;
-    }
     this.trainer = null;
     this.mapperType = null;
     this.mirroring = null;
