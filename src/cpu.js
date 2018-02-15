@@ -180,19 +180,43 @@ CPU.prototype = {
     printInstruction: function () {
         let opcode = this.read(this.PC);
         let bytes = instructionSizes[opcode];
-        let name = instructionNames[opcode];
+        let operator = instructionNames[opcode];
         let w1 = "  ";
         let w2 = "  ";
         if (bytes > 1) {
-            w1 = this.read(this.PC + 1).toString(16);
+            w1 = this.read(this.PC + 1).toString(16).toUpperCase();
         }
         if (bytes > 2) {
-            w2 = this.read(this.PC + 2).toString(16);
+            w2 = this.read(this.PC + 2).toString(16).toUpperCase();
         }
-        return util.sprintf("%04X  %02s %02s %02s %01s%s %28s" +
-            "A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3d\n",
-            this.PC, opcode.toString(16), w1, w2, name === "NOP" && opcode !== 0xEA ? "*" : " ", name, "",
-            this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341);
+        let prefix = " ";
+        if (operator === "NOP" && opcode !== 0xEA ||
+            operator === "LAX" ||
+            operator === "SAX") {
+            prefix = "*";
+        }
+        let mode = instructionModes[opcode];
+        let opdata = this.opdataDisassembly(this.PC, mode);
+        let address = this.addressing(opcode, mode, false);
+        if (operator === "STA") {
+            opdata += util.sprintf(" = %02s", this.A.toString(16).toUpperCase());
+        }
+        if (operator === "STX") {
+            opdata += util.sprintf(" = %02s", this.X.toString(16).toUpperCase());
+        }
+        if (operator === "STY") {
+            opdata += util.sprintf(" = %02s", this.Y.toString(16).toUpperCase());
+        }
+        if (operator === "BIT" ||
+            operator === "LDA" ||
+            operator === "LDX" ||
+            operator === "LDY") {
+            opdata += util.sprintf(" = %02s", this.read(address).toString(16).toUpperCase());
+        }
+        return console.log(util.sprintf("%04X  %02s %02s %02s %01s%s %-28s" +
+            "A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3d",
+            this.PC, opcode.toString(16).toUpperCase(), w1, w2, prefix, operator, opdata,
+            this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341));
     },
 
     // https://zhuanlan.zhihu.com/p/21330930
@@ -228,7 +252,7 @@ CPU.prototype = {
                 if (operator === "NOP") {
                     opdata = "";
                 }
-                console.log(util.sprintf("%04X: %8s %s %s", PC, hexDump, operator, opdata));
+                // console.log(util.sprintf("%04X: %8s %s %s", PC, hexDump, operator, opdata));
                 var hexAddr = util.sprintf("%02X", PC);
                 disasm[hexAddr] = {
                     hexDump,
@@ -252,7 +276,8 @@ CPU.prototype = {
             case modeAccumulator:
                 return "A";
             case modeImmediate:
-                return util.sprintf("#%02X", this.read(PC + 1));
+                return util.sprintf("#$%02X", this.read(PC + 1));
+            // return util.sprintf("#%02X", this.read(PC + 1));
             case modeImplied:
                 return "";
             case modeIndexedIndirect:
@@ -279,7 +304,7 @@ CPU.prototype = {
         }
     },
 
-    addressing: function (opcode, mode) {
+    addressing: function (opcode, mode, addCycle = true) {
         let address = null;
         let pageCrossed = null;
         switch (mode) {
@@ -314,7 +339,7 @@ CPU.prototype = {
                 pageCrossed = this.pagesDiffer(address - this.Y, address);
                 break;
             case modeRelative:
-                var offset = this.read(this.PC + 1);
+                let offset = this.read(this.PC + 1);
                 if (offset < 0x80) {
                     address = (this.PC + 2 + offset) & 0xFFFF;
                 } else {
@@ -331,8 +356,10 @@ CPU.prototype = {
                 address = (this.read(this.PC + 1) + this.Y) & 0xff;
                 break;
         }
-        if (pageCrossed) {
-            this.cycles += instructionPagecycles[opcode];
+        if (addCycle) {
+            if (pageCrossed) {
+                this.cycles += instructionPagecycles[opcode];
+            }
         }
         return address;
     },
@@ -633,7 +660,7 @@ CPU.prototype = {
 
     // BIT - Bit Test
     BIT: function (address, pc, mode) {
-        var value = this.read(address);
+        let value = this.read(address);
         this.V = (value >> 6) & 1;
         this.setZ(value & this.A);
         this.setN(value);

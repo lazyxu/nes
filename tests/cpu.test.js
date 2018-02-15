@@ -2,18 +2,16 @@ let fs = require('fs');
 let path = require("path");
 let nesEmulator = require('../src/index');
 
-function readString(cpu, address) {
-
-}
+let nes = new nesEmulator.NES();
 
 function officlalInstructions() {
     let i;
-    fs.readFile(path.resolve(__dirname, "../../nes-test-roms/instr_test-v5/official_only.nes"), 'binary', function (error, file) {
+    fs.readFile(path.resolve(__dirname, "../nes-test-roms/instr_test-v5/official_only.nes"), 'binary', function (error, file) {
             if (typeof(error) !== 'undefined' && error != null) {
                 console.log(error);
             } else {
-                let nes = new nesEmulator.NES();
                 nes.load(file);
+                nes.reset();
                 nes.cpu.write(0x6000, 0xFF);
                 for (; ;) {
                     for (i = 0; i < 65536; i++) {
@@ -22,7 +20,14 @@ function officlalInstructions() {
                     if (nes.cpu.read(0x6000) < 0x80) {
                         break;
                     }
-                    let message = readString(nes.cpu, 0x6004);
+                    let message = "";
+                    for (let address = 0x6004; ; address++) {
+                        let c = nes.cpu.read(address);
+                        if (c === 0) {
+                            break;
+                        }
+                        message += String.fromCharCode(c);
+                    }
                     if (message.length > 0) {
                         console.log(message);
                     }
@@ -32,4 +37,28 @@ function officlalInstructions() {
     );
 }
 
-console.log(officlalInstructions());
+function nestest() {
+    let i;
+    fs.readFile(path.resolve(__dirname, "../test/nestest.nes"), 'binary', function (error, file) {
+            if (typeof(error) !== 'undefined' && error != null) {
+                console.log(error);
+            } else {
+                nes.load(file);
+                nes.reset();
+                nes.cpu.PC = 0xC000;
+                for (i = 0; i < 65536; i++) {
+                    nes.cpu.printInstruction();
+                    nes.cpu.step();
+                }
+            }
+        }
+    );
+}
+
+let arguments = process.argv.splice(2);
+if (arguments.indexOf("-official")>-1) {
+    officlalInstructions();
+}
+if (arguments.indexOf("-nestest")>-1) {
+    nestest();
+}

@@ -9,9 +9,7 @@ export const INES_LOADED = 'INES_LOADED';
 
 export function loadiNes() {
     let nes = window.nes;
-    // nes.cpu.PC = 0xC000;
     nes.reset();
-    nes.cpu.write(0x6000, 0xFF);
     return {
         type: newPC,
         PC: util.sprintf("%04X", nes.cpu.PC)
