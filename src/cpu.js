@@ -508,7 +508,7 @@ CPU.prototype = {
                 case 4014:
                     return this.nes.ppu.readRegister(address);
                 default:
-                    throw new Error("unhandled I/O Registers II read at address: " + address.toString(16));
+                    console.warn("unhandled I/O Registers II read at address: " + address.toString(16));
             }
         }
         if (address < 0x6000) {

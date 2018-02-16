@@ -6,7 +6,7 @@ let nes = new nesEmulator.NES();
 
 function officlalInstructions() {
     let i;
-    fs.readFile(path.resolve(__dirname, "../nes-test-roms/instr_test-v5/official_only.nes"), 'binary', function (error, file) {
+    fs.readFile(path.resolve(__dirname, "../nes-test-roms/cpu_interrupts_v2/cpu_interrupts.nes"), 'binary', function (error, file) {
             if (typeof(error) !== 'undefined' && error != null) {
                 console.log(error);
             } else {

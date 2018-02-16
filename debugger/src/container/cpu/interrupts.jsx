@@ -11,7 +11,8 @@ class component extends React.Component {
     render() {
         let nes = window.nes;
         return (
-            <table className="Interrupts">
+            <div className="Interrupts">
+            <table>
                 <thead>
                 <tr>
                     <th colSpan="2">Interrupts</th>
@@ -32,6 +33,7 @@ class component extends React.Component {
                 </tr>
                 </tbody>
             </table>
+            </div>
         )
     }
 }

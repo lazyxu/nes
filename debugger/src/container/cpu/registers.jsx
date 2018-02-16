@@ -21,8 +21,8 @@ class component extends React.Component {
 
     updateRegister(oldVal, newVal) {
         return (oldVal !== newVal && typeof oldVal !== 'undefined' && oldVal !== '') ?
-            ( '<span style="color: red">'+newVal+'</span> <del>' + oldVal + '</del>') :
-                newVal;
+            ('<span style="color: red">' + newVal + '</span> <del>' + oldVal + '</del>') :
+            newVal;
     }
 
     updateRegisters() {
@@ -73,71 +73,73 @@ class component extends React.Component {
 
     render() {
         return (
-            <table className="Registers">
-                <thead>
-                <tr>
-                    <th colSpan="2">Registers</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td width="50px">PC</td>
-                    <td><span ref="PC"/></td>
-                </tr>
-                <tr>
-                    <td>A</td>
-                    <td><span ref="A"/></td>
-                </tr>
-                <tr>
-                    <td>X</td>
-                    <td><span ref="X"/></td>
-                </tr>
-                <tr>
-                    <td>Y</td>
-                    <td><span ref="Y"/></td>
-                </tr>
-                <tr>
-                    <td>SP</td>
-                    <td><span ref="SP"/></td>
-                </tr>
-                <tr>
-                    <td>P</td>
-                    <td><span ref="P"/></td>
-                </tr>
-                <tr>
-                    <td>N</td>
-                    <td><span ref="N"/></td>
-                </tr>
-                <tr>
-                    <td>V</td>
-                    <td><span ref="V"/></td>
-                </tr>
-                <tr>
-                    <td>U</td>
-                    <td><span ref="U"/></td>
-                </tr>
-                <tr>
-                    <td>B</td>
-                    <td><span ref="B"/></td>
-                </tr>
-                <tr>
-                    <td>D</td>
-                    <td><span ref="D"/></td>
-                </tr>
-                <tr>
-                    <td>I</td>
-                    <td><span ref="I"/></td>
-                </tr>
-                <tr>
-                    <td>Z</td>
-                    <td><span ref="Z"/></td>
-                </tr>
-                <tr>
-                    <td>C</td>
-                    <td><span ref="C"/></td>
-                </tr>
-                </tbody>
-            </table>
+            <div className="Registers">
+                <table>
+                    <thead>
+                    <tr>
+                        <th colSpan="2">Registers</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td width="50px">PC</td>
+                        <td><span ref="PC"/></td>
+                    </tr>
+                    <tr>
+                        <td>A</td>
+                        <td><span ref="A"/></td>
+                    </tr>
+                    <tr>
+                        <td>X</td>
+                        <td><span ref="X"/></td>
+                    </tr>
+                    <tr>
+                        <td>Y</td>
+                        <td><span ref="Y"/></td>
+                    </tr>
+                    <tr>
+                        <td>SP</td>
+                        <td><span ref="SP"/></td>
+                    </tr>
+                    <tr>
+                        <td>P</td>
+                        <td><span ref="P"/></td>
+                    </tr>
+                    <tr>
+                        <td>N</td>
+                        <td><span ref="N"/></td>
+                    </tr>
+                    <tr>
+                        <td>V</td>
+                        <td><span ref="V"/></td>
+                    </tr>
+                    <tr>
+                        <td>U</td>
+                        <td><span ref="U"/></td>
+                    </tr>
+                    <tr>
+                        <td>B</td>
+                        <td><span ref="B"/></td>
+                    </tr>
+                    <tr>
+                        <td>D</td>
+                        <td><span ref="D"/></td>
+                    </tr>
+                    <tr>
+                        <td>I</td>
+                        <td><span ref="I"/></td>
+                    </tr>
+                    <tr>
+                        <td>Z</td>
+                        <td><span ref="Z"/></td>
+                    </tr>
+                    <tr>
+                        <td>C</td>
+                        <td><span ref="C"/></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         )
     }
 }

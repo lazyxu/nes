@@ -7,41 +7,58 @@ import util from '../../../../src/util'
 class component extends React.Component {
     constructor(props) {
         super(props);
-        // this.state = {
-        //     reset: 0,
-        //     nmi: 0,
-        //     irq: 0
-        // };
+        this.state = {
+            stack: [],
+        };
+        this.PC = "0000";
+    }
+
+    componentDidMount() {
+        this.update();
     }
 
     componentWillReceiveProps(nextProps) {
+        if (nextProps.pc !== this.PC) {
+            this.update();
+            this.PC = util.sprintf("%04X", nes.cpu.PC);
+        }
     }
 
-    // getCpuState() {
-    //     let nes = window.nes;
-    //     return {
-    //         reset: util.sprintf("%04X", nes.cpu.read16(0xFFFC)),
-    //         nmi: util.sprintf("%04X", nes.cpu.read16(0xFFFA)),
-    //         irq: util.sprintf("%04X", nes.cpu.read16(0xFFFE)),
-    //     };
-    // }
+    update() {
+        let nes = window.nes;
+        let stack = [];
+        for (let i = nes.cpu.SP; i < 0x100; i++) {
+            stack.unshift(
+                {
+                    address: util.sprintf("%02X", i),
+                    value: util.sprintf("%02X", nes.cpu.read(0x100 | i))
+                }
+            );
+        }
+        this.setState({stack: stack});
+    }
 
     render() {
         return (
-            <table className="Stack">
-                <thead>
-                <tr>
-                    <td>Address</td>
-                    <td>Value</td>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>FD</td>
-                    <td>FFFC</td>
-                </tr>
-                </tbody>
-            </table>
+            <div className="Stack">
+                <table>
+                    <thead>
+                    <tr>
+                        <th colSpan="2">Stack</th>
+                    </tr>
+                    </thead>
+                    {this.state.stack.map(item => {
+                        return (
+                            <tbody key={item.address}>
+                            <tr>
+                                <td width="50px">{item.address}</td>
+                                <td>{item.value}</td>
+                            </tr>
+                            </tbody>
+                        )
+                    })}
+                </table>
+            </div>
         )
     }
 }

@@ -6,6 +6,7 @@ import ToolBar from './toolBar'
 import Registers from './registers'
 import Interrupts from './interrupts'
 import Instructions from './instructions'
+import Stack from './stack'
 import util from '../../../../src/util'
 
 class component extends React.Component {
@@ -21,6 +22,7 @@ class component extends React.Component {
                 {this.props.pc !== null ? <Instructions/> : <div/>}
                 {this.props.pc !== null ? <Interrupts/> : <div/>}
                 {this.props.pc !== null ? <Registers/> : <div/>}
+                {this.props.pc !== null ? <Stack/> : <div/>}
             </div>
         )
     }
