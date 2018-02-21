@@ -18,6 +18,7 @@ class component extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
+        let nes = window.nes;
         if (nextProps.pc !== this.PC) {
             this.update();
             this.PC = util.sprintf("%04X", nes.cpu.PC);

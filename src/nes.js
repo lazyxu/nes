@@ -38,13 +38,20 @@ NES.prototype = {
         return cpuCycles;
     },
 
-    runWithBreakPoints: function () {
-        for (; ;) {
-            this.step();
-            if (this.breakPoints.indexOf(this.cpu.PC) > -1) {
-                break;
-            }
+    runWithBreakPoints: function (callback) {
+        this.isRunning = true;
+        if (typeof(this.frameInterval)!=="undefined" && this.frameInterval !==null) {
+            clearInterval(this.frameInterval);
         }
+        this.frameInterval = setInterval(()=> {
+            this.step();
+            if (this.isRunning === false || this.breakPoints.indexOf(this.cpu.PC) > -1) {
+                clearInterval(this.frameInterval);
+                this.frameInterval = null;
+                this.isRunning = false;
+            }
+            callback();
+        }, 1000/60);
     },
 
     run: function () {

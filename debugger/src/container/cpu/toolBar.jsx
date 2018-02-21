@@ -62,19 +62,25 @@ class component extends React.Component {
 
     run() {
         let nes = window.nes;
-        nes.runWithBreakPoints();
-        this.props.showPC();
+        nes.runWithBreakPoints(() => {
+                this.props.showPC();
+            }
+        );
+    }
+
+    stop() {
+        window.nes.isRunning = false;
     }
 
     render() {
         return (
             <div className="ToolBar">
                 <button title="reset(Ctrl+F2)" onClick={this.props.reset}>↻</button>
-                <button title="run(F9)" onClick={this.run.bind(this)}>▶</button>
+                <button title="run(F9)" onClick={this.run.bind(this)}>►</button>
+                <button title="stop(F9)" onClick={this.stop.bind(this)}>▣</button>
                 <button title="autoStep(Ctrl+F7)" onClick={this.autoStep.bind(this)}>⇊</button>
                 <button title="exitAutoStep(ESC)" onClick={this.exitAutoStep.bind(this)}>||</button>
                 <button title="stepIn(F7)" onClick={this.props.stepIn}>↓</button>
-                <input type="text"/>
             </div>
         )
     }

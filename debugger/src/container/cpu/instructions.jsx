@@ -8,8 +8,9 @@ class component extends React.PureComponent {
     constructor(props) {
         super(props);
         let nes = window.nes;
-        this.dump = nes.cpu.linearScanDisassembly([nes.cpu.read16(0XFFFA), nes.cpu.read16(0XFFFC), nes.cpu.read16(0XFFFE)]);
-        // this.dump = nes.cpu.linearScanDisassembly([0XC000]);
+        if (typeof(window.dump)==="undefined" || window.dump===null) {
+            window.dump = nes.cpu.linearScanDisassembly([nes.cpu.read16(0XFFFA), nes.cpu.read16(0XFFFC), nes.cpu.read16(0XFFFE)]);
+        }
         this.lastPC = util.sprintf("%04X", nes.cpu.PC);
     }
 
@@ -69,14 +70,14 @@ class component extends React.PureComponent {
                         <th className="Comment">Comment</th>
                     </tr>
                     </thead>
-                    {Object.keys(this.dump).map(key =>
+                    {Object.keys(window.dump).map(key =>
                         key !== this.lastPC ?
                             <tbody key={key} ref={key}>
                             <tr>
                                 <td className="Break"><input type="checkbox" name="Break" value={key} onChange={this.breakPoint.bind(this, key)}/></td>
                                 <td className="Address">{key}</td>
-                                <td className="HexDump">{this.dump[key].hexDump}</td>
-                                <td className="Disassembly">{this.dump[key].operator} {this.dump[key].opdata}</td>
+                                <td className="HexDump">{window.dump[key].hexDump}</td>
+                                <td className="Disassembly">{window.dump[key].operator} {window.dump[key].opdata}</td>
                                 <td className="Comment"><input type="text"/></td>
                             </tr>
                             </tbody> :
@@ -84,8 +85,8 @@ class component extends React.PureComponent {
                             <tr>
                                 <td className="Break"><input type="checkbox" name="Break" value={key} onChange={this.breakPoint.bind(this, key)}/></td>
                                 <td className="Address">{key}</td>
-                                <td className="HexDump">{this.dump[key].hexDump}</td>
-                                <td className="Disassembly">{this.dump[key].operator} {this.dump[key].opdata}</td>
+                                <td className="HexDump">{window.dump[key].hexDump}</td>
+                                <td className="Disassembly">{window.dump[key].operator} {window.dump[key].opdata}</td>
                                 <td className="Comment"><input type="text"/></td>
                             </tr>
                             </tbody>
