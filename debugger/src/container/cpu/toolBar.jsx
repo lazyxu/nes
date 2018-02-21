@@ -70,6 +70,7 @@ class component extends React.Component {
 
     stop() {
         window.nes.isRunning = false;
+        this.props.showPC();
     }
 
     render() {

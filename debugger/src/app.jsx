@@ -5,7 +5,7 @@ import {HashRouter, Route} from 'react-router-dom'
 
 import './app.scss'
 import cpu from './container/cpu/cpu'
-import ppu from './container/ppu'
+import ppu from './container/ppu/ppu'
 import apu from './container/apu'
 import mem from './container/mem'
 import joystick from './container/joystick'

@@ -3,17 +3,23 @@
   .Header {
     height: 30px;
     padding: 5px;
+    border-bottom: 1px solid black;
     .Link {
       margin-left: 4px;
       margin-right: 4px;
     }
   }
+  .ToolBar {
+    left: 0;
+    right: 0;
+    height: 30px;
+    padding: 8px;
+    border-bottom: 1px solid black;
+  }
   .FileSelector {
 
   }
   .INesInfo {
-    position: absolute;
-    top: 286px;
     width: 100%;
   }
 }

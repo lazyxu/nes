@@ -5,6 +5,7 @@ import {Link} from 'react-router-dom'
 import './common.scss'
 import FileSelector from './fileSelector'
 import INesInfo from './iNesInfo'
+import ToolBar from './toolBar'
 
 class component extends React.Component {
     constructor(props) {
@@ -22,6 +23,7 @@ class component extends React.Component {
                     <Link className="Link" to="/mem">mem</Link>
                     <Link className="Link" to="/joystick">joystick</Link>
                 </div>
+                <ToolBar/>
                 <FileSelector/>
                 {this.props.pc !== null ? <INesInfo/> : <div/>}
             </div>

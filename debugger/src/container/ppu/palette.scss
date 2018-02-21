@@ -1,0 +1,10 @@
+.Palette {
+  display: flex;
+  flex-wrap: wrap;
+  width: 288px;
+  .palette {
+    height: 16px;
+    width: 16px;
+    margin: 1px;
+  }
+}

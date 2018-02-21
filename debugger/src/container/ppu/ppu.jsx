@@ -1,5 +1,7 @@
 import React from 'react';
 
+import './ppu.scss'
+import Palette from './palette'
 
 export default class component extends React.Component {
     constructor(props) {
@@ -9,7 +11,7 @@ export default class component extends React.Component {
     render() {
         return (
             <div className="PPU">
-                ppu page
+                <Palette/>
             </div>
         )
     }

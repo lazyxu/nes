@@ -38,12 +38,21 @@ NES.prototype = {
         return cpuCycles;
     },
 
+    stepFrame: function () {
+        let cpuCycles = 0;
+        let frame = this.ppu.frame;
+        for (; frame === this.ppu.frame;) {
+            cpuCycles += this.step();
+        }
+        return cpuCycles;
+    },
+
     runWithBreakPoints: function (callback) {
         this.isRunning = true;
-        if (typeof(this.frameInterval)!=="undefined" && this.frameInterval !==null) {
+        if (typeof(this.frameInterval) !== "undefined" && this.frameInterval !== null) {
             clearInterval(this.frameInterval);
         }
-        this.frameInterval = setInterval(()=> {
+        this.frameInterval = setInterval(() => {
             this.step();
             if (this.isRunning === false || this.breakPoints.indexOf(this.cpu.PC) > -1) {
                 clearInterval(this.frameInterval);
@@ -51,13 +60,24 @@ NES.prototype = {
                 this.isRunning = false;
             }
             callback();
-        }, 1000/60);
+        }, 1000 / 60);
     },
 
-    run: function () {
-        for (; this.isRunning === true;) {
-            this.step();
+    run: function (callback) {
+        this.isRunning = true;
+        if (typeof(this.frameInterval) !== "undefined" && this.frameInterval !== null) {
+            clearInterval(this.frameInterval);
         }
+        this.frameInterval = setInterval(() => {
+            this.stepFrame();
+            if (this.isRunning === false) {
+                clearInterval(this.frameInterval);
+                this.frameInterval = null;
+            }
+            if (typeof(callback) === "function") {
+                callback();
+            }
+        }, 1000 / 60);
     },
 
     stop: function () {

@@ -44,7 +44,7 @@ Mapper.prototype = {
 
     read: function (address) {
         address &= 0xFFFF;
-        console.warn('mapper1 read', address.toString(16));
+        // console.warn('mapper1 read', address.toString(16));
         if (address < 0x2000) {
             return address < 0x1000 ?
                 this.nes.ines.chrRam[this.chrLowerBank * 0x1000] :
