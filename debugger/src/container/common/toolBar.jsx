@@ -3,7 +3,7 @@ import React from 'react';
 import './toolBar.scss'
 import {
     reset,
-    showPC
+    updateFrame
 } from "../../utils/actions";
 import {connect} from "react-redux";
 
@@ -15,14 +15,13 @@ class component extends React.Component {
     run() {
         let nes = window.nes;
         nes.run(() => {
-                this.props.showPC();
+                this.props.updateFrame();
             }
         );
     }
 
     stop() {
         window.nes.isRunning = false;
-        this.props.showPC();
     }
 
     render() {
@@ -42,4 +41,4 @@ function mapStateToProps(state) {
     }
 }
 
-export default connect(mapStateToProps, {reset, showPC})(component)
+export default connect(mapStateToProps, {reset, updateFrame})(component)

@@ -35,7 +35,7 @@ class component extends React.Component {
                 </tr>
                 <tr>
                     <td>PRG ROM</td>
-                    <td>{nes.ines.prgRom.length}</td>
+                    <td>{nes.ines.prgRom === null ? 0 : nes.ines.prgRom.length}</td>
                 </tr>
                 </tbody>
             </table>

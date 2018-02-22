@@ -1,17 +1,22 @@
 import {combineReducers} from 'redux'
 import {
-    newPC,
-    CPU_EXIT,
-    CPU_RESTART,
-    CPU_RUN,
-    CPU_STOP,
-    INES_LOADED
+    SET_PC,
+    SET_FRAME
 } from './actions'
 
-function pc(state = null, action) {
+function pc(state = 0, action) {
     switch (action.type) {
-        case newPC:
+        case SET_PC:
             return action.PC;
+        default:
+            return state;
+    }
+}
+
+function frame(state = 0, action) {
+    switch (action.type) {
+        case SET_FRAME:
+            return action.frame;
         default:
             return state;
     }
@@ -19,4 +24,5 @@ function pc(state = null, action) {
 
 export default combineReducers({
     pc,
+    frame,
 })

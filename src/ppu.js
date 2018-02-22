@@ -31,13 +31,13 @@ let PPU = function (nes) {
     this.nes = nes;
     this.cycle = 0;    // 0-340
     this.scanLine = 0; // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
-    this.back = new Array(340);
+    this.back = new Array(256);
     for (i=0;i<this.back.length;i++) {
-        this.back[i] = new Array(260);
+        this.back[i] = new Array(240);
     }
-    this.front = new Array(340);
+    this.front = new Array(256);
     for (i=0;i<this.front.length;i++) {
-        this.front[i] = new Array(260);
+        this.front[i] = new Array(240);
     }
     this.frame = 0;    // frame counter
     this.paletteIndex = new Array(0x20); //  the image palette ($3F00-$3F0F) and the sprite palette ($3F10-$3F1F)
@@ -468,7 +468,7 @@ PPU.prototype = {
     },
 
     read: function (address) {
-        console.warn('ppu read', address.toString(16));
+        // console.warn('ppu read', address.toString(16));
         address = address % 0x4000;
         if (address < 0x2000) {
             return this.nes.mapper.read(address);
@@ -484,7 +484,7 @@ PPU.prototype = {
     },
 
     write: function (address, value) {
-        console.warn('ppu write', address.toString(16), value.toString(16));
+        // console.warn('ppu write', address.toString(16), value.toString(16));
         address = address % 0x4000;
         if (address < 0x2000) {
             this.nes.mapper.write(address, value);
@@ -503,7 +503,7 @@ PPU.prototype = {
     },
 
     readRegister: function (address) {
-        console.warn('ppu register read', address.toString(16));
+        // console.warn('ppu register read', address.toString(16));
         switch (address) {
             case 0x2000:
                 throw new Error("invalid ppu register read at address: " + address.toString(16));
@@ -529,7 +529,7 @@ PPU.prototype = {
     },
 
     writeRegister: function (address, value) {
-        console.warn('ppu register write', address.toString(16), value.toString(16));
+        // console.warn('ppu register write', address.toString(16), value.toString(16));
         switch (address) {
             case 0x2000:
                 this.writeControl1(value);

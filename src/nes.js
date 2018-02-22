@@ -68,13 +68,14 @@ NES.prototype = {
         if (typeof(this.frameInterval) !== "undefined" && this.frameInterval !== null) {
             clearInterval(this.frameInterval);
         }
+        let callbackEnable = typeof(callback) === "function";
         this.frameInterval = setInterval(() => {
             this.stepFrame();
             if (this.isRunning === false) {
                 clearInterval(this.frameInterval);
                 this.frameInterval = null;
             }
-            if (typeof(callback) === "function") {
+            if (callbackEnable) {
                 callback();
             }
         }, 1000 / 60);

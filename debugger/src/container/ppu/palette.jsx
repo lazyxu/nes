@@ -11,7 +11,7 @@ class component extends React.Component {
             imagePalette: [],
             spritePalette: []
         };
-        this.PC = "0000";
+        this.frame = -1;
     }
 
     componentDidMount() {
@@ -20,14 +20,10 @@ class component extends React.Component {
 
     componentWillReceiveProps(nextProps) {
         let nes = window.nes;
-        if (nextProps.pc !== this.PC) {
+        if (nextProps.frame !== this.frame) {
             this.update();
-            this.PC = util.sprintf("%04X", nes.cpu.PC);
+            this.frame = nes.ppu.frame;
         }
-        // if (nextProps.frame !== this.frame) {
-        //     this.update();
-        //     this.frame = nes.ppu.frame;
-        // }
     }
 
     update() {
@@ -57,6 +53,7 @@ class component extends React.Component {
                         </div>
                     )
                 })}
+                {this.props.frame}
             </div>
         )
     }
@@ -64,7 +61,7 @@ class component extends React.Component {
 
 function mapStateToProps(state) {
     return {
-        pc: state.pc,
+        frame: state.frame,
     }
 }
 

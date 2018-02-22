@@ -4,7 +4,7 @@ import './toolBar.scss'
 import {
     stepIn,
     reset,
-    showPC
+    updatePC
 } from "../../utils/actions";
 import {connect} from "react-redux";
 
@@ -63,14 +63,14 @@ class component extends React.Component {
     run() {
         let nes = window.nes;
         nes.runWithBreakPoints(() => {
-                this.props.showPC();
+                this.props.updatePC();
             }
         );
     }
 
     stop() {
         window.nes.isRunning = false;
-        this.props.showPC();
+        this.props.updatePC();
     }
 
     render() {
@@ -93,4 +93,4 @@ function mapStateToProps(state) {
     }
 }
 
-export default connect(mapStateToProps, {stepIn, reset, showPC})(component)
+export default connect(mapStateToProps, {stepIn, reset, updatePC})(component)
