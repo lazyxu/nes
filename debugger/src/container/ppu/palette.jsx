@@ -36,6 +36,10 @@ class component extends React.Component {
         });
     }
 
+    rgb(color) {
+        return 'rgb(' + ((color >> 16) & 0xff) + ', ' + ((color >> 8) & 0xff) + ', ' + (color & 0xff) + ')';
+    }
+
     render() {
         return (
             <div className="Palette">
@@ -44,7 +48,7 @@ class component extends React.Component {
                     {this.state.imagePalette.map((color, index) => {
                         return (
                             <div className="palette-square" key={index}
-                                 style={{backgroundColor: 'rgb(' + (color & 0xff) + ', ' + ((color >> 8) & 0xff) + ', ' + ((color >> 16) & 0xff) + ')'}}>
+                                 style={{backgroundColor: this.rgb(color)}}>
                             </div>
                         )
                     })}
@@ -54,7 +58,7 @@ class component extends React.Component {
                     {this.state.spritePalette.map((color, index) => {
                         return (
                             <div className="palette-square" key={index}
-                                 style={{backgroundColor: 'rgb(' + (color & 0xff) + ', ' + ((color >> 8) & 0xff) + ', ' + ((color >> 16) & 0xff) + ')'}}>
+                                 style={{backgroundColor: this.rgb(color)}}>
                             </div>
                         )
                     })}

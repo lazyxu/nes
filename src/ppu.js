@@ -468,7 +468,7 @@ PPU.prototype = {
     },
 
     read: function (address) {
-        // console.warn('ppu read', address.toString(16));
+        console.warn('ppu read', address.toString(16));
         address = address % 0x4000;
         if (address < 0x2000) {
             return this.nes.mapper.read(address);
@@ -484,7 +484,7 @@ PPU.prototype = {
     },
 
     write: function (address, value) {
-        // console.warn('ppu write', address.toString(16), value.toString(16));
+        console.warn('ppu write', address.toString(16), value.toString(16));
         address = address % 0x4000;
         if (address < 0x2000) {
             this.nes.mapper.write(address, value);
@@ -504,7 +504,7 @@ PPU.prototype = {
     },
 
     readRegister: function (address) {
-        // console.warn('ppu register read', address.toString(16));
+        console.warn('ppu register read', address.toString(16));
         switch (address) {
             case 0x2000:
                 throw new Error("invalid ppu register read at address: " + address.toString(16));
@@ -530,7 +530,7 @@ PPU.prototype = {
     },
 
     writeRegister: function (address, value) {
-        // console.warn('ppu register write', address.toString(16), value.toString(16));
+        console.warn('ppu register write', address.toString(16), value.toString(16));
         switch (address) {
             case 0x2000:
                 this.writeControl1(value);
