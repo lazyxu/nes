@@ -39,21 +39,27 @@ class component extends React.Component {
     render() {
         return (
             <div className="Palette">
-                {this.state.imagePalette.map((color, index) => {
-                    return (
-                        <div className="palette" key={index}
-                             style={{backgroundColor: 'rgb(' + (color & 0xff) + ', ' + ((color >> 8) & 0xff) + ', ' + ((color >> 16) & 0xff) + ')'}}>
-                        </div>
-                    )
-                })}
-                {this.state.spritePalette.map((color, index) => {
-                    return (
-                        <div className="palette" key={index}
-                             style={{backgroundColor: 'rgb(' + (color & 0xff) + ', ' + ((color >> 8) & 0xff) + ', ' + ((color >> 16) & 0xff) + ')'}}>
-                        </div>
-                    )
-                })}
-                {this.props.frame}
+                <p>background palette</p>
+                <div className="palette">
+                    {this.state.imagePalette.map((color, index) => {
+                        return (
+                            <div className="palette-square" key={index}
+                                 style={{backgroundColor: 'rgb(' + (color & 0xff) + ', ' + ((color >> 8) & 0xff) + ', ' + ((color >> 16) & 0xff) + ')'}}>
+                            </div>
+                        )
+                    })}
+                </div>
+                <p>sprite palette</p>
+                <div className="palette">
+                    {this.state.spritePalette.map((color, index) => {
+                        return (
+                            <div className="palette-square" key={index}
+                                 style={{backgroundColor: 'rgb(' + (color & 0xff) + ', ' + ((color >> 8) & 0xff) + ', ' + ((color >> 16) & 0xff) + ')'}}>
+                            </div>
+                        )
+                    })}
+                </div>
+                <p>{this.props.frame}</p>
             </div>
         )
     }

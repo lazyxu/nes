@@ -1,6 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
+import './screen.scss'
 class Screen extends React.Component {
 
     constructor(props) {
@@ -22,7 +23,7 @@ class Screen extends React.Component {
             for (let x = 0; x < 256; ++x) {
                 i = y * 256 + x;
                 // Convert pixel from NES BGR to canvas ABGR
-                this.buf32[i] = 0xFF000000 | nes.ppu.back[x][y]; // Full alpha
+                this.buf32[i] = 0xFF000000 | nes.ppu.front[x][y]; // Full alpha
             }
         }
         this.canvasImageData.data.set(this.buf8);
@@ -50,8 +51,9 @@ class Screen extends React.Component {
 
     render() {
         return (
-            <div>
-                <canvas ref='screen' className="Screen" width="256" height="240"/>
+            <div className="Screen">
+                <p>screen</p>
+                <canvas ref='screen' width="256" height="240"/>
             </div>
         )
     }

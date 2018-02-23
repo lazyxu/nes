@@ -496,6 +496,7 @@ PPU.prototype = {
             return;
         }
         if (address < 0x4000) {
+            // console.warn('ppu write', address.toString(16), value.toString(16));
             this.writePaletteIndex(address % 32, value);
             return;
         }
@@ -566,7 +567,7 @@ PPU.prototype = {
 
     // $2000: PPU Control Register 1
     writeControl1: function (value) {
-        value &= 0xF;
+        value &= 0xFF;
         // Bits 0-1 - Name table address, changes between the four name tables at $2000 (0), $2400 (1), $2800 (2) and $2C00 (3).
         this.flagNameTable = (value >> 0) & 3;
         // Bit 2 - Specifies amount to increment address by, either 1 if this is 0 or 32 if this is 1.
@@ -588,7 +589,7 @@ PPU.prototype = {
 
     // PPU Control Register 2
     writeControl2: function (value) {
-        value &= 0xF;
+        value &= 0xFF;
         // Bit 0 - Indicates whether the system is in colour (0) or monochrome mode (1),
         this.flagGrayscale = (value >> 0) & 1;
         // Bit 1 - Specifies whether to clip the background,
@@ -628,7 +629,7 @@ PPU.prototype = {
 
     // $2003: SPR-RAM Address Register:
     writeOAMAddress: function (value) {
-        value &= 0xF;
+        value &= 0xFF;
         // Holds the address in SPR-RAM to access on the next write to $2004.
         this.oamAddress = value
     },
@@ -641,7 +642,7 @@ PPU.prototype = {
 
     // $2004: OAMDATA (write) ???
     writeOAMData: function (value) {
-        value &= 0xF;
+        value &= 0xFF;
         this.oamData[this.oamAddress] = value;
         this.oamAddress++;
     },
