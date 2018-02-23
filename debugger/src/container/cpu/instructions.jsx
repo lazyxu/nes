@@ -72,19 +72,19 @@ class component extends React.PureComponent {
                     </thead>
                     {Object.keys(window.dump).map(key =>
                         key !== this.lastPC ?
-                            <tbody key={key} ref={key}>
+                            <tbody key={key} ref={window.dump[key].hexAddr}>
                             <tr>
-                                <td className="Break"><input type="checkbox" name="Break" value={key} onChange={this.breakPoint.bind(this, key)}/></td>
-                                <td className="Address">{key}</td>
+                                <td className="Break"><input type="checkbox" name="Break" value={window.dump[key].hexAddr} onChange={this.breakPoint.bind(this, window.dump[key].hexAddr)}/></td>
+                                <td className="Address">{window.dump[key].hexAddr}</td>
                                 <td className="HexDump">{window.dump[key].hexDump}</td>
                                 <td className="Disassembly">{window.dump[key].operator} {window.dump[key].opdata}</td>
                                 <td className="Comment"><input type="text"/></td>
                             </tr>
                             </tbody> :
-                            <tbody key={key} ref={key} style={{backgroundColor: "red"}}>
+                            <tbody key={key} ref={window.dump[key].hexAddr} style={{backgroundColor: "red"}}>
                             <tr>
-                                <td className="Break"><input type="checkbox" name="Break" value={key} onChange={this.breakPoint.bind(this, key)}/></td>
-                                <td className="Address">{key}</td>
+                                <td className="Break"><input type="checkbox" name="Break" value={window.dump[key].hexAddr} onChange={this.breakPoint.bind(this, window.dump[key].hexAddr)}/></td>
+                                <td className="Address">{window.dump[key].hexAddr}</td>
                                 <td className="HexDump">{window.dump[key].hexDump}</td>
                                 <td className="Disassembly">{window.dump[key].operator} {window.dump[key].opdata}</td>
                                 <td className="Comment"><input type="text"/></td>

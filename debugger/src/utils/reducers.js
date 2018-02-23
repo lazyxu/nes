@@ -4,7 +4,7 @@ import {
     SET_FRAME
 } from './actions'
 
-function pc(state = 0, action) {
+function pc(state = null, action) {
     switch (action.type) {
         case SET_PC:
             return action.PC;

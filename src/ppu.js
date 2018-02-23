@@ -581,9 +581,9 @@ PPU.prototype = {
         this.flagMasterSlave = (value >> 6) & 1;
         // Bit 7 - Indicates whether a NMI should occur upon V-Blank.
         this.nmiOutput = ((value >> 7) & 1) === 1;
-        // this.nmiChange();
-        // // t: ....BA.. ........ = d: ......BA
-        // this.t = (this.t & 0xF3FF) | ((value & 0x03) << 10);
+        this.nmiChange();
+        // t: ....BA.. ........ = d: ......BA
+        this.t = (this.t & 0xF3FF) | ((value & 0x03) << 10);
     },
 
     // PPU Control Register 2

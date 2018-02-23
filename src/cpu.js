@@ -235,8 +235,8 @@ CPU.prototype = {
         });
         for (let i = 0; i < start.length; i++) {
             let PC = start[i];
-            console.log("start", start[i].toString(16));
             let end = i === start.length - 1 ? 0xFFFA : start[i + 1];
+            console.log("from ", PC.toString(16), " to ", end.toString(16));
             for (; PC < end;) {
                 let opcode = this.read(PC);
                 let size = instructionSizes[opcode];
@@ -262,7 +262,8 @@ CPU.prototype = {
                 }
                 // console.log(util.sprintf("%04X: %8s %s %s", PC, hexDump, operator, opdata));
                 let hexAddr = util.sprintf("%04X", PC);
-                disasm[hexAddr] = {
+                disasm[PC] = {
+                    hexAddr,
                     hexDump,
                     operator,
                     opdata,
