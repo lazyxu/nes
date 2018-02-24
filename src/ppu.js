@@ -13,7 +13,8 @@ let mirrorLookup = [
 
 function mirrorAddress(mode, address) {
     address = (address - 0x2000) % 0x1000;
-    return 0x2000 + mirrorLookup[mode][address / 0x0400] * 0x0400 + address % 0x0400;
+    console.log(address, "->", 0x2000 + mirrorLookup[mode][Math.floor(address / 0x0400)] * 0x0400 + address % 0x0400);
+    return 0x2000 + mirrorLookup[mode][Math.floor(address / 0x0400)] * 0x0400 + address % 0x0400;
 }
 
 let PPU = function (nes) {
@@ -57,6 +58,8 @@ let PPU = function (nes) {
     this.spritePositions = new Array(8);
     this.spritePriorities = new Array(8);
     this.spriteIndexes = new Array(8);
+
+    this.flagBackgroundTable = 0;
 };
 
 PPU.prototype = {
@@ -492,6 +495,7 @@ PPU.prototype = {
             return;
         }
         if (address < 0x3F00) {
+            console.warn('ppu write', address.toString(16), value.toString(16));
             let mode = this.nes.ines.mirroring;
             this.nameTableData[mirrorAddress(mode, address) % 0x800] = value;
             return;

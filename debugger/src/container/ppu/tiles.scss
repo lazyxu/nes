@@ -1,14 +1,3 @@
 .Tiles {
   color: white;
-  .tiles{
-    display: flex;
-    flex-wrap: wrap;
-    width: 256px;
-    background-color: white;
-    .tile-square {
-      height: 8px;
-      width: 8px;
-      background-color: red;
-    }
-  }
 }

@@ -1,3 +1,29 @@
 .PPU {
   background-color: black;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  .Mirroring {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .Palette {
+    position: absolute;
+    left: 520px;
+    top: 0;
+    height: 100px;
+  }
+  .Tiles {
+    position: absolute;
+    left: 520px;
+    top: 100px;
+  }
+  .Screen {
+    position: absolute;
+    left: 520px;
+    top: 300px;
+  }
 }

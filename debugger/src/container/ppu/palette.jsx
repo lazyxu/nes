@@ -63,7 +63,6 @@ class component extends React.Component {
                         )
                     })}
                 </div>
-                <p>{this.props.frame}</p>
             </div>
         )
     }

@@ -3,6 +3,7 @@ import React from 'react';
 import './ppu.scss'
 import Palette from './palette'
 import Tiles from './tiles'
+import Mirroring from './mirroring'
 import Screen from './screen'
 import {connect} from "react-redux";
 
@@ -16,7 +17,8 @@ class component extends React.Component {
             <div className="PPU">
                 <Palette/>
                 <Tiles/>
-                <Screen/>
+                <Mirroring/>
+                {/*<Screen/>*/}
             </div>
         )
     }

@@ -11,7 +11,6 @@ class component extends React.Component {
     }
 
     componentDidMount() {
-        // this.update();
     }
 
     componentWillReceiveProps(nextProps) {
@@ -51,7 +50,7 @@ class component extends React.Component {
                     buf32[i * 8 + j] = 0xFF000000 |
                         nes.ppu.palette[
                         paletteOffset +
-                        nes.ppu.readPaletteIndex([(highTileByte >> 7) & 0b10 | (lowTileByte >> 8) & 1])
+                        nes.ppu.readPaletteIndex([(highTileByte >> 6) & 0b10 | (lowTileByte >> 7) & 1])
                             ];
                     lowTileByte <<= 1;
                     highTileByte <<= 1;
@@ -64,7 +63,6 @@ class component extends React.Component {
     }
 
     update() {
-        let nes = window.nes;
         this.renderTiles(true);
         this.renderTiles(false);
     }
