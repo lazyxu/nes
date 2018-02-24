@@ -8,10 +8,10 @@ class component extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            imagePalette: [],
+            backgroundPalette: [],
             spritePalette: []
         };
-        this.frame = -1;
+        this.frame = 0;
     }
 
     componentDidMount() {
@@ -28,10 +28,10 @@ class component extends React.Component {
 
     update() {
         let nes = window.nes;
-        let imagePalette = nes.ppu.readImagePalette();
-        let spritePalette = nes.ppu.readSpritePalette();
+        let backgroundPalette = nes.ppu.renderBackgroundPalette();
+        let spritePalette = nes.ppu.renderSpritePalette();
         this.setState({
-            imagePalette: imagePalette,
+            backgroundPalette: backgroundPalette,
             spritePalette: spritePalette
         });
     }
@@ -45,7 +45,7 @@ class component extends React.Component {
             <div className="Palette">
                 <p>background palette</p>
                 <div className="palette">
-                    {this.state.imagePalette.map((color, index) => {
+                    {this.state.backgroundPalette.map((color, index) => {
                         return (
                             <div className="palette-square" key={index}
                                  style={{backgroundColor: this.rgb(color)}}>

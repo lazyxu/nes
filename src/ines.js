@@ -121,13 +121,13 @@ INES.prototype = {
             this.chrRom = new Array(numChrRom);
             for (i = 0; i < numChrRom; i++) {
                 this.chrRom[i] = new Array(8192);
-                for (j = 0; j < 0x1000; j++) {
+                for (j = 0; j < 0x2000; j++) {
                     if (offset + j >= data.length) {
                         break;
                     }
                     this.chrRom[i][j] = data.charCodeAt(offset + j) & 0xff;
                 }
-                offset += 0x1000;
+                offset += 0x2000;
             }
         } else {
             this.chrRam = new Array(8192);
