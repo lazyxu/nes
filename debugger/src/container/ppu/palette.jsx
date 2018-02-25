@@ -37,7 +37,7 @@ class component extends React.Component {
     }
 
     rgb(color) {
-        return 'rgb(' + ((color >> 16) & 0xff) + ', ' + ((color >> 8) & 0xff) + ', ' + (color & 0xff) + ')';
+        return 'rgb(' + (color & 0xff) + ', ' + ((color >> 8) & 0xff) + ', ' + ((color >> 16) & 0xff) + ')';
     }
 
     render() {

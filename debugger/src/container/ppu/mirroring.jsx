@@ -44,39 +44,69 @@ class component extends React.Component {
     renderMirroring(index) {
         let nes = window.nes;
         let canvasContext = this.refs["L"].getContext('2d');
-        let canvasImageData = canvasContext.getImageData(0, 0, 8, 8);
+        let canvasImageData = canvasContext.getImageData(0, 0, 256, 240);
         let buf = new ArrayBuffer(canvasImageData.data.length);
         let buf8 = new Uint8ClampedArray(buf);
         let buf32 = new Uint32Array(buf);
         let nameTableAddress = 0x2000 + index * 0x400;
         let x = index % 2;
         let y = Math.floor(index / 2);
-        for (let i = 0; i < 32 * 30; i++) { // 32*30 tiles
-            // name table: 0x3c0
-            // attribute table: 0x40
-            let x1 = i % 32;
-            let y1 = Math.floor(i / 32);
-            let tileIndex = nes.ppu.read(nameTableAddress + i);
 
-            let tileAddress = 0x1000 * nes.ppu.flagBackgroundTable + 16 * tileIndex;
-            let highTwoBit = 0;
-            for (let j = 0; j < 8; j++) {
-                let lowTileByte = nes.ppu.read(tileAddress + j);
-                let highTileByte = nes.ppu.read(tileAddress + j + 8);
-                for (let k = 0; k < 8; k++) {
-                    buf32[j * 8 + k] = 0xFF000000 |
-                        nes.ppu.palette[
-                            nes.ppu.readPaletteIndex([highTwoBit | ((highTileByte >> 6) & 0b10) | ((lowTileByte >> 7) & 1)])
-                            ];
-                    lowTileByte <<= 1;
-                    highTileByte <<= 1;
+        // attribute table: 0x40
+        let attribute = new Array(16);
+        for (let i = 0; i < 16; i++) {
+            attribute[i] = new Array(16);
+        }
+        for (let y1 = 0; y1 < 8; y1++) {
+            for (let x1 = 0; x1 < 8; x1++) {
+                let address = nameTableAddress + 0x3c0 + y1 * 8 + x1;
+                let byte = nes.ppu.read(address);
+                attribute[2 * x1][2 * y1] = (byte << 2) & 0b1100;
+                attribute[2 * x1 + 1][2 * y1] = byte & 0b1100;
+                attribute[2 * x1][2 * y1 + 1] = (byte >> 2) & 0b1100;
+                attribute[2 * x1 + 1][2 * y1 + 1] = (byte >> 4) & 0b1100;
+                // console.log(byte.toString(2));
+                // console.log(attribute[2 * x1][2 * y1].toString(2));
+                // console.log(attribute[2 * x1][2 * y1 + 1].toString(2));
+                // console.log(attribute[2 * x1 + 1][2 * y1].toString(2));
+                // console.log(attribute[2 * x1 + 1][2 * y1 + 1].toString(2));
+            }
+        }
+
+        // name table: 0x3c0
+        for (let y1 = 0; y1 < 30; y1++) { // 32*30 tiles
+            for (let x1 = 0; x1 < 32; x1++) {
+                let base = (y1 * 8) * 256 + x1 * 8;
+                let tileIndex = nes.ppu.read(nameTableAddress + y1 * 32 + x1);
+
+                let tileAddress = 0x1000 * nes.ppu.flagBackgroundTable + 16 * tileIndex;
+                let highTwoBit = attribute[Math.floor(x1 / 2)][Math.floor(y1 / 2)];
+                // console.log(highTwoBit.toString(2));
+                for (let y2 = 0; y2 < 8; y2++) {
+                    let lowTileByte = nes.ppu.read(tileAddress + y2);
+                    let highTileByte = nes.ppu.read(tileAddress + y2 + 8);
+                    for (let x2 = 0; x2 < 8; x2++) {
+                        buf32[base + y2 * 256 + x2] = 0xFF000000 |
+                            nes.ppu.palette[
+                                nes.ppu.readPaletteIndex([
+                                    highTwoBit & 0b1100 |
+                                    (highTileByte >> 6) & 0b10 |
+                                    (lowTileByte >> 7) & 1])
+                                ];
+                        lowTileByte <<= 1;
+                        highTileByte <<= 1;
+                        if (nes.ppu.frame > 30 && x2 === 0 && y2 === 0) {
+                            console.log(x1, y1,
+                                highTwoBit & 0b1100 |
+                                (highTileByte >> 6) & 0b10 |
+                                (lowTileByte >> 7) & 1)
+                        }
+                    }
                 }
             }
-            // console.log(x, y, (tileAddress + i).toString(16), tileIndex);
-            // console.log(buf32);
-            canvasImageData.data.set(buf8);
-            canvasContext.putImageData(canvasImageData, x * 257 + x1 * 8, y * 241 + y1 * 8);
         }
+        canvasImageData.data.set(buf8);
+        canvasContext.putImageData(canvasImageData, x * 257, y * 241);
     }
 
     update() {

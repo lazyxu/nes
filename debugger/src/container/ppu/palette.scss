@@ -2,8 +2,8 @@
   color: white;
   .palette{
     display: flex;
-    flex-wrap: unset;
-    width: 273px;
+    flex-wrap: wrap;
+    width: 69px;
     background-color: white;
     padding: 1px 0 0 1px;
     .palette-square {
