@@ -21,26 +21,6 @@ class component extends React.Component {
         }
     }
 
-    renderTile(tileIndex, highTwoBit) {
-        let nes = window.nes;
-        let table = nes.ppu.flagBackgroundTable;
-        let address = 0x1000 * table + 16 * tileIndex;
-        let tile = [];
-        for (let i = 0; i < 8; i++) {
-            let lowTileByte = nes.ppu.read(address + i);
-            let highTileByte = nes.ppu.read(address + i + 8);
-            for (let j = 0; j < 8; j++) {
-                tile[i * 8 + j] = 0xFF000000 |
-                    nes.ppu.palette[
-                        nes.ppu.readPaletteIndex([highTwoBit | ((highTileByte >> 7) & 0b10) | ((lowTileByte >> 8) & 1)])
-                        ];
-                lowTileByte <<= 1;
-                highTileByte <<= 1;
-            }
-        }
-        return tile;
-    }
-
     renderMirroring(index) {
         let nes = window.nes;
         let canvasContext = this.refs["L"].getContext('2d');
@@ -65,11 +45,6 @@ class component extends React.Component {
                 attribute[2 * x1 + 1][2 * y1] = byte & 0b1100;
                 attribute[2 * x1][2 * y1 + 1] = (byte >> 2) & 0b1100;
                 attribute[2 * x1 + 1][2 * y1 + 1] = (byte >> 4) & 0b1100;
-                // console.log(byte.toString(2));
-                // console.log(attribute[2 * x1][2 * y1].toString(2));
-                // console.log(attribute[2 * x1][2 * y1 + 1].toString(2));
-                // console.log(attribute[2 * x1 + 1][2 * y1].toString(2));
-                // console.log(attribute[2 * x1 + 1][2 * y1 + 1].toString(2));
             }
         }
 
@@ -81,26 +56,25 @@ class component extends React.Component {
 
                 let tileAddress = 0x1000 * nes.ppu.flagBackgroundTable + 16 * tileIndex;
                 let highTwoBit = attribute[Math.floor(x1 / 2)][Math.floor(y1 / 2)];
-                // console.log(highTwoBit.toString(2));
                 for (let y2 = 0; y2 < 8; y2++) {
                     let lowTileByte = nes.ppu.read(tileAddress + y2);
                     let highTileByte = nes.ppu.read(tileAddress + y2 + 8);
                     for (let x2 = 0; x2 < 8; x2++) {
                         buf32[base + y2 * 256 + x2] = 0xFF000000 |
                             nes.ppu.palette[
-                                nes.ppu.readPaletteIndex([
+                                nes.ppu.readPaletteIndex(
                                     highTwoBit & 0b1100 |
                                     (highTileByte >> 6) & 0b10 |
-                                    (lowTileByte >> 7) & 1])
+                                    (lowTileByte >> 7) & 1)
                                 ];
                         lowTileByte <<= 1;
                         highTileByte <<= 1;
-                        if (nes.ppu.frame > 30 && x2 === 0 && y2 === 0) {
-                            console.log(x1, y1,
-                                highTwoBit & 0b1100 |
-                                (highTileByte >> 6) & 0b10 |
-                                (lowTileByte >> 7) & 1)
-                        }
+                        // if (nes.ppu.frame > 30 && x2 === 0 && y2 === 0) {
+                        //     console.log(x1, y1,
+                        //         highTwoBit & 0b1100 |
+                        //         (highTileByte >> 6) & 0b10 |
+                        //         (lowTileByte >> 7) & 1)
+                        // }
                     }
                 }
             }
@@ -122,6 +96,7 @@ class component extends React.Component {
                 <div className="mirroring">
                     <canvas ref='L' width="512" height="480"/>
                 </div>
+                <p>{this.props.frame}</p>
             </div>
         )
     }

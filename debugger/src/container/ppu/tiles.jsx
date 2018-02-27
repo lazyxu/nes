@@ -49,8 +49,8 @@ class component extends React.Component {
                 for (let j = 0; j < 8; j++) {
                     buf32[i * 8 + j] = 0xFF000000 |
                         nes.ppu.palette[
-                        paletteOffset +
-                        nes.ppu.readPaletteIndex([(highTileByte >> 6) & 0b10 | (lowTileByte >> 7) & 1])
+                            nes.ppu.readPaletteIndex(
+                                paletteOffset + ((highTileByte >> 6) & 0b10 | (lowTileByte >> 7) & 1))
                             ];
                     lowTileByte <<= 1;
                     highTileByte <<= 1;
@@ -74,7 +74,6 @@ class component extends React.Component {
                 <canvas ref='backgroundTiles' width="256" height="64"/>
                 <p>sprite tiles</p>
                 <canvas ref='spriteTiles' width="256" height="64"/>
-                <p>{this.props.frame}</p>
             </div>
         )
     }

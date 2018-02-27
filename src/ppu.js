@@ -38,7 +38,7 @@ let PPU = function (nes) {
     for (i = 0; i < this.nameTableData.length; i++) {
         this.nameTableData[i] = 0;
     }
-    this.oamData = new Array(0x100);
+    this.oamData = new Array(0x100); // SPR-RAM
     for (i = 0; i < this.oamData.length; i++) {
         this.oamData[i] = 0;
     }
