@@ -499,6 +499,7 @@ CPU.prototype = {
         address &= 0xFFFF;
         // console.warn('cpu memory read', address.toString(16));
         if (address < 0x2000) {
+            // console.warn('cpu memory read', address.toString(16));
             return this.ram[address % 0x800];
         }
         if (address < 0x4000) {
@@ -528,6 +529,7 @@ CPU.prototype = {
         value &= 0xff;
         // console.warn('cpu memory write', address.toString(16), value.toString(16));
         if (address < 0x2000) {
+            console.warn('cpu memory write', address.toString(16), value.toString(16));
             this.ram[address % 0x800] = value;
             return;
         }

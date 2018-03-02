@@ -47,8 +47,8 @@ Mapper.prototype = {
         // console.warn('mapper1 read', address.toString(16));
         if (address < 0x2000) {
             return address < 0x1000 ?
-                this.nes.ines.chrRam[this.chrLowerBank * 0x1000] :
-                this.nes.ines.chrRam[this.chrUpperBank * 0x1000];
+                this.nes.ines.chrRom[this.chrLowerBank * 0x1000] :
+                this.nes.ines.chrRom[this.chrUpperBank * 0x1000];
         }
         if (address >= 0xc000) {
             return this.nes.ines.prgRom[this.prgRomUpperBank][address - 0xc000] & 0xff;
@@ -69,9 +69,9 @@ Mapper.prototype = {
         // console.warn('mapper1 write', address.toString(16), value.toString(16));
         if (address < 0x2000) {
             if (address < 0x1000) {
-                this.nes.ines.chrRam[this.chrLowerBank * 0x1000] = value;
+                this.nes.ines.chrRom[this.chrLowerBank * 0x1000] = value;
             } else {
-                this.nes.ines.chrRam[this.chrUpperBank * 0x1000] = value;
+                this.nes.ines.chrRom[this.chrUpperBank * 0x1000] = value;
             }
             return;
         }

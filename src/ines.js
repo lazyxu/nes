@@ -116,7 +116,7 @@ INES.prototype = {
             offset += 0x4000;
         }
 
-        if (numChrRom!==0) {
+        if (numChrRom !== 0) {
             // Load CHR-ROM banks:
             this.chrRom = new Array(numChrRom);
             for (i = 0; i < numChrRom; i++) {

@@ -494,13 +494,11 @@ PPU.prototype = {
             return;
         }
         if (address < 0x3F00) {
-            console.warn('ppu write', address.toString(16), value.toString(16));
             let mode = this.nes.ines.mirroring;
             this.nameTableData[mirrorAddress(mode, address) % 0x800] = value;
             return;
         }
         if (address < 0x4000) {
-            // console.warn('ppu write', address.toString(16), value.toString(16));
             this.writePaletteIndex(address % 0x20, value);
             return;
         }
@@ -534,7 +532,7 @@ PPU.prototype = {
     },
 
     writeRegister: function (address, value) {
-        // console.warn('ppu register write', address.toString(16), value.toString(16));
+        console.warn('ppu register write', address.toString(16), value.toString(16));
         switch (address) {
             case 0x2000:
                 this.writeControl1(value);
