@@ -24,12 +24,17 @@ class component extends React.Component {
         window.nes.isRunning = false;
     }
 
+    exit() {
+        window.nes.reset();
+    }
+
     render() {
         return (
             <div className="ToolBar">
                 <button title="reset(Ctrl+F2)" onClick={this.props.reset}>↻</button>
                 <button title="run" onClick={this.run.bind(this)}>►</button>
-                <button title="stop" onClick={this.stop.bind(this)}>▣</button>
+                <button title="stop" onClick={this.stop.bind(this)}>||</button>
+                <button title="exit" onClick={this.exit.bind(this)}>▣</button>
             </div>
         )
     }

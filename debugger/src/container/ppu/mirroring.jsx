@@ -80,7 +80,7 @@ class component extends React.Component {
             }
         }
         canvasImageData.data.set(buf8);
-        canvasContext.putImageData(canvasImageData, x * 257, y * 241);
+        canvasContext.putImageData(canvasImageData, 1 + x * 256, 1 + y * 240);
     }
 
     update() {
@@ -94,9 +94,8 @@ class component extends React.Component {
             <div className="Mirroring">
                 <p>mirroring tables</p>
                 <div className="mirroring">
-                    <canvas ref='L' width="512" height="480"/>
+                    <canvas ref='L' width="514" height="482"/>
                 </div>
-                <p>{this.props.frame}</p>
             </div>
         )
     }

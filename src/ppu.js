@@ -22,11 +22,11 @@ let PPU = function (nes) {
     this.cycle = 0;    // 0-340
     this.scanLine = 0; // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
     this.back = new Array(256);
-    for (i=0;i<this.back.length;i++) {
+    for (i = 0; i < this.back.length; i++) {
         this.back[i] = new Array(240);
     }
     this.front = new Array(256);
-    for (i=0;i<this.front.length;i++) {
+    for (i = 0; i < this.front.length; i++) {
         this.front[i] = new Array(240);
     }
     this.frame = 0;    // frame counter
@@ -42,11 +42,12 @@ let PPU = function (nes) {
     for (i = 0; i < this.oamData.length; i++) {
         this.oamData[i] = 0;
     }
+
     // PPU registers
-    this.v = 0; // current vram address (15 bit)
-    this.t = 0; // temporary vram address (15 bit)
-    this.x = 0; // fine x scroll (3 bit)
-    this.w = 0; // write toggle (1 bit)
+    this.vramAddress = 0; // current vram address (15 bit)
+    this.tmpVramAddress = 0; // temporary vram address (15 bit)
+    this.xScroll = 0; // fine x scroll (3 bit)
+    this.writeToggle = 0; // write toggle (1 bit)
     this.f = 0; // even/odd frame flag (1 bit)
 
     this.nmiDelay = 0;
@@ -72,7 +73,7 @@ PPU.prototype = {
         0xFFFFFF, 0xFFF2BE, 0xF8B8B8, 0xF8B8D8, 0xFFB6FF, 0xFFC3FF, 0xC7D1FF, 0x9ADAFF,
         0x88EDF8, 0x83FFDD, 0xB8F8B8, 0xF5F8AC, 0xFFFFB0, 0xF8D8F8, 0x000000, 0x000000
     ],
-    
+
     reset: function () {
         this.cycle = 340;
         this.scanLine = 240;
@@ -112,20 +113,20 @@ PPU.prototype = {
     },
 
     fetchNameTableByte: function () {
-        let v = this.v;
+        let v = this.vramAddress;
         let address = 0x2000 | (v & 0x0FFF);
         this.nameTableByte = this.read(address);
     },
 
     fetchAttributeTableByte: function () {
-        let v = this.v;
+        let v = this.vramAddress;
         let address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
         let shift = ((v >> 4) & 4) | (v & 2);
         this.attributeTableByte = ((this.read(address) >> shift) & 3) << 2;
     },
 
     fetchLowTileByte: function () {
-        let fineY = (this.v >> 12) & 7;
+        let fineY = (this.vramAddress >> 12) & 7;
         let table = this.flagBackgroundTable;
         let tile = this.nameTableByte;
         let address = 0x1000 * table + tile * 16 + fineY;
@@ -133,7 +134,7 @@ PPU.prototype = {
     },
 
     fetchHighTileByte: function () {
-        let fineY = (this.v >> 12) & 7;
+        let fineY = (this.vramAddress >> 12) & 7;
         let table = this.flagBackgroundTable;
         let tile = this.nameTableByte;
         let address = 0x1000 * table + tile * 16 + fineY;
@@ -162,7 +163,7 @@ PPU.prototype = {
         if (this.flagShowBackground === 0) {
             return 0;
         }
-        let data = this.fetchTileData() >> ((7 - this.x) * 4);
+        let data = this.fetchTileData() >> ((7 - this.xScroll) * 4);
         return data & 0x0F;
     },
 
@@ -170,22 +171,25 @@ PPU.prototype = {
         let x = this.cycle - 1;
         let y = this.scanLine;
         let background = this.backgroundPixel();
-        let i = 0, sprite = 0;
+        let index = 0, sprite = 0;
         // spritePixel
         if (this.flagShowSprites !== 0) {
             for (let i = 0; i < this.spriteCount; i++) {
                 let offset = (this.cycle - 1) - this.spritePositions[i];
                 if (offset < 0 || offset > 7) {
-                    continue
+                    continue;
                 }
                 offset = 7 - offset;
-                let color = this.spritePatterns[i] >> (offset * 4) & 0x0F;
+                let color = (this.spritePatterns[i] >> (offset * 4)) & 0x0F;
                 if (color % 4 === 0) {
-                    continue
+                    continue;
                 }
+                index = i;
+                sprite = color;
                 break;
             }
         }
+
         if (x < 8 && this.flagShowLeftBackground === 0) {
             background = 0;
         }
@@ -202,10 +206,10 @@ PPU.prototype = {
         } else if (b && !s) {
             color = background;
         } else {
-            if (this.spriteIndexes[i] === 0 && x < 255) {
+            if (this.spriteIndexes[index] === 0 && x < 255) {
                 this.flagSpriteZeroHit = 1;
             }
-            if (this.spritePriorities[i] === 0) {
+            if (this.spritePriorities[index] === 0) {
                 color = sprite | 0x10;
             } else {
                 color = background;
@@ -295,33 +299,33 @@ PPU.prototype = {
     incrementX: function () {
         // increment hori(v)
         // if coarse X == 31
-        if ((this.v & 0x001F) === 31) {
+        if ((this.vramAddress & 0x001F) === 31) {
             // coarse X = 0
-            this.v &= 0xFFE0;
+            this.vramAddress &= 0xFFE0;
             // switch horizontal nametable
-            this.v ^= 0x0400;
+            this.vramAddress ^= 0x0400;
         } else {
             // increment coarse X
-            this.v++;
+            this.vramAddress++;
         }
     },
 
     incrementY: function () {
         // increment vert(v)
         // if fine Y < 7
-        if ((this.v & 0x7000) !== 0x7000) {
+        if ((this.vramAddress & 0x7000) !== 0x7000) {
             // increment fine Y
-            this.v += 0x1000;
+            this.vramAddress += 0x1000;
         } else {
             // fine Y = 0
-            this.v &= 0x8FFF;
+            this.vramAddress &= 0x8FFF;
             // let y = coarse Y
-            let y = (this.v & 0x03E0) >> 5;
+            let y = (this.vramAddress & 0x03E0) >> 5;
             if (y === 29) {
                 // coarse Y = 0
                 y = 0;
                 // switch vertical nametable
-                this.v ^= 0x0800;
+                this.vramAddress ^= 0x0800;
             } else if (y === 31) {
                 // coarse Y = 0, nametable not switched
                 y = 0;
@@ -330,20 +334,20 @@ PPU.prototype = {
                 y++;
             }
             // put coarse Y back into v
-            this.v = (this.v & 0xFC1F) | (y << 5);
+            this.vramAddress = (this.vramAddress & 0xFC1F) | (y << 5);
         }
     },
 
     copyX: function () {
         // hori(v) = hori(t)
         // v: .....F.. ...EDCBA = t: .....F.. ...EDCBA
-        this.v = (this.v & 0xFBE0) | (this.t & 0x041F);
+        this.vramAddress = (this.vramAddress & 0xFBE0) | (this.tmpVramAddress & 0x041F);
     },
 
     copyY: function () {
         // vert(v) = vert(t)
         // v: .IHGF.ED CBA..... = t: .IHGF.ED CBA.....
-        this.v = (this.v & 0x841F) | (this.t & 0x7BE0);
+        this.vramAddress = (this.vramAddress & 0x841F) | (this.tmpVramAddress & 0x7BE0);
     },
 
     step: function () {
@@ -431,10 +435,10 @@ PPU.prototype = {
     },
 
     setVerticalBlank: function () {
-        let temp;
-        temp = this.front;
-        this.front = this.back;
-        this.back = temp;
+        // let temp;
+        // temp = this.front;
+        // this.front = this.back;
+        // this.back = temp;
         this.nmiOccurred = true;
         this.nmiChange();
     },
@@ -532,7 +536,7 @@ PPU.prototype = {
     },
 
     writeRegister: function (address, value) {
-        console.warn('ppu register write', address.toString(16), value.toString(16));
+        // console.warn('ppu register write', address.toString(16), value.toString(16));
         switch (address) {
             case 0x2000:
                 this.writeControl1(value);
@@ -586,7 +590,7 @@ PPU.prototype = {
         this.nmiOutput = ((value >> 7) & 1) === 1;
         this.nmiChange();
         // t: ....BA.. ........ = d: ......BA
-        this.t = (this.t & 0xF3FF) | ((value & 0x03) << 10);
+        this.tmpVramAddress = (this.tmpVramAddress & 0xF3FF) | ((value & 0x03) << 10);
     },
 
     // PPU Control Register 2
@@ -625,7 +629,7 @@ PPU.prototype = {
         this.nmiOccurred = false;
         this.nmiChange();
         // w:                   = 0
-        this.w = 0;
+        this.writeToggle = 0;
         return result;
     },
 
@@ -652,68 +656,68 @@ PPU.prototype = {
     // $2005: VRAM Address Register 1.
     writeScroll: function (value) {
         value &= 0xff;
-        if (this.w === 0) {
+        if (this.writeToggle === 0) {
             // t: ........ ...HGFED = d: HGFED...
             // x:               CBA = d: .....CBA
             // w:                   = 1
-            this.t = (this.t & 0xFFE0) | (value >> 3);
-            this.x = value & 0x07;
-            this.w = 1;
+            this.tmpVramAddress = (this.tmpVramAddress & 0xFFE0) | (value >> 3);
+            this.xScroll = value & 0x07;
+            this.writeToggle = 1;
         } else {
             // t: .CBA..HG FED..... = d: HGFEDCBA
             // w:                   = 0
-            this.t = (this.t & 0x8FFF) | ((value & 0x07) << 12);
-            this.t = (this.t & 0xFC1F) | ((value & 0xF8) << 2);
-            this.w = 0;
+            this.tmpVramAddress = (this.tmpVramAddress & 0x8FFF) | ((value & 0x07) << 12);
+            this.tmpVramAddress = (this.tmpVramAddress & 0xFC1F) | ((value & 0xF8) << 2);
+            this.writeToggle = 0;
         }
     },
 
     // $2006: VRAM Address Register 2.
     writeAddress: function (value) {
-        if (this.w === 0) {
+        if (this.writeToggle === 0) {
             // t: ..FEDCBA ........ = d: ..FEDCBA
             // t: .X...... ........ = 0
             // w:                   = 1
-            this.t = (this.t & 0x80FF) | ((value & 0x3F) << 8);
-            this.w = 1;
+            this.tmpVramAddress = (this.tmpVramAddress & 0x80FF) | ((value & 0x3F) << 8);
+            this.writeToggle = 1;
         } else {
             // t: ........ HGFEDCBA = d: HGFEDCBA
             // v                    = t
             // w:                   = 0
-            this.t = (this.t & 0xFF00) | value;
-            this.v = this.t;
-            this.w = 0;
+            this.tmpVramAddress = (this.tmpVramAddress & 0xFF00) | value;
+            this.vramAddress = this.tmpVramAddress;
+            this.writeToggle = 0;
         }
     },
 
     // $2007: VRAM I/O Register (read)
     // Reads or writes a byte from VRAM at the current address.
     readData: function () {
-        let value = this.read(this.v);
+        let value = this.read(this.vramAddress);
         // emulate buffered reads
-        if (this.v % 0x4000 < 0x3F00) {
+        if (this.vramAddress % 0x4000 < 0x3F00) {
             let buffered = this.bufferedData;
             this.bufferedData = value;
             value = buffered;
         } else {
-            this.bufferedData = this.read(this.v - 0x1000);
+            this.bufferedData = this.read(this.vramAddress - 0x1000);
         }
         // increment address
         if (this.flagIncrement === 0) {
-            this.v += 1;
+            this.vramAddress += 1;
         } else {
-            this.v += 32;
+            this.vramAddress += 32;
         }
         return value;
     },
 
     // $2007: VRAM I/O Register (write)
     writeData: function (value) {
-        this.write(this.v, value);
+        this.write(this.vramAddress, value);
         if (this.flagIncrement === 0) {
-            this.v += 1;
+            this.vramAddress += 1;
         } else {
-            this.v += 32;
+            this.vramAddress += 32;
         }
     },
 

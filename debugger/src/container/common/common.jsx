@@ -6,6 +6,7 @@ import './common.scss'
 import FileSelector from './fileSelector'
 import INesInfo from './iNesInfo'
 import ToolBar from './toolBar'
+import Screen from "./screen";
 
 class component extends React.Component {
     constructor(props) {
@@ -25,6 +26,7 @@ class component extends React.Component {
                 </div>
                 <ToolBar/>
                 <FileSelector/>
+                <Screen/>
                 {this.props.pc !== null ? <INesInfo/> : <div/>}
             </div>
         )

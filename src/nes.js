@@ -11,12 +11,12 @@ let NES = function () {
     this.ines = new INES();
     this.cpu = new CPU(this);
     this.ppu = new PPU(this);
-    this.isRunning = false;
     this.breakPoints = [];
 };
 
 NES.prototype = {
     reset: function () {
+        this.stop();
         this.cpu.reset();
         this.ppu.reset();
     },
@@ -47,50 +47,39 @@ NES.prototype = {
         return cpuCycles;
     },
 
-    runWithBreakPoints: function (callback) {
-        this.isRunning = true;
+    stop: function () {
         if (typeof(this.frameInterval) !== "undefined" && this.frameInterval !== null) {
             clearInterval(this.frameInterval);
         }
+        this.frameInterval = null;
+        this.isRunning = false;
+    },
+
+    runWithBreakPoints: function (callback) {
+        this.stop();
+        this.isRunning = true;
         this.frameInterval = setInterval(() => {
             this.step();
             if (this.isRunning === false || this.breakPoints.indexOf(this.cpu.PC) > -1) {
-                clearInterval(this.frameInterval);
-                this.frameInterval = null;
-                this.isRunning = false;
+                this.stop();
             }
             callback();
         }, 1000 / 60);
     },
 
     run: function (callback) {
+        this.stop();
         this.isRunning = true;
-        if (typeof(this.frameInterval) !== "undefined" && this.frameInterval !== null) {
-            clearInterval(this.frameInterval);
-        }
         let callbackEnable = typeof(callback) === "function";
         this.frameInterval = setInterval(() => {
             this.stepFrame();
             if (this.isRunning === false) {
-                clearInterval(this.frameInterval);
-                this.frameInterval = null;
+                this.stop();
             }
             if (callbackEnable) {
                 callback();
             }
         }, 1000 / 60);
-    },
-
-    stop: function () {
-        this.isRunning = false;
-    },
-
-    continue: function () {
-        this.isRunning = true;
-    },
-
-    exit: function () {
-
     },
 
     setMapper: function (mapperType) {

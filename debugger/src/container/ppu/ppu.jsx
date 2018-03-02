@@ -5,7 +5,7 @@ import Palette from './palette'
 import Tiles from './tiles'
 import Sprite from './sprite'
 import Mirroring from './mirroring'
-import Screen from './screen'
+import Data from './data'
 import {connect} from "react-redux";
 
 class component extends React.Component {
@@ -20,7 +20,7 @@ class component extends React.Component {
                 <Palette/>
                 <Tiles/>
                 <Sprite/>
-                {/*<Screen/>*/}
+                <Data/>
             </div>
         )
     }
