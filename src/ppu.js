@@ -320,21 +320,21 @@ PPU.prototype = {
             // fine Y = 0
             this.vramAddress &= 0x8FFF;
             // let y = coarse Y
-            let y = (this.vramAddress & 0x03E0) >> 5;
-            if (y === 29) {
+            let yScroll = (this.vramAddress & 0x03E0) >> 5;
+            if (yScroll === 29) {
                 // coarse Y = 0
-                y = 0;
+                yScroll = 0;
                 // switch vertical nametable
                 this.vramAddress ^= 0x0800;
-            } else if (y === 31) {
+            } else if (yScroll === 31) {
                 // coarse Y = 0, nametable not switched
-                y = 0;
+                yScroll = 0;
             } else {
                 // increment coarse Y
-                y++;
+                yScroll++;
             }
             // put coarse Y back into v
-            this.vramAddress = (this.vramAddress & 0xFC1F) | (y << 5);
+            this.vramAddress = (this.vramAddress & 0xFC1F) | (yScroll << 5);
         }
     },
 

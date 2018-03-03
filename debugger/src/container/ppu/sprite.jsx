@@ -35,30 +35,31 @@ class component extends React.Component {
         let buf8 = new Uint8ClampedArray(buf);
         let buf32 = new Uint32Array(buf);
 
-        let count = 0;
         for (let y1 = 3; y1 >= 0; y1--) { // 64 sprites 256 bytes
-            for (let x1 = 15; x1 >= 0; x1--) {
+            for (let x1 = 0; x1 < 16; x1++) {
                 let base = (y1 * 16 + x1) * 4;
                 let y2 = nes.ppu.oamData[base];
                 let tileIndex = nes.ppu.oamData[base + 1];
                 let attribute = nes.ppu.oamData[base + 2];
                 let x2 = nes.ppu.oamData[base + 3];
                 let highTwoBit = (attribute & 0b11) << 2;
-                let overBackground = (attribute >> 4) & 1;
-                let flipHorizontally = (attribute >> 5) & 1;
-                let flipVertically = (attribute >> 6) & 1;
+                let overBackground = (attribute >> 5) & 1;
+                let flipHorizontally = (attribute >> 6) & 1;
+                let flipVertically = (attribute >> 7) & 1;
 
                 let table = 1 - nes.ppu.flagBackgroundTable;
-                let paletteOffset = 0x10;
                 let address = 0x1000 * table + tileIndex * 16;
+                let paletteOffset = 0x10;
                 for (let i = 8 * 8; i < 8 * 16; i++) {
                     buf32[i] = 0;
                 }
-                for (let i = 0; i < 8; i++) {
-                    let lowTileByte = nes.ppu.read(address + i);
-                    let highTileByte = nes.ppu.read(address + i + 8);
-                    for (let j = 0; j < 8; j++) {
-                        buf32[i * 8 + j] = 0xFF000000 |
+                for (let y = 0; y < 8; y++) {
+                    let lowTileByte = nes.ppu.read(address + y);
+                    let highTileByte = nes.ppu.read(address + y + 8);
+                    for (let x = 0; x < 8; x++) {
+                        let index = flipVertically ? (7 - y) * 8 : y * 8;
+                        index += flipHorizontally ? (7 - x) : x;
+                        buf32[index] = 0xFF000000 |
                             nes.ppu.palette[
                                 nes.ppu.readPaletteIndex(
                                     paletteOffset + (
@@ -73,31 +74,18 @@ class component extends React.Component {
                 canvasImageData.data.set(buf8);
                 spriteRamContext.putImageData(canvasImageData, x1 * 16, y1 * 16);
 
-                if (this.flagSpriteSize === 0) {
-                    let address = 0x1000 * table + tileIndex * 16;
-                    let from_i = 0;
-                    let from_j = 0;
-                    if (flipHorizontally && flipVertically) {
-                        from_i = 7;
-                        from_j = 7;
-                    }
-                    if (flipHorizontally && !flipVertically) {
-                        from_i = 7;
-                        from_j = 0;
-                    }
-                    if (!flipHorizontally && flipVertically) {
-                        from_i = 0;
-                        from_j = 7;
-                    }
-                    if (!flipHorizontally && !flipVertically) {
-                        from_i = 0;
-                        from_j = 0;
-                    }
-                    for (let i = 0; i < 8; i++) {
-                        let lowTileByte = nes.ppu.read(address + i);
-                        let highTileByte = nes.ppu.read(address + i + 8);
-                        for (let j = 0; j < 8; j++) {
-                            buf32[i * 8 + j] = 0xFF000000 |
+                if (overBackground === 1) {
+                    continue;
+                }
+
+                if (nes.ppu.flagSpriteSize === 0) {
+                    for (let y = 0; y < 8; y++) {
+                        let lowTileByte = nes.ppu.read(address + y);
+                        let highTileByte = nes.ppu.read(address + y + 8);
+                        for (let x = 0; x < 8; x++) {
+                            let index = flipVertically ? (7 - y) * 8 : y * 8;
+                            index += flipHorizontally ? (7 - x) : x;
+                            buf32[index] = 0xFF000000 |
                                 nes.ppu.palette[
                                     nes.ppu.readPaletteIndex(
                                         paletteOffset + (
@@ -110,31 +98,15 @@ class component extends React.Component {
                         }
                     }
                 } else {
-                    table = (tileIndex & 1) === 1 ? 1 : 0;
-                    address = 0x1000 * table + (tileIndex & 0xFE) * 16;
-                    let from_i = 0;
-                    let from_j = 0;
-                    if (flipHorizontally && flipVertically) {
-                        from_i = 7;
-                        from_j = 7;
-                    }
-                    if (flipHorizontally && !flipVertically) {
-                        from_i = 7;
-                        from_j = 0;
-                    }
-                    if (!flipHorizontally && flipVertically) {
-                        from_i = 0;
-                        from_j = 7;
-                    }
-                    if (!flipHorizontally && !flipVertically) {
-                        from_i = 0;
-                        from_j = 0;
-                    }
-                    for (let i = from_i; i < 8 - from_i; from_i === 0 ? i++ : i--) {
-                        let lowTileByte = nes.ppu.read(address + i);
-                        let highTileByte = nes.ppu.read(address + i + 8);
-                        for (let j = from_j; j < 8 - from_j; from_j === 0 ? j++ : j--) {
-                            buf32[i * 8 + j] = 0xFF000000 |
+                    let table = (tileIndex & 1) === 1 ? 1 : 0;
+                    let address = 0x1000 * table + (tileIndex & 0xFE) * 16;
+                    for (let y = 0; y < 8; y++) {
+                        let lowTileByte = nes.ppu.read(address + y);
+                        let highTileByte = nes.ppu.read(address + y + 8);
+                        for (let x = 0; x < 8; x++) {
+                            let index = flipVertically ? (7 - y) * 8 : y * 8;
+                            index += flipHorizontally ? (7 - x) : x;
+                            buf32[index] = 0xFF000000 |
                                 nes.ppu.palette[
                                     nes.ppu.readPaletteIndex(
                                         paletteOffset + (
@@ -147,11 +119,13 @@ class component extends React.Component {
                         }
                     }
                     address += 16;
-                    for (let i = from_i; i < 8 - from_i; from_i === 0 ? i++ : i--) {
-                        let lowTileByte = nes.ppu.read(address + i);
-                        let highTileByte = nes.ppu.read(address + i + 8);
-                        for (let j = from_j; j < 8 - from_j; from_j === 0 ? j++ : j--) {
-                            buf32[i * 8 + j + 8 * 8] = 0xFF000000 |
+                    for (let y = 0; y < 8; y++) {
+                        let lowTileByte = nes.ppu.read(address + y);
+                        let highTileByte = nes.ppu.read(address + y + 8);
+                        for (let x = 0; x < 8; x++) {
+                            let index = flipVertically ? (7 - y) * 8 : y * 8;
+                            index += flipHorizontally ? (7 - x) : x;
+                            buf32[index] = 0xFF000000 |
                                 nes.ppu.palette[
                                     nes.ppu.readPaletteIndex(
                                         paletteOffset + (
