@@ -12,6 +12,8 @@ let NES = function () {
     this.cpu = new CPU(this);
     this.ppu = new PPU(this);
     this.breakPoints = [];
+    this.onEndFrame = function () {
+    };
 };
 
 NES.prototype = {
@@ -44,6 +46,7 @@ NES.prototype = {
         for (; frame === this.ppu.frame;) {
             cpuCycles += this.step();
         }
+        this.onEndFrame(this);
         return cpuCycles;
     },
 

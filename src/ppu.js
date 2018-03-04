@@ -21,13 +21,9 @@ let PPU = function (nes) {
     this.nes = nes;
     this.cycle = 0;    // 0-340
     this.scanLine = 0; // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
-    this.back = new Array(256);
-    for (i = 0; i < this.back.length; i++) {
-        this.back[i] = new Array(240);
-    }
-    this.front = new Array(256);
-    for (i = 0; i < this.front.length; i++) {
-        this.front[i] = new Array(240);
+    this.buffer = new Array(256);
+    for (i = 0; i < this.buffer.length; i++) {
+        this.buffer[i] = new Array(240);
     }
     this.frame = 0;    // frame counter
     this.paletteIndex = new Array(0x20); //  the image palette ($3F00-$3F0F) and the sprite palette ($3F10-$3F1F)
@@ -78,8 +74,8 @@ PPU.prototype = {
         this.cycle = 340;
         this.scanLine = 240;
         this.frame = 0;
-        this.writeControl1(0);
-        this.writeControl2(0);
+        this.writeController(0);
+        this.writeMask(0);
         this.writeOAMAddress(0);
     },
 
@@ -215,7 +211,7 @@ PPU.prototype = {
                 color = background;
             }
         }
-        this.back[x][y] = this.palette[this.readPaletteIndex(color) % 64];
+        this.buffer[x][y] = this.palette[this.readPaletteIndex(color) % 64];
     },
 
     fetchSpritePattern: function (i, row) {
@@ -435,10 +431,6 @@ PPU.prototype = {
     },
 
     setVerticalBlank: function () {
-        // let temp;
-        // temp = this.front;
-        // this.front = this.back;
-        // this.back = temp;
         this.nmiOccurred = true;
         this.nmiChange();
     },
@@ -448,32 +440,29 @@ PPU.prototype = {
         this.nmiChange();
     },
 
-    // $3F00-$3F0F: image palette
-    renderBackgroundPalette: function () {
-        let p = [];
-        for (let i = 0; i < 0x10; i++) {
-            p[i] = this.palette[this.readPaletteIndex(i)];
-        }
-        return p;
-    },
-
-    // $3F10-$3F1F: sprite palette
-    renderSpritePalette: function () {
-        let p = [];
-        for (let i = 0; i < 0x10; i++) {
-            p[i] = this.palette[this.readPaletteIndex(i + 0x10)];
-        }
-        return p;
-    },
-
+    /**
+     * Reads palette index by image(background)/sprite palette index.
+     * @param address: [0, 31].
+     * @returns {number}: [0, 63].
+     */
     readPaletteIndex: function (address) {
         return this.paletteIndex[address];
     },
 
+    /**
+     * Writes palette index by image(background)/sprite palette index.
+     * @param address: [0, 31].
+     * @param value: [0, 63].
+     */
     writePaletteIndex: function (address, value) {
         this.paletteIndex[address] = value;
     },
 
+    /**
+     * Reads PPU Memory.
+     * @param address: 32bit.
+     * @returns {number}: 16bit.
+     */
     read: function (address) {
         // console.warn('ppu read', address.toString(16));
         address = address % 0x4000;
@@ -490,6 +479,11 @@ PPU.prototype = {
         throw new Error("unhandled ppu memory read at address: " + address.toString(16));
     },
 
+    /**
+     * Writes PPU Memory.
+     * @param address: 32bit.
+     * @param value: 16bit.
+     */
     write: function (address, value) {
         // console.warn('ppu write', address.toString(16), value.toString(16));
         address = address % 0x4000;
@@ -509,6 +503,11 @@ PPU.prototype = {
         throw new Error("unhandled ppu memory write at address: " + address.toString(16));
     },
 
+    /**
+     * Reads PPU Register.
+     * @param address: 32bit.
+     * @returns {number}: 16bit.
+     */
     readRegister: function (address) {
         // console.warn('ppu register read', address.toString(16));
         switch (address) {
@@ -535,14 +534,21 @@ PPU.prototype = {
         }
     },
 
+    /**
+     * Writes PPU Register.
+     * @param address: 32bit.
+     * @param value: 16bit.
+     */
     writeRegister: function (address, value) {
         // console.warn('ppu register write', address.toString(16), value.toString(16));
+        value &= 0xFF;
+        this.register = value;
         switch (address) {
             case 0x2000:
-                this.writeControl1(value);
+                this.writeController(value);
                 return;
             case 0x2001:
-                this.writeControl2(value);
+                this.writeMask(value);
                 return;
             case 0x2002:
                 throw new Error("invalid ppu register write at address: " + address.toString(16));
@@ -552,8 +558,6 @@ PPU.prototype = {
             case 0x2004:
                 this.writeOAMData(value);
                 return;
-            // // ???
-            // throw new Error("invalid ppu register write at address: " + address.toString(16));
             case 0x2005:
                 this.writeScroll(value);
                 return;
@@ -564,15 +568,36 @@ PPU.prototype = {
                 this.writeData(value);
                 return;
             case 0x4014:
-                this.writeDMA(value);
+                this.write_OAM_DMA(value);
                 return;
             default:
                 throw new Error("unhandled ppu register write at address: " + address.toString(16));
         }
     },
 
-    // $2000: PPU Control Register 1
-    writeControl1: function (value) {
+    // TODO: this.nmiChange()
+    /**
+     * Controller ($2000) > write: PPU Control Register
+     *
+     7  bit  0
+     ---- ----
+     VPHB SINN
+     |||| ||||
+     |||| ||++- Base nametable address
+     |||| ||    (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
+     |||| |+--- VRAM address increment per CPU read/write of PPUDATA
+     |||| |     (0: add 1, going across; 1: add 32, going down)
+     |||| +---- Sprite pattern table address for 8x8 sprites
+     ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
+     |||+------ Background pattern table address (0: $0000; 1: $1000)
+     ||+------- Sprite size (0: 8x8; 1: 8x16)
+     |+-------- PPU master/slave select
+     |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
+     +--------- Generate an NMI at the start of the vertical blanking interval (0: off; 1: on)
+     *
+     * @param value: 16bit.
+     */
+    writeController: function (value) {
         value &= 0xFF;
         // Bits 0-1 - Name table address, changes between the four name tables at $2000 (0), $2400 (1), $2800 (2) and $2C00 (3).
         this.flagNameTable = (value >> 0) & 3;
@@ -588,13 +613,31 @@ PPU.prototype = {
         this.flagMasterSlave = (value >> 6) & 1;
         // Bit 7 - Indicates whether a NMI should occur upon V-Blank.
         this.nmiOutput = ((value >> 7) & 1) === 1;
+        // When turning on the NMI flag in bit 7, if the PPU is currently in vertical blank and the PPUSTATUS ($2002) vblank flag is set, an NMI will be generated immediately.
         this.nmiChange();
         // t: ....BA.. ........ = d: ......BA
         this.tmpVramAddress = (this.tmpVramAddress & 0xF3FF) | ((value & 0x03) << 10);
     },
 
-    // PPU Control Register 2
-    writeControl2: function (value) {
+    /**
+     * Mask ($2001) > write: PPU mask register.
+     *
+     7  bit  0
+     ---- ----
+     BGRs bMmG
+     |||| ||||
+     |||| |||+- Greyscale (0: normal color, 1: produce a greyscale display)
+     |||| ||+-- 1: Show background in leftmost 8 pixels of screen, 0: Hide
+     |||| |+--- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
+     |||| +---- 1: Show background
+     |||+------ 1: Show sprites
+     ||+------- Emphasize red*
+     |+-------- Emphasize green*
+     +--------- Emphasize blue*
+     *
+     * @param value: 16bit.
+     */
+    writeMask: function (value) {
         value &= 0xFF;
         // Bit 0 - Indicates whether the system is in colour (0) or monochrome mode (1),
         this.flagGrayscale = (value >> 0) & 1;
@@ -609,51 +652,67 @@ PPU.prototype = {
         // Bit 4 - If this is 0, sprites should not be displayed.
         this.flagShowSprites = (value >> 4) & 1;
         // Bits 5-7 - Indicates background colour in monochrome mode or colour intensity in colour mode.
-        this.flagRedTint = (value >> 5) & 1;
-        this.flagGreenTint = (value >> 6) & 1;
-        this.flagBlueTint = (value >> 7) & 1;
+        this.flagRedEmphasize = (value >> 5) & 1;
+        this.flagGreenEmphasize = (value >> 6) & 1;
+        this.flagBlueEmphasize = (value >> 7) & 1;
     },
 
-    // $2002: PPU Status Register:
+    /**
+     * Status ($2002) < read: PPU Status Register:
+     * @returns {number}: 16bit.
+     */
     readStatus: function () {
         // Bit 4 - If set, indicates that writes to VRAM should be ignored.
         // Bit 5 - Scanline sprite count, if set, indicates more than 8 sprites on the current scanline.
         // Bit 6 - Sprite 0 hit flag, set when a non-transparent pixel of sprite 0 overlaps a non-transparent background pixel.
         // Bit 7 - Indicates whether V-Blank is occurring.
-        let result = this.register & 0x1F;
-        result |= this.flagSpriteOverflow << 5;
-        result |= this.flagSpriteZeroHit << 6;
+        let value = this.register & 0x1F;
+        value |= this.flagSpriteOverflow << 5;
+        value |= this.flagSpriteZeroHit << 6;
+        // Reading the status register will clear D7 mentioned above and also the address latch used by PPUSCROLL and PPUADDR.
+        // It does not clear the sprite 0 hit or overflow bit.
         if (this.nmiOccurred) {
-            result |= 1 << 7;
+            value |= 1 << 7;
         }
         this.nmiOccurred = false;
         this.nmiChange();
         // w:                   = 0
         this.writeToggle = 0;
-        return result;
+        return value;
     },
 
-    // $2003: SPR-RAM Address Register:
+    /**
+     * OAM address ($2003) > write: SPR-RAM Address Register.
+     * Holds the address in SPR-RAM to access on the next write to $2004.
+     * @param value: 16bit.
+     */
     writeOAMAddress: function (value) {
-        value &= 0xFF;
-        // Holds the address in SPR-RAM to access on the next write to $2004.
-        this.oamAddress = value
+        this.oamAddress = value & 0xFF;
     },
 
-    // $2004: SPR-RAM I/O Register:
+    /**
+     * OAM data ($2004) <> read/write: SPR-RAM I/O Register.
+     * Reads a byte from SPR-RAM at the address indicated by $2003.
+     */
     readOAMData: function () {
-        // writes a byte to SPR-RAM at the address indicated by $2003.
         return this.oamData[this.oamAddress];
     },
 
-    // $2004: OAMDATA (write) ???
+    /**
+     * OAM data ($2004) <> read/write: SPR-RAM I/O Register.
+     * Writes a byte to SPR-RAM at the address indicated by $2003.
+     * @param value: 16bit.
+     */
     writeOAMData: function (value) {
-        value &= 0xFF;
-        this.oamData[this.oamAddress] = value;
+        this.oamData[this.oamAddress] = value & 0xFF;
         this.oamAddress++;
     },
 
-    // $2005: VRAM Address Register 1.
+    // TODO: this.tmpVramAddress
+    /**
+     * Scroll ($2005) >> write x2: VRAM Address Register 1.
+     * @param value: 16bit.
+     */
     writeScroll: function (value) {
         value &= 0xff;
         if (this.writeToggle === 0) {
@@ -672,7 +731,12 @@ PPU.prototype = {
         }
     },
 
-    // $2006: VRAM Address Register 2.
+    // TODO: this.tmpVramAddress
+    /**
+     * Address ($2006) >> write x2: VRAM Address Register 2.
+     * Since PPU memory uses 16-bit addresses but I/O registers are only 8-bit, two writes to $2006 are required to set the address required.
+     * @param value: 16 bit
+     */
     writeAddress: function (value) {
         if (this.writeToggle === 0) {
             // t: ..FEDCBA ........ = d: ..FEDCBA
@@ -690,43 +754,55 @@ PPU.prototype = {
         }
     },
 
-    // $2007: VRAM I/O Register (read)
-    // Reads or writes a byte from VRAM at the current address.
+    /**
+     * Data ($2007) <> read/write: VRAM I/O Register.
+     * Reads a byte from VRAM at the current address.
+     * The first read from $2007 is invalid and the data will actually be buffered and returned on the next read. This does not apply to colour palettes.
+     * Reading the palettes still updates the internal buffer though, but the data placed in it is the mirrored nametable data that would appear "underneath" the palette.
+     * @returns {number}: 16bit.
+     */
     readData: function () {
         let value = this.read(this.vramAddress);
-        // emulate buffered reads
         if (this.vramAddress % 0x4000 < 0x3F00) {
-            let buffered = this.bufferedData;
-            this.bufferedData = value;
+            let buffered = this.readBufferData;
+            this.readBufferData = value;
             value = buffered;
-        } else {
-            this.bufferedData = this.read(this.vramAddress - 0x1000);
+        } else { // palettes
+            this.readBufferData = this.read(this.vramAddress - 0x1000);
         }
-        // increment address
-        if (this.flagIncrement === 0) {
-            this.vramAddress += 1;
-        } else {
-            this.vramAddress += 32;
-        }
+        this.incrementVramAddress();
         return value;
     },
 
-    // $2007: VRAM I/O Register (write)
+    /**
+     * Data ($2007) <> read/write: VRAM I/O Register.
+     * Writes a byte to VRAM at the current address.
+     * @param value: 16 bit
+     */
     writeData: function (value) {
         this.write(this.vramAddress, value);
-        if (this.flagIncrement === 0) {
-            this.vramAddress += 1;
-        } else {
-            this.vramAddress += 32;
-        }
+        this.incrementVramAddress();
     },
 
-    // $4014: Sprite DMA Register
-    // Writes cause a DMA transfer to occur from CPU memory at address $100 x n, where n is the value written, to SPR-RAM.
-    writeDMA: function (value) {
+    /**
+     * After each read from or write to $2007, the address is incremented by either 1 or 32 as dictated by bit 2 of $2000.
+     */
+    incrementVramAddress: function () {
+        this.vramAddress += this.flagIncrement === 0 ? 1 : 32;
+    },
+
+    /**
+     * OAM DMA ($4014) > write: Sprite DMA Register.
+     * Writing $XX will upload 256 bytes of data from CPU page $XX00-$XXFF to the internal PPU OAM.
+     * This page is typically located in internal RAM, commonly $0200-$02FF, but cartridge RAM or ROM can be used as well.
+     * The CPU is suspended during the transfer, which will take 513 or 514 cycles after the $4014 write tick.
+     * (1 dummy read cycle while waiting for writes to complete, +1 if on an odd CPU cycle, then 256 alternating read/write cycles.)
+     * @param value: 16bit.
+     */
+    write_OAM_DMA: function (value) {
         let cpu = this.nes.cpu;
         let address = value << 8;
-        for (let i = 0; i < 256; i++) {
+        for (let i = 0; i < 256; i++) { // $XX00-$XXFF
             this.oamData[this.oamAddress] = cpu.read(address);
             this.oamAddress++;
             address++;

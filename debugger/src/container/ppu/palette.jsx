@@ -27,9 +27,20 @@ class component extends React.Component {
     }
 
     update() {
-        let nes = window.nes;
-        let backgroundPalette = nes.ppu.renderBackgroundPalette();
-        let spritePalette = nes.ppu.renderSpritePalette();
+        let i;
+        let ppu = window.nes.ppu;
+        // $3F00-$3F0F: image palette
+        let backgroundPalette = [];
+        for (i = 0; i < 0x10; i++) {
+            backgroundPalette[i] = ppu.palette[ppu.readPaletteIndex(i)];
+        }
+
+        // $3F10-$3F1F: sprite palette
+        let spritePalette = [];
+        for (i = 0; i < 0x10; i++) {
+            spritePalette[i] = ppu.palette[ppu.readPaletteIndex(i + 0x10)];
+        }
+
         this.setState({
             backgroundPalette: backgroundPalette,
             spritePalette: spritePalette

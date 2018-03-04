@@ -201,7 +201,7 @@ CPU.prototype = {
             operator === "RLA" ||
             operator === "SRE" ||
             operator === "RRA" ||
-            (opcode===0xEB)) {
+            (opcode === 0xEB)) {
             prefix = "*";
         }
         let opdata = this.opdataDisassembly(this.PC, mode);
@@ -407,19 +407,25 @@ CPU.prototype = {
 
     /* interrupt ---------------------------------------------------------------------------------------------------- */
 
-    // triggerNMI causes a non-maskable interrupt to occur on the next cycle
+    /**
+     * triggerNMI causes a Non-Maskable Interrupt to occur on the next cycle
+     */
     triggerNMI: function () {
         this.interrupt = interruptNMI;
     },
 
-    // triggerIRQ causes an IRQ interrupt to occur on the next cycle
+    /**
+     * triggerIRQ causes an IRQ interrupt to occur on the next cycle
+     */
     triggerIRQ: function () {
         if (this.I === 0) {
             this.interrupt = interruptIRQ;
         }
     },
 
-    // NMI - Non-Maskable Interrupt
+    /**
+     * NMI - Non-Maskable Interrupt
+     */
     nmi: function () {
         this.push16(this.PC);
         this.PHP(null);
@@ -428,7 +434,9 @@ CPU.prototype = {
         this.cycles += 7;
     },
 
-    // IRQ - IRQ Interrupt
+    /**
+     *  IRQ - IRQ Interrupt
+     */
     irq: function () {
         this.push16(this.PC);
         this.PHP(null);
@@ -437,7 +445,9 @@ CPU.prototype = {
         this.cycles += 7;
     },
 
-    // RESET - RESET Interrupt
+    /**
+     * RESET - RESET Interrupt
+     */
     RESET: function () {
         this.push16(this.PC);
         this.PHP(null);
