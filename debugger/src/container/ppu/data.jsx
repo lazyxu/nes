@@ -8,8 +8,8 @@ class component extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            tmpVramAddress: 0,
-            vramAddress:0,
+            t: 0,
+            v:0,
             flagSpriteSize: 0,
         };
         this.frame = 0;

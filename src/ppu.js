@@ -38,7 +38,11 @@ let PPU = function (nes) {
     for (i = 0; i < this.oamData.length; i++) {
         this.oamData[i] = 0;
     }
-
+    // used for debugger
+    this.debuggerScrollX = 0;
+    this.debuggerScrollY = 0;
+    this.debuggerNameTable = 0;
+    this.debuggerX = 0;
     // PPU registers
     /**
      * Current VRAM address (15 bits).
@@ -332,6 +336,7 @@ PPU.prototype = {
                 let address;
                 let v = this.v;
                 let table = this.flagBackgroundTable;
+                let tile = this.nameTableByte;
                 let fineY = (v >> 12) & 7;
                 switch (this.cycle % 8) {
                     case 1: // Nametable byte
@@ -344,11 +349,11 @@ PPU.prototype = {
                         this.attributeTableByte = ((this.read(address) >> shift) & 3) << 2;
                         break;
                     case 5: // Tile bitmap low
-                        address = 0x1000 * table + this.nameTableByte * 16 + fineY;
+                        address = 0x1000 * table + tile * 16 + fineY;
                         this.lowTileByte = this.read(address);
                         break;
                     case 7: // Tile bitmap high (+8 bytes from tile bitmap low)
-                        address = 0x1000 * table + this.nameTableByte * 16 + fineY;
+                        address = 0x1000 * table + tile * 16 + fineY;
                         this.highTileByte = this.read(address + 8);
                         break;
                     case 0:
@@ -414,6 +419,12 @@ PPU.prototype = {
             }
         }
 
+        if (this.cycle === 0 && this.scanLine === 239) {
+            this.debuggerScrollX = (this.v & 0b11111) - 1;
+            this.debuggerScrollY = (this.v >> 5) & 0b11111;
+            this.debuggerNameTable = (this.v >> 10) & 0b11;
+            this.debuggerX = this.x;
+        }
         // Post-render scanLine (240)
         // The PPU just idles during this scanLine.
         // Even though accessing PPU memory from the program would be safe here, the VBlank flag isn't set until after this scanLine.
@@ -822,6 +833,7 @@ PPU.prototype = {
 
     /**
      * After each read from or write to $2007, the address is incremented by either 1 or 32 as dictated by bit 2 of $2000.
+     * Outside of rendering.
      */
     incrementVramAddress: function () {
         this.v += this.flagIncrement === 0 ? 1 : 32;

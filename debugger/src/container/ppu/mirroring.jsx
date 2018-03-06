@@ -80,13 +80,30 @@ class component extends React.Component {
             }
         }
         canvasImageData.data.set(buf8);
-        canvasContext.putImageData(canvasImageData, 1 + x * 256, 1 + y * 240);
+        canvasContext.putImageData(canvasImageData, x * 256, y * 240);
     }
 
     update() {
+        let ppu = window.nes.ppu;
         for (let i = 0; i < 4; i++) {
             this.renderMirroring(i);
         }
+        let ctx = this.refs["L"].getContext('2d');
+        let x = ppu.debuggerScrollX * 8 + (ppu.debuggerNameTable & 1) * 256 + ppu.debuggerX;
+        let y = (ppu.debuggerScrollY - 29) * 8 + ((ppu.debuggerNameTable >> 1) & 1) * 240;
+        ctx.strokeStyle = "#00FF00";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 479);
+        ctx.moveTo(0, y);
+        ctx.lineTo(511, y);
+        ctx.moveTo((x+256)%512, 0);
+        ctx.lineTo((x+256)%512, 479);
+        ctx.moveTo(0, (y+240)%480);
+        ctx.lineTo(511, (y+240)%480);
+        ctx.stroke();
+        // ctx.closePath();
     }
 
     render() {
@@ -94,7 +111,7 @@ class component extends React.Component {
             <div className="Mirroring">
                 <p>mirroring tables</p>
                 <div className="mirroring">
-                    <canvas ref='L' width="514" height="482"/>
+                    <canvas ref='L' width="512" height="480"/>
                 </div>
             </div>
         )
