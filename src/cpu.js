@@ -425,6 +425,9 @@ CPU.prototype = {
 
     /**
      * NMI - Non-Maskable Interrupt
+     * "Non-maskable" means that no state inside the CPU can prevent the NMI from being processed as an interrupt.
+     * However, most boards that use a 6502 CPU's /NMI line allow the CPU to disable the generation of /NMI signals by writing to a memory-mapped I/O device.
+     * In the case of the NES, the /NMI line is connected to the NES PPU and is used to detect vertical blanking.
      */
     nmi: function () {
         this.push16(this.PC);

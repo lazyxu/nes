@@ -30,8 +30,8 @@ class component extends React.Component {
     update() {
         let nes = window.nes;
         this.setState({
-            tmpVramAddress: nes.ppu.tmpVramAddress,
-            vramAddress: nes.ppu.vramAddress,
+            t: nes.ppu.t,
+            v: nes.ppu.v,
             flagSpriteSize: nes.ppu.flagSpriteSize,
         });
     }
@@ -40,11 +40,11 @@ class component extends React.Component {
         return (
             <div className="Data">
                 <p>frame: {this.props.frame}</p>
-                <p>tmpVram addr: {util.sprintf("%016b", this.state.tmpVramAddress)}</p>
-                <p>vram address: {util.sprintf("%016b", this.state.vramAddress)}</p>
-                <p>y-offset: {util.sprintf("%d", (this.state.vramAddress >> 12) & 0b111)}</p>
-                <p>x-scroll: {util.sprintf("%d", this.state.vramAddress & 0b11111)}</p>
-                <p>y-scroll: {util.sprintf("%d", (this.state.vramAddress >> 5) & 0b11111)}</p>
+                <p>tmpVram addr: {util.sprintf("%016b", this.state.t)}</p>
+                <p>vram address: {util.sprintf("%016b", this.state.v)}</p>
+                <p>y-offset: {util.sprintf("%d", (this.state.v >> 12) & 0b111)}</p>
+                <p>x-scroll: {util.sprintf("%d", this.state.v & 0b11111)}</p>
+                <p>y-scroll: {util.sprintf("%d", (this.state.v >> 5) & 0b11111)}</p>
                 <p>flagSpriteSize: {util.sprintf("%d", this.state.flagSpriteSize)}</p>
             </div>
         )

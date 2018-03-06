@@ -40,11 +40,26 @@ let PPU = function (nes) {
     }
 
     // PPU registers
-    this.vramAddress = 0; // current vram address (15 bit)
-    this.tmpVramAddress = 0; // temporary vram address (15 bit)
-    this.xScroll = 0; // fine x scroll (3 bit)
-    this.writeToggle = 0; // write toggle (1 bit)
-    this.f = 0; // even/odd frame flag (1 bit)
+    /**
+     * Current VRAM address (15 bits).
+     * The PPU uses the current VRAM address for both reading and writing PPU memory thru $2007,
+     * and for fetching nametable data to draw the background. As it's drawing the background,
+     * it updates the address to point to the nametable data currently being drawn.
+     * Bits 10-11 hold the base address of the nametable minus $2000.
+     * Bits 12-14 are the Y offset of a scanline within a tile.
+     * The 15 bit registers t and v are composed this way during rendering:
+     yyy NN YYYYY XXXXX
+     ||| || ||||| +++++-- coarse X scroll
+     ||| || +++++-------- coarse Y scroll
+     ||| ++-------------- nametable select
+     +++----------------- fine Y scroll
+     */
+    this.v = 0;
+    this.t = 0; // Temporary VRAM address (15 bits); can also be thought of as the address of the top left onscreen tile.
+    this.x = 0; // Fine X scroll (3 bits)
+    this.w = 0; // First or second write toggle (1 bit)
+
+    this.oddFrameFlag = 0; // even/odd frame flag (1 bit), set if odd
 
     this.nmiDelay = 0;
 
@@ -79,7 +94,10 @@ PPU.prototype = {
         this.writeOAMAddress(0);
     },
 
-    // tick updates Cycle, ScanLine and Frame counters
+    // TODO: this.nmiDelay
+    /**
+     * Tick updates Cycle, ScanLine and Frame counters
+     */
     tick: function () {
         if (this.nmiDelay > 0) {
             this.nmiDelay--;
@@ -87,68 +105,30 @@ PPU.prototype = {
                 this.nes.cpu.triggerNMI();
             }
         }
+        // Pre-render scanLine (-1, 261): This scanLine varies in length, depending on whether an even or an odd frame is being rendered.
+        // For odd frames, the cycle at the end of the scanLine is skipped
+        // (this is done internally by jumping directly from (339,261) to (0,0),
+        // replacing the idle tick at the beginning of the first visible scanLine with the last tick of the last dummy nametable fetch).
+        // For even frames, the last cycle occurs normally.
         if (this.flagShowBackground !== 0 || this.flagShowSprites !== 0) {
-            if (this.f === 1 && this.scanLine === 261 && this.cycle === 339) {
+            if (this.oddFrameFlag === 1 && this.scanLine === 261 && this.cycle === 339) {
                 this.cycle = 0;
                 this.scanLine = 0;
                 this.frame++;
-                this.f ^= 1;
+                this.oddFrameFlag ^= 1;
                 return;
             }
         }
         this.cycle++;
-        if (this.cycle > 340) {
+        if (this.cycle > 340) { // [0,340]
             this.cycle = 0;
             this.scanLine++;
-            if (this.scanLine > 261) {
+            if (this.scanLine > 261) { // [0, 261]
                 this.scanLine = 0;
                 this.frame++;
-                this.f ^= 1;
+                this.oddFrameFlag ^= 1;
             }
         }
-    },
-
-    fetchNameTableByte: function () {
-        let v = this.vramAddress;
-        let address = 0x2000 | (v & 0x0FFF);
-        this.nameTableByte = this.read(address);
-    },
-
-    fetchAttributeTableByte: function () {
-        let v = this.vramAddress;
-        let address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
-        let shift = ((v >> 4) & 4) | (v & 2);
-        this.attributeTableByte = ((this.read(address) >> shift) & 3) << 2;
-    },
-
-    fetchLowTileByte: function () {
-        let fineY = (this.vramAddress >> 12) & 7;
-        let table = this.flagBackgroundTable;
-        let tile = this.nameTableByte;
-        let address = 0x1000 * table + tile * 16 + fineY;
-        this.lowTileByte = this.read(address);
-    },
-
-    fetchHighTileByte: function () {
-        let fineY = (this.vramAddress >> 12) & 7;
-        let table = this.flagBackgroundTable;
-        let tile = this.nameTableByte;
-        let address = 0x1000 * table + tile * 16 + fineY;
-        this.highTileByte = this.read(address + 8);
-    },
-
-    storeTileData: function () {
-        let data = 0;
-        for (let i = 0; i < 8; i++) {
-            let a = this.attributeTableByte;
-            let p1 = (this.lowTileByte & 0x80) >> 7;
-            let p2 = (this.highTileByte & 0x80) >> 6;
-            this.lowTileByte <<= 1;
-            this.highTileByte <<= 1;
-            data <<= 4;
-            data |= a | p1 | p2;
-        }
-        this.tileData |= data;
     },
 
     fetchTileData: function () {
@@ -159,7 +139,7 @@ PPU.prototype = {
         if (this.flagShowBackground === 0) {
             return 0;
         }
-        let data = this.fetchTileData() >> ((7 - this.xScroll) * 4);
+        let data = this.fetchTileData() >> ((7 - this.x) * 4);
         return data & 0x0F;
     },
 
@@ -290,60 +270,41 @@ PPU.prototype = {
         this.spriteCount = count;
     },
 
-    // NTSC Timing Helper Functions
-
+    /**
+     * increment horizontal(v)
+     */
     incrementX: function () {
-        // increment hori(v)
-        // if coarse X == 31
-        if ((this.vramAddress & 0x001F) === 31) {
-            // coarse X = 0
-            this.vramAddress &= 0xFFE0;
-            // switch horizontal nametable
-            this.vramAddress ^= 0x0400;
+        if ((this.v & 0x001F) === 31) {   // if coarse X == 31
+            this.v &= 0xFFE0;             // coarse X = 0
+            this.v ^= 0x0400;             // switch horizontal nameTable
         } else {
-            // increment coarse X
-            this.vramAddress++;
+            this.v++;                     // increment coarse X
         }
     },
 
+    /**
+     * increment vertical(v)
+     */
     incrementY: function () {
         // increment vert(v)
-        // if fine Y < 7
-        if ((this.vramAddress & 0x7000) !== 0x7000) {
-            // increment fine Y
-            this.vramAddress += 0x1000;
+        // If rendering is enabled, fine Y is incremented at dot 256 of each scanLine,
+        // overflowing to coarse Y, and finally adjusted to wrap among the nameTables vertically.
+        // Bits 12-14 are fine Y. Bits 5-9 are coarse Y. Bit 11 selects the vertical nameTable.
+        if ((this.v & 0x7000) !== 0x7000) {        // if fine Y < 7
+            this.v += 0x1000;                      // increment fine Y
         } else {
-            // fine Y = 0
-            this.vramAddress &= 0x8FFF;
-            // let y = coarse Y
-            let yScroll = (this.vramAddress & 0x03E0) >> 5;
-            if (yScroll === 29) {
-                // coarse Y = 0
-                yScroll = 0;
-                // switch vertical nametable
-                this.vramAddress ^= 0x0800;
-            } else if (yScroll === 31) {
-                // coarse Y = 0, nametable not switched
-                yScroll = 0;
+            this.v &= 0x8FFF;                      // fine Y = 0
+            let y = (this.v & 0x03E0) >> 5;        // let y = coarse Y
+            if (y === 29) {
+                y = 0;                             // coarse Y = 0
+                this.v ^= 0x0800;                  // switch vertical nameTable
+            } else if (y === 31) {
+                y = 0;                             // coarse Y = 0, nameTable not switched
             } else {
-                // increment coarse Y
-                yScroll++;
+                y++;                               // increment coarse Y
             }
-            // put coarse Y back into v
-            this.vramAddress = (this.vramAddress & 0xFC1F) | (yScroll << 5);
+            this.v = (this.v & 0xFC1F) | (y << 5); // put coarse Y back into v
         }
-    },
-
-    copyX: function () {
-        // hori(v) = hori(t)
-        // v: .....F.. ...EDCBA = t: .....F.. ...EDCBA
-        this.vramAddress = (this.vramAddress & 0xFBE0) | (this.tmpVramAddress & 0x041F);
-    },
-
-    copyY: function () {
-        // vert(v) = vert(t)
-        // v: .IHGF.ED CBA..... = t: .IHGF.ED CBA.....
-        this.vramAddress = (this.vramAddress & 0x841F) | (this.tmpVramAddress & 0x7BE0);
     },
 
     step: function () {
@@ -352,54 +313,98 @@ PPU.prototype = {
 
         let renderingEnabled = this.flagShowBackground !== 0 || this.flagShowSprites !== 0;
         let preLine = this.scanLine === 261;
-        let visibleLine = this.scanLine < 240;
-        // let postLine = this.scanLine == 240;
+        let visibleLine = this.scanLine < 240; // Visible scanLines (0-239)
         let renderLine = preLine || visibleLine;
         let preFetchCycle = this.cycle >= 321 && this.cycle <= 336;
         let visibleCycle = this.cycle >= 1 && this.cycle <= 256;
         let fetchCycle = preFetchCycle || visibleCycle;
 
         if (renderingEnabled) {
-            // background logic
+            // Visible scanlines (0-239)
             if (visibleLine && visibleCycle) {
                 this.renderPixel();
             }
+            // prepare tile data of the next scanLine
             if (renderLine && fetchCycle) {
+                // The data for each tile is fetched during this phase.
+                // Each memory access takes 2 PPU cycles to complete, and 4 must be performed per tile:
                 this.tileData <<= 4;
+                let address;
+                let v = this.v;
+                let table = this.flagBackgroundTable;
+                let fineY = (v >> 12) & 7;
                 switch (this.cycle % 8) {
-                    case 1:
-                        this.fetchNameTableByte();
+                    case 1: // Nametable byte
+                        address = 0x2000 | (v & 0x0FFF);
+                        this.nameTableByte = this.read(address);
                         break;
-                    case 3:
-                        this.fetchAttributeTableByte();
+                    case 3: // Attribute table byte
+                        address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
+                        let shift = ((v >> 4) & 4) | (v & 2);
+                        this.attributeTableByte = ((this.read(address) >> shift) & 3) << 2;
                         break;
-                    case 5:
-                        this.fetchLowTileByte();
+                    case 5: // Tile bitmap low
+                        address = 0x1000 * table + this.nameTableByte * 16 + fineY;
+                        this.lowTileByte = this.read(address);
                         break;
-                    case 7:
-                        this.fetchHighTileByte();
+                    case 7: // Tile bitmap high (+8 bytes from tile bitmap low)
+                        address = 0x1000 * table + this.nameTableByte * 16 + fineY;
+                        this.highTileByte = this.read(address + 8);
                         break;
                     case 0:
-                        this.storeTileData();
+                        // The data fetched from these accesses is placed into internal latches,
+                        // and then fed to the appropriate shift registers when it's time to do so (every 8 cycles).
+                        let data = 0;
+                        for (let i = 0; i < 8; i++) {
+                            let a = this.attributeTableByte;
+                            let p1 = (this.lowTileByte & 0x80) >> 7;
+                            let p2 = (this.highTileByte & 0x80) >> 6;
+                            this.lowTileByte <<= 1;
+                            this.highTileByte <<= 1;
+                            data <<= 4;
+                            data |= a | p1 | p2;
+                        }
+                        this.tileData |= data;
                         break;
                 }
             }
-            if (preLine && this.cycle >= 280 && this.cycle <= 304) {
-                this.copyY();
+
+            // Pre-render scanLine (-1, 261)
+            // During pixels 280 through 304 of the Pre-render scanLine, the vertical scroll bits are reloaded if rendering is enabled.
+            if (preLine) {
+                if (this.cycle >= 280 && this.cycle <= 304) {
+                    // During dots 280 to 304 of the pre-render scanline (end of vblank)
+                    // If rendering is enabled, at the end of vBlank,
+                    // shortly after the horizontal bits are copied from t to v at dot 257,
+                    // the PPU will repeatedly copy the vertical bits from t to v from dots 280 to 304,
+                    // completing the full initialization of v from t:
+                    // vert(v) = vert(t)
+                    // v: .IHGF.ED CBA..... = t: .IHGF.ED CBA.....
+                    this.v = (this.v & 0x841F) | (this.t & 0x7BE0);
+                }
             }
             if (renderLine) {
                 if (fetchCycle && this.cycle % 8 === 0) {
                     this.incrementX();
                 }
                 if (this.cycle === 256) {
+                    // At dot 256 of each scanline
+                    // If rendering is enabled, the PPU increments the vertical position in v.
+                    // The effective Y scroll coordinate is incremented,
+                    // which is a complex operation that will correctly skip the attribute table memory regions,
+                    // and wrap to the next nameTable appropriately.
                     this.incrementY();
                 }
                 if (this.cycle === 257) {
-                    this.copyX();
+                    // At dot 257 of each scanline
+                    // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
+                    // hori(v) = hori(t)
+                    // v: .....F.. ...EDCBA = t: .....F.. ...EDCBA
+                    this.v = (this.v & 0xFBE0) | (this.t & 0x041F);
                 }
             }
 
-            // sprite logic
+            // evaluate sprites of the next scanLine
             if (this.cycle === 257) {
                 if (visibleLine) {
                     this.evaluateSprites();
@@ -409,17 +414,31 @@ PPU.prototype = {
             }
         }
 
-        // vblank logic
+        // Post-render scanLine (240)
+        // The PPU just idles during this scanLine.
+        // Even though accessing PPU memory from the program would be safe here, the VBlank flag isn't set until after this scanLine.
+        let postLine = this.scanLine === 240;
+
+        // Vertical blanking lines (241-260)
+        // The VBlank flag of the PPU is set at tick 1 (the second tick) of scanLine 241, where the VBlank NMI also occurs.
+        // The PPU makes no memory accesses during these scanLines, so PPU memory can be freely accessed by the program.
         if (this.scanLine === 241 && this.cycle === 1) {
-            this.setVerticalBlank();
+            this.startVerticalBlank();
         }
+
         if (preLine && this.cycle === 1) {
-            this.clearVerticalBlank();
+            this.endVerticalBlank();
             this.flagSpriteZeroHit = 0;
             this.flagSpriteOverflow = 0;
         }
     },
 
+    // TODO: this.nmiPrevious, this.nmiDelay
+    /**
+     * The PPU pulls /NMI low if and only if both NMI_occurred and NMI_output are true.
+     * By toggling NMI_output (PPUCTRL.7) during vertical blank without reading PPUSTATUS,
+     * a program can cause /NMI to be pulled low multiple times, causing multiple NMIs to be generated.
+     */
     nmiChange: function () {
         let nmi = this.nmiOutput && this.nmiOccurred;
         if (nmi && !this.nmiPrevious) {
@@ -430,12 +449,18 @@ PPU.prototype = {
         this.nmiPrevious = nmi;
     },
 
-    setVerticalBlank: function () {
+    /**
+     * Start of vertical blanking: Set NMI_occurred in PPU to true.
+     */
+    startVerticalBlank: function () {
         this.nmiOccurred = true;
         this.nmiChange();
     },
 
-    clearVerticalBlank: function () {
+    /**
+     * End of vertical blanking, sometime in pre-render scanLine: Set NMI_occurred to false.
+     */
+    endVerticalBlank: function () {
         this.nmiOccurred = false;
         this.nmiChange();
     },
@@ -460,8 +485,8 @@ PPU.prototype = {
 
     /**
      * Reads PPU Memory.
-     * @param address: 32bit.
-     * @returns {number}: 16bit.
+     * @param address: 16bit.
+     * @returns {number}: 8bit.
      */
     read: function (address) {
         // console.warn('ppu read', address.toString(16));
@@ -481,8 +506,8 @@ PPU.prototype = {
 
     /**
      * Writes PPU Memory.
-     * @param address: 32bit.
-     * @param value: 16bit.
+     * @param address: 16bit.
+     * @param value: 8bit.
      */
     write: function (address, value) {
         // console.warn('ppu write', address.toString(16), value.toString(16));
@@ -505,8 +530,8 @@ PPU.prototype = {
 
     /**
      * Reads PPU Register.
-     * @param address: 32bit.
-     * @returns {number}: 16bit.
+     * @param address: 16bit.
+     * @returns {number}: 8bit.
      */
     readRegister: function (address) {
         // console.warn('ppu register read', address.toString(16));
@@ -536,8 +561,8 @@ PPU.prototype = {
 
     /**
      * Writes PPU Register.
-     * @param address: 32bit.
-     * @param value: 16bit.
+     * @param address: 16bit.
+     * @param value: 8bit.
      */
     writeRegister: function (address, value) {
         // console.warn('ppu register write', address.toString(16), value.toString(16));
@@ -577,8 +602,10 @@ PPU.prototype = {
 
     // TODO: this.nmiChange()
     /**
-     * Controller ($2000) > write: PPU Control Register
-     *
+     * Controller ($2000) > write
+     * Common name: PPUCTRL
+     * Description: PPU control register
+     * Access: write
      7  bit  0
      ---- ----
      VPHB SINN
@@ -595,7 +622,7 @@ PPU.prototype = {
      |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
      +--------- Generate an NMI at the start of the vertical blanking interval (0: off; 1: on)
      *
-     * @param value: 16bit.
+     * @param value: 8bit.
      */
     writeController: function (value) {
         value &= 0xFF;
@@ -612,11 +639,14 @@ PPU.prototype = {
         // Bit 6 - Changes PPU between master and slave modes. This is not used by the NES.
         this.flagMasterSlave = (value >> 6) & 1;
         // Bit 7 - Indicates whether a NMI should occur upon V-Blank.
+        // Write to PPUCTRL: Set NMI_output to bit 7.
         this.nmiOutput = ((value >> 7) & 1) === 1;
         // When turning on the NMI flag in bit 7, if the PPU is currently in vertical blank and the PPUSTATUS ($2002) vblank flag is set, an NMI will be generated immediately.
         this.nmiChange();
+        // In the following, d refers to the data written to the port, and A through H to individual bits of a value.
+        // update name table
         // t: ....BA.. ........ = d: ......BA
-        this.tmpVramAddress = (this.tmpVramAddress & 0xF3FF) | ((value & 0x03) << 10);
+        this.t = (this.t & 0xF3FF) | (this.flagNameTable << 10);
     },
 
     /**
@@ -635,7 +665,7 @@ PPU.prototype = {
      |+-------- Emphasize green*
      +--------- Emphasize blue*
      *
-     * @param value: 16bit.
+     * @param value: 8bit.
      */
     writeMask: function (value) {
         value &= 0xFF;
@@ -658,12 +688,15 @@ PPU.prototype = {
     },
 
     /**
-     * Status ($2002) < read: PPU Status Register:
-     * @returns {number}: 16bit.
+     * Status ($2002) < read
+     * Common name: PPUSTATUS
+     * Description: PPU status register
+     * Access: read
+     * @returns {number}: 8bit.
      */
     readStatus: function () {
         // Bit 4 - If set, indicates that writes to VRAM should be ignored.
-        // Bit 5 - Scanline sprite count, if set, indicates more than 8 sprites on the current scanline.
+        // Bit 5 - Scanline sprite count, if set, indicates more than 8 sprites on the current scanLine.
         // Bit 6 - Sprite 0 hit flag, set when a non-transparent pixel of sprite 0 overlaps a non-transparent background pixel.
         // Bit 7 - Indicates whether V-Blank is occurring.
         let value = this.register & 0x1F;
@@ -671,20 +704,21 @@ PPU.prototype = {
         value |= this.flagSpriteZeroHit << 6;
         // Reading the status register will clear D7 mentioned above and also the address latch used by PPUSCROLL and PPUADDR.
         // It does not clear the sprite 0 hit or overflow bit.
+        // Read PPUSTATUS: Return old status of NMI_occurred in bit 7, then set NMI_occurred to false.
         if (this.nmiOccurred) {
             value |= 1 << 7;
         }
         this.nmiOccurred = false;
         this.nmiChange();
         // w:                   = 0
-        this.writeToggle = 0;
+        this.w = 0;
         return value;
     },
 
     /**
      * OAM address ($2003) > write: SPR-RAM Address Register.
      * Holds the address in SPR-RAM to access on the next write to $2004.
-     * @param value: 16bit.
+     * @param value: 8bit.
      */
     writeOAMAddress: function (value) {
         this.oamAddress = value & 0xFF;
@@ -701,56 +735,58 @@ PPU.prototype = {
     /**
      * OAM data ($2004) <> read/write: SPR-RAM I/O Register.
      * Writes a byte to SPR-RAM at the address indicated by $2003.
-     * @param value: 16bit.
+     * @param value: 8bit.
      */
     writeOAMData: function (value) {
         this.oamData[this.oamAddress] = value & 0xFF;
         this.oamAddress++;
     },
 
-    // TODO: this.tmpVramAddress
     /**
      * Scroll ($2005) >> write x2: VRAM Address Register 1.
-     * @param value: 16bit.
+     * @param value: 8bit.
      */
     writeScroll: function (value) {
         value &= 0xff;
-        if (this.writeToggle === 0) {
+        if (this.w === 0) {
+            // $2005 first write (w is 0): update coarse X scroll
             // t: ........ ...HGFED = d: HGFED...
             // x:               CBA = d: .....CBA
             // w:                   = 1
-            this.tmpVramAddress = (this.tmpVramAddress & 0xFFE0) | (value >> 3);
-            this.xScroll = value & 0x07;
-            this.writeToggle = 1;
+            this.t = (this.t & 0xFFE0) | (value >> 3);
+            this.x = value & 0x07;
+            this.w = 1;
         } else {
+            // $2005 second write (w is 1): update coarse Y scroll
             // t: .CBA..HG FED..... = d: HGFEDCBA
             // w:                   = 0
-            this.tmpVramAddress = (this.tmpVramAddress & 0x8FFF) | ((value & 0x07) << 12);
-            this.tmpVramAddress = (this.tmpVramAddress & 0xFC1F) | ((value & 0xF8) << 2);
-            this.writeToggle = 0;
+            this.t = (this.t & 0x8FFF) | ((value & 0x07) << 12);
+            this.t = (this.t & 0xFC1F) | ((value & 0xF8) << 2);
+            this.w = 0;
         }
     },
 
-    // TODO: this.tmpVramAddress
     /**
      * Address ($2006) >> write x2: VRAM Address Register 2.
      * Since PPU memory uses 16-bit addresses but I/O registers are only 8-bit, two writes to $2006 are required to set the address required.
-     * @param value: 16 bit
+     * @param value: 8bit
      */
     writeAddress: function (value) {
-        if (this.writeToggle === 0) {
+        if (this.w === 0) {
+            // $2006 first write (w is 0): update vram higher address
             // t: ..FEDCBA ........ = d: ..FEDCBA
             // t: .X...... ........ = 0
             // w:                   = 1
-            this.tmpVramAddress = (this.tmpVramAddress & 0x80FF) | ((value & 0x3F) << 8);
-            this.writeToggle = 1;
+            this.t = (this.t & 0x80FF) | ((value & 0x3F) << 8);
+            this.w = 1;
         } else {
+            // $2006 second write (w is 1): update vram lower address
             // t: ........ HGFEDCBA = d: HGFEDCBA
             // v                    = t
             // w:                   = 0
-            this.tmpVramAddress = (this.tmpVramAddress & 0xFF00) | value;
-            this.vramAddress = this.tmpVramAddress;
-            this.writeToggle = 0;
+            this.t = (this.t & 0xFF00) | value;
+            this.v = this.t;
+            this.w = 0;
         }
     },
 
@@ -759,16 +795,16 @@ PPU.prototype = {
      * Reads a byte from VRAM at the current address.
      * The first read from $2007 is invalid and the data will actually be buffered and returned on the next read. This does not apply to colour palettes.
      * Reading the palettes still updates the internal buffer though, but the data placed in it is the mirrored nametable data that would appear "underneath" the palette.
-     * @returns {number}: 16bit.
+     * @returns {number}: 8bit.
      */
     readData: function () {
-        let value = this.read(this.vramAddress);
-        if (this.vramAddress % 0x4000 < 0x3F00) {
+        let value = this.read(this.v);
+        if (this.v % 0x4000 < 0x3F00) {
             let buffered = this.readBufferData;
             this.readBufferData = value;
             value = buffered;
         } else { // palettes
-            this.readBufferData = this.read(this.vramAddress - 0x1000);
+            this.readBufferData = this.read(this.v - 0x1000);
         }
         this.incrementVramAddress();
         return value;
@@ -777,10 +813,10 @@ PPU.prototype = {
     /**
      * Data ($2007) <> read/write: VRAM I/O Register.
      * Writes a byte to VRAM at the current address.
-     * @param value: 16 bit
+     * @param value: 8bit
      */
     writeData: function (value) {
-        this.write(this.vramAddress, value);
+        this.write(this.v, value);
         this.incrementVramAddress();
     },
 
@@ -788,7 +824,7 @@ PPU.prototype = {
      * After each read from or write to $2007, the address is incremented by either 1 or 32 as dictated by bit 2 of $2000.
      */
     incrementVramAddress: function () {
-        this.vramAddress += this.flagIncrement === 0 ? 1 : 32;
+        this.v += this.flagIncrement === 0 ? 1 : 32;
     },
 
     /**
@@ -797,7 +833,7 @@ PPU.prototype = {
      * This page is typically located in internal RAM, commonly $0200-$02FF, but cartridge RAM or ROM can be used as well.
      * The CPU is suspended during the transfer, which will take 513 or 514 cycles after the $4014 write tick.
      * (1 dummy read cycle while waiting for writes to complete, +1 if on an odd CPU cycle, then 256 alternating read/write cycles.)
-     * @param value: 16bit.
+     * @param value: 8bit.
      */
     write_OAM_DMA: function (value) {
         let cpu = this.nes.cpu;
