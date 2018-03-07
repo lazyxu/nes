@@ -92,16 +92,36 @@ class component extends React.Component {
         let x = ppu.debuggerScrollX * 8 + (ppu.debuggerNameTable & 1) * 256 + ppu.debuggerX;
         let y = (ppu.debuggerScrollY - 29) * 8 + ((ppu.debuggerNameTable >> 1) & 1) * 240;
         ctx.strokeStyle = "#00FF00";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, 479);
-        ctx.moveTo(0, y);
-        ctx.lineTo(511, y);
-        ctx.moveTo((x+256)%512, 0);
-        ctx.lineTo((x+256)%512, 479);
-        ctx.moveTo(0, (y+240)%480);
-        ctx.lineTo(511, (y+240)%480);
+        let len = 40;
+        ctx.moveTo(x, y + len);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x + len, y);
+
+        let x1 = (x + 256) % 512;
+        ctx.moveTo(x1 - len, y);
+        ctx.lineTo(x1, y);
+        ctx.lineTo(x1, y + len);
+
+        let y1 = (y + 240) % 480;
+        ctx.moveTo(x, y1 - len);
+        ctx.lineTo(x, y1);
+        ctx.lineTo(x + len, y1);
+
+
+        ctx.moveTo(x1, y1 - len);
+        ctx.lineTo(x1, y1);
+        ctx.lineTo(x1 - len, y1);
+
+        // ctx.moveTo(x, 0);
+        // ctx.lineTo(x, 479);
+        // ctx.moveTo(0, y);
+        // ctx.lineTo(511, y);
+        // ctx.moveTo((x + 256) % 512, 0);
+        // ctx.lineTo((x + 256) % 512, 479);
+        // ctx.moveTo(0, (y + 240) % 480);
+        // ctx.lineTo(511, (y + 240) % 480);
         ctx.stroke();
         // ctx.closePath();
     }
