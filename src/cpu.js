@@ -522,13 +522,17 @@ CPU.prototype = {
             switch (address) {
                 case 0x4014:
                     return this.nes.ppu.readRegister(address);
+                case 0x4016:
+                    return this.nes.controller[0].read();
+                case 0x4017:
+                    return this.nes.controller[1].read();
                 default:
-                    console.warn("unhandled I/O Registers II read at address: " + address.toString(16));
+                    // console.warn("unhandled I/O Registers II read at address: " + address.toString(16));
                     return;
             }
         }
         if (address < 0x6000) {
-            console.warn("unhandled Expansion ROM read at address: " + address.toString(16));
+            // console.warn("unhandled Expansion ROM read at address: " + address.toString(16));
             return;
         }
         if (address >= 0x6000) {
@@ -555,13 +559,17 @@ CPU.prototype = {
                 case 0x4014:
                     this.nes.ppu.writeRegister(address, value);
                     return;
+                case 0x4016:
+                    return this.nes.controller[0].write(value);
+                case 0x4017:
+                    return this.nes.controller[1].write(value);
                 default:
-                    console.warn("unhandled I/O Registers II write at address: " + address.toString(16));
+                    // console.warn("unhandled I/O Registers II write at address: " + address.toString(16));
                     return;
             }
         }
         if (address < 0x6000) {
-            console.warn("unhandled Expansion ROM write at address: " + address.toString(16));
+            // console.warn("unhandled Expansion ROM write at address: " + address.toString(16));
             return;
         }
         if (address >= 0x6000) {

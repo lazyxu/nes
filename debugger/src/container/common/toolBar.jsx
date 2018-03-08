@@ -35,9 +35,8 @@ class component extends React.Component {
     }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps() {
     return {
-        pc: state.pc,
     }
 }
 

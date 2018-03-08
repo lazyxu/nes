@@ -46,6 +46,42 @@ class component extends React.Component {
             }
             this.canvasImageData.data.set(this.buf8);
             this.canvasContext.putImageData(this.canvasImageData, 0, 0);
+        };
+        document.addEventListener('keydown', evt => {
+            this.updateKey(evt.keyCode, true);
+        });
+        document.addEventListener('keyup', evt => {
+            this.updateKey(evt.keyCode, false);
+        });
+    }
+
+    updateKey(keyCode, value) {
+        let nes = window.nes;
+        switch (keyCode) {
+            case 87:
+                nes.controller[0].setUp(value);
+                break;
+            case 83:
+                nes.controller[0].setDown(value);
+                break;
+            case 65:
+                nes.controller[0].setLeft(value);
+                break;
+            case 68:
+                nes.controller[0].setRight(value);
+                break;
+            case 86:
+                nes.controller[0].setSelect(value);
+                break;
+            case 66:
+                nes.controller[0].setStart(value);
+                break;
+            case 75:
+                nes.controller[0].setA(value);
+                break;
+            case 74:
+                nes.controller[0].setB(value);
+                break;
         }
     }
 
@@ -56,10 +92,4 @@ class component extends React.Component {
     }
 }
 
-function mapStateToProps(state) {
-    return {
-        frame: state.frame,
-    }
-}
-
-export default connect(mapStateToProps)(component)
+export default component

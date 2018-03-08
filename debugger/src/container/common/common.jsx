@@ -11,7 +11,6 @@ import Screen from "./screen";
 class component extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {};
     }
 
     render() {
@@ -25,18 +24,11 @@ class component extends React.Component {
                     <Link className="Link" to="/joystick">joystick</Link>
                 </div>
                 <ToolBar/>
-                <FileSelector/>
                 <Screen/>
-                {this.props.pc !== null ? <INesInfo/> : <div/>}
+                <FileSelector/>
             </div>
         )
     }
 }
 
-function mapStateToProps(state) {
-    return {
-        pc: state.pc,
-    }
-}
-
-export default connect(mapStateToProps)(component)
+export default component;

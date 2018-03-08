@@ -13,6 +13,9 @@ import {
 class component extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            loadCount: 0
+        };
     }
 
     selectFile() {
@@ -21,22 +24,24 @@ class component extends React.Component {
             let file = elem.files[0];
             nesUtil.loadROM(window.nes, file, data => {
                 this.props.loadiNes();
+                this.setState({loadCount: this.state.loadCount + 1});
             });
         }
     }
 
     render() {
         return (
-            <input type="file" ref={el => this.selector = el} className="FileSelector"
-                   onChange={this.selectFile.bind(this)}/>
+            <div>
+                <input type="file" ref={el => this.selector = el} className="FileSelector"
+                       onChange={this.selectFile.bind(this)}/>
+                {this.state.loadCount>0?<INesInfo/>:<div/>}
+            </div>
         )
     }
 }
 
-function mapStateToProps(state) {
-    return {
-        cpu: state.cpu,
-    }
+function mapStateToProps() {
+    return {}
 }
 
 export default connect(mapStateToProps, {loadiNes})(component)

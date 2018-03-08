@@ -1,6 +1,7 @@
 let INES = require("./ines");
 let CPU = require("./cpu");
 let PPU = require("./ppu");
+let Controller = require("./controller");
 let Mapper0 = require("./mapper0");
 let Mapper1 = require("./mapper1");
 let Mapper2 = require("./mapper2");
@@ -11,6 +12,9 @@ let NES = function () {
     this.ines = new INES();
     this.cpu = new CPU(this);
     this.ppu = new PPU(this);
+    this.controller = new Array(2);
+    this.controller[0] = new Controller();
+    this.controller[1] = new Controller();
     this.breakPoints = [];
     this.onEndFrame = function () {
     };
@@ -80,7 +84,7 @@ NES.prototype = {
                 this.stop();
             }
             if (callbackEnable) {
-                callback();
+                callback(this);
             }
         }, 1000 / 60);
     },
