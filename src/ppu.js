@@ -141,22 +141,10 @@ PPU.prototype = {
         }
     },
 
-    fetchTileData: function () {
-        return this.tileData >> 32;
-    },
-
-    backgroundPixel: function () {
-        if (this.flagShowBackground === 0) {
-            return 0;
-        }
-        // let data = this.fetchTileData() >> ((7 - this.x) * 4);
-        return this.backgroundPix[this.x];
-    },
-
     renderPixel: function () {
         let x = this.cycle - 1;
         let y = this.scanLine;
-        let background = this.backgroundPixel();
+        let background = this.backgroundPix[this.x];
         let index = 0, sprite = 0;
         // spritePixel
         if (this.flagShowSprites !== 0) {
@@ -339,7 +327,6 @@ PPU.prototype = {
                 // The data for each tile is fetched during this phase.
                 // Each memory access takes 2 PPU cycles to complete, and 4 must be performed per tile:
                 this.backgroundPix.shift();
-                // this.tileData <<= 4;
                 let address;
                 let v = this.v;
                 let table = this.flagBackgroundTable;
@@ -373,18 +360,14 @@ PPU.prototype = {
                     case 0:
                         // The data fetched from these accesses is placed into internal latches,
                         // and then fed to the appropriate shift registers when it's time to do so (every 8 cycles).
-                        // let data = 0;
+                        let a = this.attributeTableByte;
                         for (let i = 0; i < 8; i++) {
-                            let a = this.attributeTableByte;
                             let p1 = (this.lowTileByte & 0x80) >> 7;
                             let p2 = (this.highTileByte & 0x80) >> 6;
                             this.lowTileByte <<= 1;
                             this.highTileByte <<= 1;
-                            // data <<= 4;
-                            // data |= a | p1 | p2;
                             this.backgroundPix.push(a | p1 | p2);
                         }
-                        // this.tileData |= data;
                         break;
                 }
             }
