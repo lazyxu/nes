@@ -156,8 +156,7 @@ PPU.prototype = {
                 if (offset < 0 || offset > 7) {
                     continue;
                 }
-                offset = 7 - offset;
-                let color = (this.spritePatterns[i] >> (offset * 4)) & 0x0F;
+                let color = (this.spritePatterns[i] >> ((7 - offset) * 4)) & 0x0F;
                 if (color % 4 === 0) {
                     continue;
                 }
@@ -422,26 +421,26 @@ PPU.prototype = {
                     this.v = (this.v & 0x841F) | (this.t & 0x7BE0);
                 }
             }
-            // if (renderLine) {
-            if (fetchCycle && this.cycle % 8 === 0) {
-                this.incrementX();
+            if (renderLine) {
+                if (fetchCycle && this.cycle % 8 === 0) {
+                    this.incrementX();
+                }
+                if (this.cycle === 256) {
+                    // At dot 256 of each scanline
+                    // If rendering is enabled, the PPU increments the vertical position in v.
+                    // The effective Y scroll coordinate is incremented,
+                    // which is a complex operation that will correctly skip the attribute table memory regions,
+                    // and wrap to the next nameTable appropriately.
+                    this.incrementY();
+                }
+                if (this.cycle === 257) {
+                    // At dot 257 of each scanline
+                    // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
+                    // hori(v) = hori(t)
+                    // v: .....F.. ...EDCBA = t: .....F.. ...EDCBA
+                    this.v = (this.v & 0xFBE0) | (this.t & 0x041F);
+                }
             }
-            if (this.cycle === 256) {
-                // At dot 256 of each scanline
-                // If rendering is enabled, the PPU increments the vertical position in v.
-                // The effective Y scroll coordinate is incremented,
-                // which is a complex operation that will correctly skip the attribute table memory regions,
-                // and wrap to the next nameTable appropriately.
-                this.incrementY();
-            }
-            if (this.cycle === 257) {
-                // At dot 257 of each scanline
-                // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
-                // hori(v) = hori(t)
-                // v: .....F.. ...EDCBA = t: .....F.. ...EDCBA
-                this.v = (this.v & 0xFBE0) | (this.t & 0x041F);
-            }
-            // }
 
             // Cycles 257-320: Sprite fetches (8 sprites total, 8 cycles per sprite)
             // evaluate sprites of the next scanLine
