@@ -75,6 +75,12 @@ let PPU = function (nes) {
     this.spriteIndexes = new Array(8);
 
     this.flagBackgroundTable = 0;
+    this.backgroundPix = new Array(16);
+
+    this.result = new Array(16);
+    for (i = 0; i < this.result.length; i++) {
+        this.result[i] = i;
+    }
 };
 
 PPU.prototype = {
@@ -143,8 +149,8 @@ PPU.prototype = {
         if (this.flagShowBackground === 0) {
             return 0;
         }
-        let data = this.fetchTileData() >> ((7 - this.x) * 4);
-        return data & 0x0F;
+        // let data = this.fetchTileData() >> ((7 - this.x) * 4);
+        return this.backgroundPix[this.x];
     },
 
     renderPixel: function () {
@@ -332,11 +338,12 @@ PPU.prototype = {
             if (renderLine && fetchCycle) {
                 // The data for each tile is fetched during this phase.
                 // Each memory access takes 2 PPU cycles to complete, and 4 must be performed per tile:
-                this.tileData <<= 4;
+                this.backgroundPix.shift();
+                // this.tileData <<= 4;
                 let address;
                 let v = this.v;
                 let table = this.flagBackgroundTable;
-                let tile = this.nameTableByte;
+                let tileIndex = this.nameTableByte;
                 let fineY = (v >> 12) & 7;
                 switch (this.cycle % 8) {
                     case 1: // Nametable byte
@@ -344,32 +351,40 @@ PPU.prototype = {
                         this.nameTableByte = this.read(address);
                         break;
                     case 3: // Attribute table byte
+                        /**
+                         * 0yyy NNYY YYYX XXXX
+                         *      G FE D  C BA
+                         *      G       FEDCBA - address
+                         *            b     a
+                         *                 ba0 - shift
+                         */
                         address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
                         let shift = ((v >> 4) & 4) | (v & 2);
                         this.attributeTableByte = ((this.read(address) >> shift) & 3) << 2;
                         break;
                     case 5: // Tile bitmap low
-                        address = 0x1000 * table + tile * 16 + fineY;
+                        address = 0x1000 * table + tileIndex * 16 + fineY;
                         this.lowTileByte = this.read(address);
                         break;
                     case 7: // Tile bitmap high (+8 bytes from tile bitmap low)
-                        address = 0x1000 * table + tile * 16 + fineY;
+                        address = 0x1000 * table + tileIndex * 16 + fineY;
                         this.highTileByte = this.read(address + 8);
                         break;
                     case 0:
                         // The data fetched from these accesses is placed into internal latches,
                         // and then fed to the appropriate shift registers when it's time to do so (every 8 cycles).
-                        let data = 0;
+                        // let data = 0;
                         for (let i = 0; i < 8; i++) {
                             let a = this.attributeTableByte;
                             let p1 = (this.lowTileByte & 0x80) >> 7;
                             let p2 = (this.highTileByte & 0x80) >> 6;
                             this.lowTileByte <<= 1;
                             this.highTileByte <<= 1;
-                            data <<= 4;
-                            data |= a | p1 | p2;
+                            // data <<= 4;
+                            // data |= a | p1 | p2;
+                            this.backgroundPix.push(a | p1 | p2);
                         }
-                        this.tileData |= data;
+                        // this.tileData |= data;
                         break;
                 }
             }
@@ -388,26 +403,26 @@ PPU.prototype = {
                     this.v = (this.v & 0x841F) | (this.t & 0x7BE0);
                 }
             }
-            if (renderLine) {
-                if (fetchCycle && this.cycle % 8 === 0) {
-                    this.incrementX();
-                }
-                if (this.cycle === 256) {
-                    // At dot 256 of each scanline
-                    // If rendering is enabled, the PPU increments the vertical position in v.
-                    // The effective Y scroll coordinate is incremented,
-                    // which is a complex operation that will correctly skip the attribute table memory regions,
-                    // and wrap to the next nameTable appropriately.
-                    this.incrementY();
-                }
-                if (this.cycle === 257) {
-                    // At dot 257 of each scanline
-                    // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
-                    // hori(v) = hori(t)
-                    // v: .....F.. ...EDCBA = t: .....F.. ...EDCBA
-                    this.v = (this.v & 0xFBE0) | (this.t & 0x041F);
-                }
+            // if (renderLine) {
+            if (fetchCycle && this.cycle % 8 === 0) {
+                this.incrementX();
             }
+            if (this.cycle === 256) {
+                // At dot 256 of each scanline
+                // If rendering is enabled, the PPU increments the vertical position in v.
+                // The effective Y scroll coordinate is incremented,
+                // which is a complex operation that will correctly skip the attribute table memory regions,
+                // and wrap to the next nameTable appropriately.
+                this.incrementY();
+            }
+            if (this.cycle === 257) {
+                // At dot 257 of each scanline
+                // If rendering is enabled, the PPU copies all bits related to horizontal position from t to v:
+                // hori(v) = hori(t)
+                // v: .....F.. ...EDCBA = t: .....F.. ...EDCBA
+                this.v = (this.v & 0xFBE0) | (this.t & 0x041F);
+            }
+            // }
 
             // evaluate sprites of the next scanLine
             if (this.cycle === 257) {
@@ -425,6 +440,7 @@ PPU.prototype = {
             this.debuggerNameTable = (this.v >> 10) & 0b11;
             this.debuggerX = this.x;
         }
+
         // Post-render scanLine (240)
         // The PPU just idles during this scanLine.
         // Even though accessing PPU memory from the program would be safe here, the VBlank flag isn't set until after this scanLine.

@@ -109,21 +109,11 @@ class component extends React.Component {
         ctx.lineTo(x, y1);
         ctx.lineTo(x + len, y1);
 
-
         ctx.moveTo(x1, y1 - len);
         ctx.lineTo(x1, y1);
         ctx.lineTo(x1 - len, y1);
 
-        // ctx.moveTo(x, 0);
-        // ctx.lineTo(x, 479);
-        // ctx.moveTo(0, y);
-        // ctx.lineTo(511, y);
-        // ctx.moveTo((x + 256) % 512, 0);
-        // ctx.lineTo((x + 256) % 512, 479);
-        // ctx.moveTo(0, (y + 240) % 480);
-        // ctx.lineTo(511, (y + 240) % 480);
         ctx.stroke();
-        // ctx.closePath();
     }
 
     render() {
