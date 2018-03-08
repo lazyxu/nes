@@ -70,7 +70,7 @@ let PPU = function (nes) {
     // sprite temporary variables
     this.spriteCount = 0;
     this.spritePatterns = new Array(8);
-    this.spritePositions = new Array(8);
+    this.spriteXs = new Array(8);
     this.spritePriorities = new Array(8);
     this.spriteIndexes = new Array(8);
 
@@ -141,15 +141,18 @@ PPU.prototype = {
         }
     },
 
+    /**
+     * Render Pixel
+     */
     renderPixel: function () {
         let x = this.cycle - 1;
         let y = this.scanLine;
-        let background = this.backgroundPix[this.x];
-        let index = 0, sprite = 0;
+        let backgroundColor = this.backgroundPix[this.x];
+        let spriteIndex = 0, spriteColor = 0;
         // spritePixel
         if (this.flagShowSprites !== 0) {
             for (let i = 0; i < this.spriteCount; i++) {
-                let offset = (this.cycle - 1) - this.spritePositions[i];
+                let offset = x - this.spriteXs[i];
                 if (offset < 0 || offset > 7) {
                     continue;
                 }
@@ -158,69 +161,96 @@ PPU.prototype = {
                 if (color % 4 === 0) {
                     continue;
                 }
-                index = i;
-                sprite = color;
+                spriteIndex = i;
+                spriteColor = color;
                 break;
             }
         }
 
         if (x < 8 && this.flagShowLeftBackground === 0) {
-            background = 0;
+            backgroundColor = 0;
         }
         if (x < 8 && this.flagShowLeftSprites === 0) {
-            sprite = 0;
+            spriteColor = 0;
         }
-        let b = background % 4 !== 0;
-        let s = sprite % 4 !== 0;
+        /**
+         * Priority multiplexer decision table
+         * BG pixel    Sprite pixel    Priority    Output
+         *   0             0              X        BG ($3F00)
+         *   0             1-3            X        Sprite
+         *   1-3           0              X        BG
+         *   1-3           1-3            0        Sprite
+         *   1-3           1-3            1        BG
+         */
+        let b = backgroundColor % 4 !== 0;
+        let s = spriteColor % 4 !== 0;
         let color;
         if (!b && !s) {
             color = 0;
         } else if (!b && s) {
-            color = sprite | 0x10;
+            color = spriteColor | 0x10;
         } else if (b && !s) {
-            color = background;
+            color = backgroundColor;
         } else {
-            if (this.spriteIndexes[index] === 0 && x < 255) {
+            if (this.spriteIndexes[spriteIndex] === 0 && x < 255) {
                 this.flagSpriteZeroHit = 1;
             }
-            if (this.spritePriorities[index] === 0) {
-                color = sprite | 0x10;
+            if (this.spritePriorities[spriteIndex] === 0) {
+                color = spriteColor | 0x10;
             } else {
-                color = background;
+                color = backgroundColor;
             }
         }
         this.buffer[x][y] = this.palette[this.readPaletteIndex(color) % 64];
     },
 
+    /**
+     * Fetch sprite's pattern.
+     * @param i: sprite index in SPR-RAM.
+     * @param row: row in sprite ( 8x8 or 8x16 ).
+     * @returns {number}
+     */
     fetchSpritePattern: function (i, row) {
-        let tile = this.oamData[i * 4 + 1];
-        let attributes = this.oamData[i * 4 + 2];
+        let tileIndex = this.oamData[i * 4 + 1];  // Byte 1: Tile index number
+        /** attributes
+         76543210
+         ||||||||
+         ||||||++- Palette (4 to 7) of sprite
+         |||+++--- Unimplemented
+         ||+------ Priority (0: in front of background; 1: behind background)
+         |+------- Flip sprite horizontally
+         +-------- Flip sprite vertically
+         */
+        let attributes = this.oamData[i * 4 + 2]; // Byte 2: Attributes
+        let paletteBase = (attributes & 3) << 2;
+        let priority = (attributes >> 5) & 1;
+        let flipHorizontally = (attributes >> 6) & 1;
+        let flipVertically = (attributes >> 7) & 1;
         let address;
         if (this.flagSpriteSize === 0) {
-            if ((attributes & 0x80) === 0x80) {
+            if (flipVertically) {
                 row = 7 - row;
             }
             let table = this.flagSpriteTable;
-            address = 0x1000 * table + tile * 16 + row;
+            address = 0x1000 * table + tileIndex * 16 + row;
         } else {
-            if ((attributes & 0x80) === 0x80) {
+            if (flipVertically) {
                 row = 15 - row;
             }
-            let table = tile & 1;
-            tile &= 0xFE;
+            let table = tileIndex & 1;
+            tileIndex &= 0xFE;
             if (row > 7) {
-                tile++;
+                tileIndex++;
                 row -= 8;
             }
-            address = 0x1000 * table + tile * 16 + row;
+            address = 0x1000 * table + tileIndex * 16 + row;
         }
-        let a = (attributes & 3) << 2;
         let lowTileByte = this.read(address);
         let highTileByte = this.read(address + 8);
         let data = 0;
         for (let i = 0; i < 8; i++) {
             let p1, p2;
-            if ((attributes & 0x40) === 0x40) {
+            if (flipHorizontally) {
                 p1 = (lowTileByte & 1) << 0;
                 p2 = (highTileByte & 1) << 1;
                 lowTileByte >>= 1;
@@ -232,12 +262,15 @@ PPU.prototype = {
                 highTileByte <<= 1;
             }
             data <<= 4;
-            data |= a | p1 | p2;
+            data |= paletteBase | p1 | p2;
         }
-        return data
+        return data;
     },
 
-    evaluateSprites: function () {
+    /**
+     * Evaluate next scanLine's sprites
+     */
+    fetchSprites: function () {
         let h;
         if (this.flagSpriteSize === 0) {
             h = 8;
@@ -246,7 +279,7 @@ PPU.prototype = {
         }
         let count = 0;
         for (let i = 0; i < 64; i++) {
-            let y = this.oamData[i * 4];
+            let y = this.oamData[i * 4];     // Byte 0: Y position of top of sprite
             let a = this.oamData[i * 4 + 2];
             let x = this.oamData[i * 4 + 3];
             let row = this.scanLine - y;
@@ -255,7 +288,7 @@ PPU.prototype = {
             }
             if (count < 8) {
                 this.spritePatterns[count] = this.fetchSpritePattern(i, row);
-                this.spritePositions[count] = x;
+                this.spriteXs[count] = x;
                 this.spritePriorities[count] = (a >> 5) & 1;
                 this.spriteIndexes[count] = i;
             }
@@ -305,6 +338,9 @@ PPU.prototype = {
         }
     },
 
+    /**
+     * ppu step. Render 1 pix.
+     */
     step: function () {
 
         this.tick();
@@ -407,10 +443,11 @@ PPU.prototype = {
             }
             // }
 
+            // Cycles 257-320: Sprite fetches (8 sprites total, 8 cycles per sprite)
             // evaluate sprites of the next scanLine
             if (this.cycle === 257) {
                 if (visibleLine) {
-                    this.evaluateSprites();
+                    this.fetchSprites();
                 } else {
                     this.spriteCount = 0;
                 }
