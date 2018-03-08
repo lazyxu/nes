@@ -147,7 +147,9 @@ PPU.prototype = {
     renderPixel: function () {
         let x = this.cycle - 1;
         let y = this.scanLine;
-        let backgroundColor = this.backgroundPix[this.x];
+        let high2bit = (this.shifterRegister8 >> ((15 - this.x) * 2)) & 0b11;
+        let low2bit = (this.shifterRegister16 >> ((15 - this.x) * 2)) & 0b11;
+        let backgroundColor = high2bit << 2 | low2bit;
         let spriteIndex = 0, spriteColor = 0;
         // spritePixel
         if (this.flagShowSprites !== 0) {
@@ -361,12 +363,14 @@ PPU.prototype = {
             if (renderLine && fetchCycle) {
                 // The data for each tile is fetched during this phase.
                 // Each memory access takes 2 PPU cycles to complete, and 4 must be performed per tile:
-                this.backgroundPix.shift();
                 let address;
                 let v = this.v;
                 let table = this.flagBackgroundTable;
                 let tileIndex = this.nameTableByte;
                 let fineY = (v >> 12) & 7;
+                let data;
+                this.shifterRegister16 <<= 2;
+                this.shifterRegister8 <<= 2;
                 switch (this.cycle % 8) {
                     case 1: // Nametable byte
                         address = 0x2000 | (v & 0x0FFF);
@@ -382,7 +386,7 @@ PPU.prototype = {
                          */
                         address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
                         let shift = ((v >> 4) & 4) | (v & 2);
-                        this.attributeTableByte = ((this.read(address) >> shift) & 3) << 2;
+                        this.attribute2 = (this.read(address) >> shift) & 3;
                         break;
                     case 5: // Tile bitmap low
                         address = 0x1000 * table + tileIndex * 16 + fineY;
@@ -395,14 +399,24 @@ PPU.prototype = {
                     case 0:
                         // The data fetched from these accesses is placed into internal latches,
                         // and then fed to the appropriate shift registers when it's time to do so (every 8 cycles).
-                        let a = this.attributeTableByte;
+                        let a = this.attribute2 << 2;
+                        // this.shifters = 0;
+                        data = 0;
+                        for (let i = 0; i < 8; i++) {
+                            data <<= 2;
+                            data |= this.attribute2;
+                        }
+                        this.shifterRegister8 |= data;
+                        data = 0;
                         for (let i = 0; i < 8; i++) {
                             let p1 = (this.lowTileByte & 0x80) >> 7;
                             let p2 = (this.highTileByte & 0x80) >> 6;
                             this.lowTileByte <<= 1;
                             this.highTileByte <<= 1;
-                            this.backgroundPix.push(a | p1 | p2);
+                            data <<= 2;
+                            data |= p1 | p2;
                         }
+                        this.shifterRegister16 |= data;
                         break;
                 }
             }
@@ -799,7 +813,7 @@ PPU.prototype = {
             // t: ........ ...HGFED = d: HGFED...
             // x:               CBA = d: .....CBA
             // w:                   = 1
-            this.t = (this.t & 0xFFE0) | (value >> 3);
+            this.t = (this.t & 0xFFE0) | ((value >> 3) & 0x1F);
             this.x = value & 0x07;
             this.w = 1;
         } else {

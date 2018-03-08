@@ -130,9 +130,21 @@ INES.prototype = {
                 offset += 0x2000;
             }
         } else {
+            numChrRom = 1;
+            this.chrRom = new Array(numChrRom);
+            for (i = 0; i < numChrRom; i++) {
+                this.chrRom[i] = new Array(8192);
+                for (j = 0; j < 0x2000; j++) {
+                    if (offset + j >= data.length) {
+                        break;
+                    }
+                    this.chrRom[i][j] = data.charCodeAt(offset + j) & 0xff;
+                }
+                offset += 0x2000;
+            }
             this.chrRam = new Array(8192);
             for (i = 0; i < 0x1000; i++) {
-                this.chrRam[i] = data.charCodeAt(i) & 0xff;
+                this.chrRam[i] = data.charCodeAt(offset + i) & 0xff;
             }
         }
 
