@@ -7,10 +7,15 @@ class component extends React.Component {
 
     constructor(props) {
         super(props);
+        this.frame = -1;
     }
 
     componentWillReceiveProps(nextProps) {
         let nes = window.nes;
+        if (nextProps.frame !== this.frame) {
+            this.update();
+            this.frame = nes.ppu.frame;
+        }
     }
 
     update() {
@@ -53,6 +58,27 @@ class component extends React.Component {
         document.addEventListener('keyup', evt => {
             this.updateKey(evt.keyCode, false);
         });
+
+
+        var audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+        var channels = 1;        // 立体声
+        var sampleRate = 44100;  // 44100
+        var frameCount = 8;   // 创建一个 采样率与音频环境(AudioContext)相同的 的 音频片段。
+        var audioBuffer = audioCtx.createBuffer(channels, frameCount, sampleRate)
+        var myFrameCount = 0;
+        nes.apu.onSample = (sample) => {
+            if (myFrameCount === frameCount) {
+                console.log("create new");
+                var source = audioCtx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioCtx.destination);
+                source.start();
+                myFrameCount = 0;
+            }
+            audioBuffer.getChannelData(0)[myFrameCount] = sample; // left
+            // audioBuffer.getChannelData(1)[myFrameCount] = sample; // right
+            myFrameCount++;
+        };
     }
 
     updateKey(keyCode, value) {
@@ -92,4 +118,10 @@ class component extends React.Component {
     }
 }
 
-export default component
+function mapStateToProps(state) {
+    return {
+        frame: state.frame,
+    }
+}
+
+export default connect(mapStateToProps)(component)

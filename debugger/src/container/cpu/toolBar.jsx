@@ -36,7 +36,6 @@ class component extends React.Component {
                         }
                         break;
                 }
-                console.log(e);
             }
             // TODO:
             // F8 - step over

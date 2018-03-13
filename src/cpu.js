@@ -166,6 +166,7 @@ let CPU = function (nes) {
 let util = require('./util');
 
 CPU.prototype = {
+    CPUFrequency: 1789773, // 1.789773 MHz NTSC NES/Famicom
     // reset resets the CPU to its initial power_up state
     reset: function () {
         this.SP = 0xFD;
@@ -522,6 +523,8 @@ CPU.prototype = {
             switch (address) {
                 case 0x4014:
                     return this.nes.ppu.readRegister(address);
+                case 0x4015:
+                    return this.nes.apu.readRegister(address, value);
                 case 0x4016:
                     return this.nes.controller[0].read();
                 case 0x4017:
@@ -555,14 +558,21 @@ CPU.prototype = {
             return;
         }
         if (address < 0x4020) {
+            if (address < 0x4014) {
+                this.nes.apu.writeRegister(address, value);
+            }
             switch (address) {
                 case 0x4014:
                     this.nes.ppu.writeRegister(address, value);
                     return;
                 case 0x4016:
-                    return this.nes.controller[0].write(value);
+                    this.nes.controller[0].write(value);
+                    this.nes.controller[1].write(value);
+                    return;
+                case 0x4015:
                 case 0x4017:
-                    return this.nes.controller[1].write(value);
+                    this.nes.apu.writeRegister(address, value);
+                    return;
                 default:
                     // console.warn("unhandled I/O Registers II write at address: " + address.toString(16));
                     return;

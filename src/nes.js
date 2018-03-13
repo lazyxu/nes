@@ -1,6 +1,7 @@
 let INES = require("./ines");
 let CPU = require("./cpu");
 let PPU = require("./ppu");
+let APU = require("./apu/apu");
 let Controller = require("./controller");
 let Mapper0 = require("./mapper0");
 let Mapper1 = require("./mapper1");
@@ -12,6 +13,7 @@ let NES = function () {
     this.ines = new INES();
     this.cpu = new CPU(this);
     this.ppu = new PPU(this);
+    this.apu = new APU(this.cpu);
     this.controller = new Array(2);
     this.controller[0] = new Controller();
     this.controller[1] = new Controller();
@@ -40,6 +42,9 @@ NES.prototype = {
         let cpuCycles = this.cpu.step();
         for (i = 0; i < cpuCycles * 3; i++) {
             this.ppu.step();
+        }
+        for (i = 0; i < cpuCycles; i++) {
+            this.apu.step();
         }
         return cpuCycles;
     },
@@ -86,7 +91,7 @@ NES.prototype = {
             if (callbackEnable) {
                 callback(this);
             }
-        }, 1000 / 60);
+        }, 1000 / 120);
     },
 
     setMapper: function (mapperType) {

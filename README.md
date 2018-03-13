@@ -18,3 +18,6 @@ NES emulator written in JavaScript.
 - [bfirsh's jsnes](https://github.com/bfirsh/jsnes)
 - [fogleman's nes](https://github.com/fogleman/nes)
 - [Dendulator](https://github.com/KINGGOLDrus/dendulator)
+
+### blogs
+- [炒饭的小站](http://chaofan.io/archives/%E5%A6%82%E4%BD%95%E5%88%B6%E4%BD%9Cnes%E6%A8%A1%E6%8B%9F%E5%99%A8)
