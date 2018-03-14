@@ -10,6 +10,7 @@ let lengthTable = [
     12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30,
 ];
 
+let DecrementDivider = require("./common/decrementDivider");
 /**
  * The pulse channels produce a variable-width pulse signal, controlled by volume, envelope, length, and sweep units.
  * @constructor
@@ -19,16 +20,20 @@ let Pulse = function () {
     this.channel = 0x00;
     this.lengthEnabled = false;
     this.lengthValue = 0x00;
+
     this.timerPeriod = 0x0000;
     this.timerValue = 0x0000;
+
     this.dutyMode = 0x00;
     this.dutyValue = 0x00;
+
     this.sweepReload = false;
     this.sweepEnabled = false;
     this.sweepNegate = false;
     this.sweepShift = 0x00;
     this.sweepPeriod = 0x00;
     this.sweepValue = 0x00;
+
     this.envelopeEnabled = false;
     this.envelopeLoop = false;
     this.envelopeStart = false;
@@ -36,6 +41,8 @@ let Pulse = function () {
     this.envelopeValue = 0x00;
     this.envelopeVolume = 0x00;
     this.constantVolume = 0x00;
+
+
 };
 
 Pulse.prototype = {

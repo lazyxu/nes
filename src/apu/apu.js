@@ -64,21 +64,44 @@ APU.prototype = {
 
     sample: function () {
         let x = this.output();
-        for (let i=0;i< this.filters.length;i++) {
+        for (let i = 0; i < this.filters.length; i++) {
             x = this.filters[i].step(x);
         }
         this.onSample(x);
         // TODO: output
     },
 
+    /**
+     * The following formula calculates the audio output level within the range of 0.0 to 1.0.
+     * It is the sum of two sub-groupings of the channels:
+     * output = pulse_out + tnd_out
+     *
+     *                             95.88
+     * pulse_out = ------------------------------------
+     *              (8128 / (pulse1 + pulse2)) + 100
+     *
+     *                                        159.79
+     * tnd_out = -------------------------------------------------------------
+     *                                     1
+     *            ----------------------------------------------------- + 100
+     *             (triangle / 8227) + (noise / 12241) + (dmc / 22638)
+     *
+     * The values for pulse1, pulse2, triangle, noise, and dmc are the output values for the corresponding channel.
+     * The dmc value ranges from 0 to 127 and the others range from 0 to 15.
+     *
+     * @returns {number} [0.0, 1.0]
+     */
     output: function () {
         let p1 = this.pulse1.output();
         let p2 = this.pulse2.output();
         let t = this.triangle.output();
         let n = this.noise.output();
         let d = this.dmc.output();
-        let pulseOut = pulseTable[p1 + p2];
-        let tndOut = tndTable[3 * t + 2 * n + d];
+        // let pulseOut = pulseTable[p1 + p2];
+        let pulseOut = 95.88 / (8128 / (p1 + p2) + 100);
+        // let tndOut = tndTable[3 * t + 2 * n + d];
+        let tndOut = 159.79 / (1 / (t / 8227 + n / 12241 + d / 22638) + 100);
+        console.log(p1, p2, t, n, d, pulseOut + tndOut);
         return pulseOut + tndOut;
     },
 
