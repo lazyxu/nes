@@ -30,10 +30,11 @@ let APU = function (cpu) {
 
     this.noise.shiftRegister = 1;
 
+    this.sampleRate = 1789773 / 44100;
     this.filters = [
-        Filter.HighPassFilter(this.sampleRate, 90),
-        Filter.HighPassFilter(this.sampleRate, 440),
-        Filter.LowPassFilter(this.sampleRate, 14000)
+        Filter.HighPassFilter(44100, 90),
+        Filter.HighPassFilter(44100, 440),
+        Filter.LowPassFilter(44100, 14000)
     ];
     this.bufferSize = 44100;
     this.sampleBuffer = new Array(this.bufferSize);
@@ -58,11 +59,11 @@ APU.prototype = {
         if (f1 !== f2) {
             this.stepFrameCounter();
         }
-        // let s1 = Math.floor(cycle1 / this.sampleRate);
-        // let s2 = Math.floor(cycle2 / this.sampleRate);
-        // if (s1 !== s2) {
-        this.sample();
-        // }
+        let s1 = Math.floor(cycle1 / this.sampleRate);
+        let s2 = Math.floor(cycle2 / this.sampleRate);
+        if (s1 !== s2) {
+            this.sample();
+        }
     },
 
     sample: function () {
