@@ -18,29 +18,29 @@ let APU = function (cpu) {
 
     this.sampleRate = 44100.0;
     // 2个方波，1个三角波，1个噪声，1个差值调制通道（DMC）
-    this.pulse1 = new Pulse();
-    this.pulse2 = new Pulse();
+    this.pulse1 = new Pulse(1);
+    this.pulse2 = new Pulse(2);
     this.triangle = new Triangle();
     this.noise = new Noise();
-    this.dmc = new DMC();
+    this.dmc = new DMC(this.cpu);
     this.cycle = 0x0000;
     this.framePeriod = 0x00;
     this.frameValue = 0x00;
     this.frameIRQ = false;
 
     this.noise.shiftRegister = 1;
-    this.pulse1.channel = 1;
-    this.pulse2.channel = 2;
-    this.dmc.cpu = this.cpu;
 
     this.filters = [
-        Filter.prototype.HighPassFilter(this.sampleRate, 90),
-        Filter.prototype.HighPassFilter(this.sampleRate, 440),
-        Filter.prototype.LowPassFilter(this.sampleRate, 14000)
+        Filter.HighPassFilter(this.sampleRate, 90),
+        Filter.HighPassFilter(this.sampleRate, 440),
+        Filter.LowPassFilter(this.sampleRate, 14000)
     ];
-    this.onSample = function () {
+    this.bufferSize = 44100;
+    this.sampleBuffer = new Array(this.bufferSize);
+    this.bufferIndex = 0;
+    this.writeSamples = function () {
 
-    }
+    };
 };
 
 APU.prototype = {
@@ -48,6 +48,9 @@ APU.prototype = {
     step: function () {
         let cycle1 = this.cycle;
         this.cycle++;
+        if (this.cycle === Number.MAX_VALUE) {
+            this.cycle = 0;
+        }
         let cycle2 = this.cycle;
         this.stepTimer();
         let f1 = Math.floor(cycle1 / this.frameCounterRate);
@@ -55,11 +58,11 @@ APU.prototype = {
         if (f1 !== f2) {
             this.stepFrameCounter();
         }
-        let s1 = Math.floor(cycle1 / this.sampleRate);
-        let s2 = Math.floor(cycle2 / this.sampleRate);
-        if (s1 !== s2) {
-            this.sample();
-        }
+        // let s1 = Math.floor(cycle1 / this.sampleRate);
+        // let s2 = Math.floor(cycle2 / this.sampleRate);
+        // if (s1 !== s2) {
+        this.sample();
+        // }
     },
 
     sample: function () {
@@ -67,8 +70,12 @@ APU.prototype = {
         for (let i = 0; i < this.filters.length; i++) {
             x = this.filters[i].step(x);
         }
-        this.onSample(x);
-        // TODO: output
+        this.sampleBuffer[this.bufferIndex++] = x;
+        if (this.bufferIndex === this.sampleBuffer.length) {
+            this.writeSamples(this.sampleBuffer);
+            this.sampleBuffer = new Array(this.bufferSize);
+            this.bufferIndex = 0;
+        }
     },
 
     /**
@@ -97,11 +104,13 @@ APU.prototype = {
         let t = this.triangle.output();
         let n = this.noise.output();
         let d = this.dmc.output();
-        // let pulseOut = pulseTable[p1 + p2];
-        let pulseOut = 95.88 / (8128 / (p1 + p2) + 100);
-        // let tndOut = tndTable[3 * t + 2 * n + d];
-        let tndOut = 159.79 / (1 / (t / 8227 + n / 12241 + d / 22638) + 100);
-        console.log(p1, p2, t, n, d, pulseOut + tndOut);
+        let pulseOut = pulseTable[p1 + p2];
+        // let pulseOut = 95.88 / ((8128 / (p1 + p2)) + 100);
+        // let pulseOut = 95.88 / ((8128.0 / (this.pulse1.output() + this.pulse2.output())) + 100);
+        let tndOut = tndTable[3 * t + 2 * n + d];
+        // let tndOut = 159.79 / (100+1 / (t / 8227 + n / 12241 + d / 22638));
+        // let tndOut = 159.79 / (100 + 1 / (this.triangle.output() / 8227.0 + this.noise.output() / 12241.0 + this.dmc.output() / 22638.0));
+        // console.log(p1, p2, t, n, d, pulseOut + tndOut);
         return pulseOut + tndOut;
     },
 
@@ -188,14 +197,15 @@ APU.prototype = {
     readRegister: function (address) {
         switch (address) {
             case 0x4015:
-                return this.readStatus()
-            // default:
-            // 	log.Fatalf("unhandled apu register read at address: 0x%04X", address)
+                return this.readStatus();
+            default:
+                console.warn("unhandled apu register read at address: ", address)
         }
-        return 0
+        return 0;
     },
 
     writeRegister: function (address, value) {
+        value &= 0xff;
         switch (address) {
             case 0x4000:
                 this.pulse1.writeControl(value);
@@ -225,6 +235,24 @@ APU.prototype = {
                 this.triangle.writeControl(value);
                 break;
             case 0x4009:
+                break;
+            case 0x400A:
+                this.triangle.writeTimerLow(value);
+                break;
+            case 0x400B:
+                this.triangle.writeTimerHigh(value);
+                break;
+            case 0x400C:
+                this.noise.writeControl(value);
+                break;
+            case 0x400D:
+                break;
+            case 0x400E:
+                this.noise.writePeriod(value);
+                break;
+            case 0x400F:
+                this.noise.writeLength(value);
+                break;
             case 0x4010:
                 this.dmc.writeControl(value);
                 break;
@@ -237,33 +265,24 @@ APU.prototype = {
             case 0x4013:
                 this.dmc.writeLength(value);
                 break;
-            case 0x400A:
-                this.triangle.writeTimerLow(value);
-                break;
-            case 0x400B:
-                this.triangle.writeTimerHigh(value);
-                break;
-            case 0x400C:
-                this.noise.writeControl(value);
-                break;
-            case 0x400D:
-            case 0x400E:
-                this.noise.writePeriod(value);
-                break;
-            case 0x400F:
-                this.noise.writeLength(value);
-                break;
             case 0x4015:
                 this.writeControl(value);
                 break;
             case 0x4017:
                 this.writeFrameCounter(value);
                 break;
-            // default:
-            // 	log.Fatalf("unhandled apu register write at address: 0x%04X", address)
+            default:
+                console.warn("unhandled apu register write at address: ", address)
         }
     },
 
+    /**
+     * Status ($4015)
+     * $4015 read    IF-D NT21    DMC interrupt (I), frame interrupt (F), DMC active (D), length counter > 0 (N/T/2/1)
+     * N/T/2/1 will read as 1 if the corresponding length counter is greater than 0.
+     * For the triangle channel, the status of the linear counter is irrelevant.
+     * @returns {number}
+     */
     readStatus: function () {
         let result = 0;
         if (this.pulse1.lengthValue > 0) {
@@ -278,18 +297,27 @@ APU.prototype = {
         if (this.noise.lengthValue > 0) {
             result |= 8;
         }
+        // D will read as 1 if the DMC bytes remaining is more than 0.
         if (this.dmc.currentLength > 0) {
             result |= 16;
         }
+        // TODO: Reading this register clears the frame interrupt flag (but not the DMC interrupt flag).
+        // TODO: If an interrupt flag was set at the same moment of the read, it will read back as 1 but it will not be cleared.
         return result;
     },
 
+    /**
+     * Status ($4015)
+     * $4015 write    ---D NT21    Enable DMC (D), noise (N), triangle (T), and pulse channels (2/1)
+     * Writing a zero to any of the channel enable bits will silence that channel and immediately set its length counter to 0.
+     * @param value: 8bit
+     */
     writeControl: function (value) {
-        this.pulse1.enabled = value & 1 === 1;
-        this.pulse2.enabled = value & 2 === 2;
-        this.triangle.enabled = value & 4 === 4;
-        this.noise.enabled = value & 8 === 8;
-        this.dmc.enabled = value & 16 === 16;
+        this.pulse1.enabled = (value & 1) === 1;
+        this.pulse2.enabled = (value & 2) === 2;
+        this.triangle.enabled = (value & 4) === 4;
+        this.noise.enabled = (value & 8) === 8;
+        this.dmc.enabled = (value & 16) === 16;
         if (!this.pulse1.enabled) {
             this.pulse1.lengthValue = 0;
         }
@@ -302,19 +330,29 @@ APU.prototype = {
         if (!this.noise.enabled) {
             this.noise.lengthValue = 0;
         }
-        if (!this.dmc.enabled) {
+        if (!this.dmc.enabled) { // If the DMC bit is clear, the DMC bytes remaining will be set to 0 and the DMC will silence when it empties.
             this.dmc.currentLength = 0;
         } else {
+            // If the DMC bit is set, the DMC sample will be restarted only if its bytes remaining is 0.
+            // TODO： If there are bits remaining in the 1-byte sample buffer, these will finish playing before the next sample is fetched.
             if (this.dmc.currentLength === 0) {
                 this.dmc.restart();
             }
         }
+        // TODO: Writing to this register clears the DMC interrupt flag.
+        // TODO: Power-up and reset have the effect of writing $00, silencing all channels.
     },
 
+    // TODO: not complete
+    /**
+     * Frame Counter ($4017)
+     * $4017    MI-- ----    Mode (M, 0 = 4-step, 1 = 5-step), IRQ inhibit flag (I)
+     * @param value: 8bit
+     */
     writeFrameCounter: function (value) {
-        this.framePeriod = 4 + (value >> 7) & 1;
+        this.framePeriod = ((value >> 7) & 1) === 0 ? 4 : 5;
         this.frameIRQ = (value >> 6) & 1 === 0;
-        // this.frameValue = 0
+        // this.frameValue = 0;
         if (this.framePeriod === 5) {
             this.stepEnvelope();
             this.stepSweep();

@@ -43,6 +43,7 @@ NES.prototype = {
         for (i = 0; i < cpuCycles * 3; i++) {
             this.ppu.step();
         }
+        // this.apu.clockFrameCounter(cpuCycles);
         for (i = 0; i < cpuCycles; i++) {
             this.apu.step();
         }

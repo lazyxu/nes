@@ -60,24 +60,19 @@ class component extends React.Component {
         });
 
 
-        var audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-        var channels = 1;        // 立体声
-        var sampleRate = 44100;  // 44100
-        var frameCount = 8;   // 创建一个 采样率与音频环境(AudioContext)相同的 的 音频片段。
-        var audioBuffer = audioCtx.createBuffer(channels, frameCount, sampleRate)
-        var myFrameCount = 0;
-        nes.apu.onSample = (sample) => {
-            if (myFrameCount === frameCount) {
-                console.log("create new");
-                var source = audioCtx.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(audioCtx.destination);
-                source.start();
-                myFrameCount = 0;
+        let audioCtx = new AudioContext();
+        nes.apu.writeSamples = (samples) => {
+            let buffer = audioCtx.createBuffer(1, samples.length, audioCtx.sampleRate);
+            let channelLeft = buffer.getChannelData(0);
+            // let channelRight = buffer.getChannelData(1);
+            for (let i = 0; i < samples.length; i++) {
+                channelLeft[i] = samples[i];
+                // channelRight[i] = samples[i];
             }
-            audioBuffer.getChannelData(0)[myFrameCount] = sample; // left
-            // audioBuffer.getChannelData(1)[myFrameCount] = sample; // right
-            myFrameCount++;
+            let source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            source.start();
         };
     }
 

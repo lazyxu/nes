@@ -10,35 +10,34 @@ let lengthTable = [
     12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30,
 ];
 
-let DecrementDivider = require("./common/decrementDivider");
 /**
  * The pulse channels produce a variable-width pulse signal, controlled by volume, envelope, length, and sweep units.
  * @constructor
  */
-let Pulse = function () {
+let Pulse = function (channel) {
     this.enabled = false;
-    this.channel = 0x00;
+    this.channel = channel;
     this.lengthEnabled = false;
     this.lengthValue = 0x00;
 
     this.timerPeriod = 0x0000;
-    this.timerValue = 0x0000;
+    this.timerCounter = 0x0000;
 
     this.dutyMode = 0x00;
-    this.dutyValue = 0x00;
+    this.dutyCounter = 0x00;
 
     this.sweepReload = false;
     this.sweepEnabled = false;
     this.sweepNegate = false;
     this.sweepShift = 0x00;
     this.sweepPeriod = 0x00;
-    this.sweepValue = 0x00;
+    this.sweepCounter = 0x00;
 
     this.envelopeEnabled = false;
     this.envelopeLoop = false;
     this.envelopeStart = false;
     this.envelopePeriod = 0x00;
-    this.envelopeValue = 0x00;
+    this.envelopeCounter = 0x00;
     this.envelopeVolume = 0x00;
     this.constantVolume = 0x00;
 
@@ -67,7 +66,6 @@ Pulse.prototype = {
          * envelope loop / length counter halt (L)
          * The length counter and envelope units are clocked by the frame counter.
          * If the envelope is not looped, the length counter must be enabled (making it redundant if longer than the envelope).
-         * The length counter simply silences the channel when it counts down to 0.
          * The envelope starts at a volume of 15 and decrements every time the unit is clocked, stopping at 0 if not looped.
          */
         this.envelopeLoop = (value >> 5) & 1 === 1;
@@ -82,6 +80,8 @@ Pulse.prototype = {
         } else {
             this.constantVolume = value & 0b1111;
         }
+        // this.envelopePeriod = value & 0b1111;
+        // this.constantVolume = value & 0b1111;
         this.envelopeStart = true;
     },
 
@@ -94,7 +94,7 @@ Pulse.prototype = {
      */
     writeSweep: function (value) {
         this.sweepEnabled = (value >> 7) & 1 === 1;
-        this.sweepPeriod = (value >> 4) & 7 + 1;
+        this.sweepPeriod = ((value >> 4) & 7) + 1;
         this.sweepNegate = (value >> 3) & 1 === 1;
         this.sweepShift = value & 0b111;
         this.sweepReload = true;
@@ -122,52 +122,61 @@ Pulse.prototype = {
         this.lengthValue = lengthTable[value >> 3];
         this.timerPeriod = (this.timerPeriod & 0x00FF) | ((value & 0B111) << 8);
         this.envelopeStart = true;
-        this.dutyValue = 0;
+        this.dutyCounter = 0;
     },
 
     stepTimer: function () {
-        if (this.timerValue === 0) {
-            this.timerValue = this.timerPeriod;
-            this.dutyValue = (this.dutyValue + 1) % 8;
+        if (this.timerCounter === 0) {
+            this.timerCounter = this.timerPeriod;
+            this.dutyCounter = (this.dutyCounter + 1) % 8;
         } else {
-            this.timerValue--;
+            this.timerCounter--;
         }
     },
 
     stepEnvelope: function () {
         if (this.envelopeStart) {
-            this.envelopeVolume = 15;
-            this.envelopeValue = this.envelopePeriod;
+            // Reset envelope
             this.envelopeStart = false;
-        } else if (this.envelopeValue > 0) {
-            this.envelopeValue--;
+            this.envelopeCounter = this.envelopePeriod;
+            this.envelopeVolume = 0xF;
         } else {
-            if (this.envelopeVolume > 0) {
-                this.envelopeVolume--;
-            } else if (this.envelopeLoop) {
-                this.envelopeVolume = 15;
+            if (this.envelopeCounter > 0) {
+                this.envelopeCounter--;
+            } else {
+                if (this.envelopeVolume > 0) {
+                    this.envelopeVolume--;
+                } else if (this.envelopeLoop) {
+                    this.envelopeVolume = 0XF;
+                    // this.envelopeStart = true;
+                }
+                this.envelopeCounter = this.envelopePeriod;
             }
-            this.envelopeValue = this.envelopePeriod;
         }
     },
 
     stepSweep: function () {
         if (this.sweepReload) {
-            if (this.sweepEnabled && this.sweepValue === 0) {
+            if (this.sweepEnabled && this.sweepCounter === 0) {
                 this.sweep();
             }
-            this.sweepValue = this.sweepPeriod;
+            this.sweepCounter = this.sweepPeriod;
             this.sweepReload = false;
-        } else if (this.sweepValue > 0) {
-            this.sweepValue--;
         } else {
-            if (this.sweepEnabled) {
-                this.sweep();
+            if (this.sweepCounter > 0) {
+                this.sweepCounter--;
+            } else {
+                if (this.sweepEnabled) {
+                    this.sweep();
+                }
+                this.sweepCounter = this.sweepPeriod;
             }
-            this.sweepValue = this.sweepPeriod;
         }
     },
 
+    /**
+     * The length counter simply silences the channel when it counts down to 0.
+     */
     stepLength: function () {
         if (this.lengthEnabled && this.lengthValue > 0) {
             this.lengthValue--;
@@ -187,20 +196,16 @@ Pulse.prototype = {
     },
 
     output: function () {
-        if (!this.enabled) {
-            return 0;
-        }
-        if (this.lengthValue === 0) {
-            return 0;
-        }
-        if (dutyTable[this.dutyMode][this.dutyValue] === 0) {
+        if ((!this.enabled)
+            || this.lengthValue === 0
+            || dutyTable[this.dutyMode][this.dutyCounter] === 0) {
             return 0;
         }
         if (this.timerPeriod < 8 || this.timerPeriod > 0x7FF) {
             return 0;
         }
-        // if !this.sweepNegate && this.timerPeriod+(this.timerPeriod>>this.sweepShift) > 0x7FF {
-        // 	return 0;
+        // if (!this.sweepNegate && this.timerPeriod + (this.timerPeriod >> this.sweepShift) > 0x7FF) {
+        //     return 0;
         // }
         if (this.envelopeEnabled) {
             return this.envelopeVolume;

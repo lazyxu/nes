@@ -1,6 +1,8 @@
 # nes
 NES emulator written in JavaScript.
 
+## Reference
+
 ### utils
 - [HexViewer](https://hexed.it/)
 
@@ -12,12 +14,14 @@ NES emulator written in JavaScript.
 ### docs
 - [Nesdev#6502](http://wiki.nesdev.com/w/index.php/Nesdev#6502)
 - [Everynes - Nocash NES Specs](http://problemkaputt.de/everynes.htm)
+- [envelope](https://www.zhihu.com/question/37731612/answer/73399028)
 
 ### emulators
 - [rockcarry's ffnes](https://github.com/rockcarry/ffnes)
 - [bfirsh's jsnes](https://github.com/bfirsh/jsnes)
 - [fogleman's nes](https://github.com/fogleman/nes)
 - [Dendulator](https://github.com/KINGGOLDrus/dendulator)
+- [ANESE](https://prilik.com/ANESE/)
 
 ### blogs
 - [炒饭的小站](http://chaofan.io/archives/%E5%A6%82%E4%BD%95%E5%88%B6%E4%BD%9Cnes%E6%A8%A1%E6%8B%9F%E5%99%A8)

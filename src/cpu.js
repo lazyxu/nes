@@ -560,16 +560,19 @@ CPU.prototype = {
         if (address < 0x4020) {
             if (address < 0x4014) {
                 this.nes.apu.writeRegister(address, value);
+                return;
             }
             switch (address) {
                 case 0x4014:
                     this.nes.ppu.writeRegister(address, value);
                     return;
+                case 0x4015:
+                    this.nes.apu.writeRegister(address, value);
+                    return;
                 case 0x4016:
                     this.nes.controller[0].write(value);
                     this.nes.controller[1].write(value);
                     return;
-                case 0x4015:
                 case 0x4017:
                     this.nes.apu.writeRegister(address, value);
                     return;

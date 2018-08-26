@@ -3,7 +3,9 @@ var webpack = require('webpack');
 
 var ROOT_PATH = path.resolve(__dirname);
 var BUILD_PATH = path.resolve(ROOT_PATH, './public/js');
-
+function resolve(dir) {
+    return path.join(__dirname, '..', dir)
+}
 module.exports = {
     entry: {
         "nes": "./src/index.js",
@@ -16,6 +18,15 @@ module.exports = {
         library: "nesEmulator",
         libraryTarget: "umd",
         umdNamedDefine: true
+    },
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                loader: 'babel-loader',
+                include: [resolve('src'), resolve('node_modules/webpack-dev-server/client')]
+            },
+        ]
     },
     plugins: [
         new webpack.optimize.UglifyJsPlugin({

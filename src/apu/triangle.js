@@ -13,8 +13,8 @@ let Triangle = function () {
     this.lengthEnabled = false;
     this.lengthValue = 0x00;
     this.timerPeriod = 0x0000;
-    this.timerValue = 0x0000;
-    this.dutyValue = 0x00;
+    this.timerCounter = 0x0000;
+    this.dutyCounter = 0x00;
     this.counterPeriod = 0x00;
     this.counterValue = 0x00;
     this.counterReload = false;
@@ -34,18 +34,18 @@ Triangle.prototype = {
     writeTimerHigh: function (value) {
         this.lengthValue = lengthTable[value >> 3];
         this.timerPeriod = (this.timerPeriod & 0x00FF) | ((value & 7) << 8);
-        this.timerValue = this.timerPeriod;
+        this.timerCounter = this.timerPeriod;
         this.counterReload = true;
     },
 
     stepTimer: function () {
-        if (this.timerValue === 0) {
-            this.timerValue = this.timerPeriod;
+        if (this.timerCounter === 0) {
+            this.timerCounter = this.timerPeriod;
             if (this.lengthValue > 0 && this.counterValue > 0) {
-                this.dutyValue = (this.dutyValue + 1) % 32;
+                this.dutyCounter = (this.dutyCounter + 1) % 32;
             }
         } else {
-            this.timerValue--;
+            this.timerCounter--;
         }
     },
 
@@ -76,7 +76,7 @@ Triangle.prototype = {
         if (this.counterValue === 0) {
             return 0;
         }
-        return triangleTable[this.dutyValue];
+        return triangleTable[this.dutyCounter];
     }
 
 };

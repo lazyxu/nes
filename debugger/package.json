@@ -39,10 +39,11 @@
     "webpack": "^1.12.9"
   },
   "dependencies": {
+    "npm": "^5.8.0",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "react-redux": "^5.0.6",
-    "redux": "^3.7.2",
-    "react-router-dom": "^4.2.2"
+    "react-router-dom": "^4.2.2",
+    "redux": "^3.7.2"
   }
 }

@@ -14,12 +14,12 @@ let Noise = function () {
     this.lengthEnabled = false;
     this.lengthValue = 0x00;
     this.timerPeriod = 0x0000;
-    this.timerValue = 0x0000;
+    this.timerCounter = 0x0000;
     this.envelopeEnabled = false;
     this.envelopeLoop = false;
     this.envelopeStart = false;
     this.envelopePeriod = 0x00;
-    this.envelopeValue = 0x00;
+    this.envelopeCounter = 0x00;
     this.envelopeVolume = 0x00;
     this.constantVolume = 0x00;
 };
@@ -46,32 +46,32 @@ Noise.prototype = {
     },
 
     stepTimer: function () {
-        if (this.timerValue === 0) {
-            this.timerValue = this.timerPeriod;
+        if (this.timerCounter === 0) {
+            this.timerCounter = this.timerPeriod;
             let shift = this.mode ? 6 : 1;
             let b1 = this.shiftRegister & 1;
             let b2 = (this.shiftRegister >> shift) & 1;
             this.shiftRegister >>= 1;
             this.shiftRegister |= (b1 ^ b2) << 14;
         } else {
-            this.timerValue--;
+            this.timerCounter--;
         }
     },
 
     stepEnvelope: function () {
         if (this.envelopeStart) {
             this.envelopeVolume = 15;
-            this.envelopeValue = this.envelopePeriod;
+            this.envelopeCounter = this.envelopePeriod;
             this.envelopeStart = false;
-        } else if (this.envelopeValue > 0) {
-            this.envelopeValue--;
+        } else if (this.envelopeCounter > 0) {
+            this.envelopeCounter--;
         } else {
             if (this.envelopeVolume > 0) {
                 this.envelopeVolume--;
             } else if (this.envelopeLoop) {
                 this.envelopeVolume = 15;
             }
-            this.envelopeValue = this.envelopePeriod;
+            this.envelopeCounter = this.envelopePeriod;
         }
     },
 
