@@ -60,7 +60,7 @@ Mapper.prototype = {
             address = 0x6000 + (address - 0x6000) % this.prgRam.length;
             return this.prgRam[address] & 0xff;
         }
-        throw new Error("unhandled mapper1 read at address: " + address.toString(16));
+        // throw new Error("unhandled mapper1 read at address: " + address.toString(16));
     },
 
     write: function (address, value) {
@@ -95,7 +95,7 @@ Mapper.prototype = {
             this.prgRam[address] = value;
             return;
         }
-        throw new Error("unhandled mapper1 write at address: " + address.toString(16));
+        // throw new Error("unhandled mapper1 write at address: " + address.toString(16));
     },
 
     writeRegister: function (address, value) {

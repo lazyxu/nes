@@ -15,10 +15,10 @@ exports.sprintf = function() {
         else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f)) {
             if (((a = arguments[m[1] || i++]) == null) || (a == undefined)) {
                 console.log(arguments);
-                throw('Too few arguments.');
+                // throw('Too few arguments.');
             }
             if (/[^s]/.test(m[7]) && (typeof(a) != 'number')) {
-                throw('Expecting number but found ' + typeof(a));
+                // throw('Expecting number but found ' + typeof(a));
             }
             switch (m[7]) {
                 case 'b':
@@ -59,7 +59,7 @@ exports.sprintf = function() {
             o.push(s + (m[4] ? a + p : p + a));
         }
         else {
-            throw('Huh ?!');
+            // throw('Huh ?!');
         }
         f = f.substring(m[0].length);
     }

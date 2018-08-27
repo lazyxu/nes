@@ -38,9 +38,9 @@ Mapper.prototype = {
             return this.nes.ines.prgRom[this.prgRomLowerBank][address - 0x8000] & 0xff;
         }
         if (address >= 0x6000) {
-            throw new Error("invalid SRAM read in mapper2 at address: " + address.toString(16));
+            // throw new Error("invalid SRAM read in mapper2 at address: " + address.toString(16));
         }
-        throw new Error("unhandled mapper2 read at address: " + address.toString(16));
+        // throw new Error("unhandled mapper2 read at address: " + address.toString(16));
     },
 
     write: function (address, value) {
@@ -56,9 +56,9 @@ Mapper.prototype = {
             return;
         }
         if (address >= 0x6000) {
-            throw new Error("invalid SRAM write in mapper2 at address: " + address.toString(16));
+            // throw new Error("invalid SRAM write in mapper2 at address: " + address.toString(16));
         }
-        throw new Error("unhandled mapper2 write at address: " + address.toString(16));
+        // throw new Error("unhandled mapper2 write at address: " + address.toString(16));
     },
 
     info: function () {

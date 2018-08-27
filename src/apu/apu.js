@@ -74,7 +74,6 @@ APU.prototype = {
         this.sampleBuffer[this.bufferIndex++] = x;
         if (this.bufferIndex === this.sampleBuffer.length) {
             this.writeSamples(this.sampleBuffer);
-            this.sampleBuffer = new Array(this.bufferSize);
             this.bufferIndex = 0;
         }
     },

@@ -40,7 +40,7 @@ INES.prototype = {
             header[2] !== 0x53 ||
             header[3] !== 0x1a
         ) {
-            throw new Error("Not a valid iNES file.");
+            // throw new Error("Not a valid iNES file.");
         }
 
         // Number of 16 KB PRG-ROM banks.
@@ -89,7 +89,7 @@ INES.prototype = {
         // Reserved for future usage and should all be 0.
         for (i = 9; i < 16; i++) {
             if (header[i] !== 0) {
-                throw new Error("Reserved for future usage and should all be 0.");
+                // throw new Error("Reserved for future usage and should all be 0.");
             }
         }
 

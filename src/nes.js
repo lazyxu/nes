@@ -43,7 +43,6 @@ NES.prototype = {
         for (i = 0; i < cpuCycles * 3; i++) {
             this.ppu.step();
         }
-        // this.apu.clockFrameCounter(cpuCycles);
         for (i = 0; i < cpuCycles; i++) {
             this.apu.step();
         }
@@ -57,6 +56,7 @@ NES.prototype = {
             cpuCycles += this.step();
         }
         this.onEndFrame(this);
+        this.fpsFrameCount++;
         return cpuCycles;
     },
 
@@ -80,19 +80,32 @@ NES.prototype = {
         }, 1000 / 60);
     },
 
-    run: function (callback) {
+    run: function (onEndFrame) {
         this.stop();
         this.isRunning = true;
-        let callbackEnable = typeof(callback) === "function";
+        if (typeof(onEndFrame) === "function") {
+            this.onEndFrame = onEndFrame;
+        }
         this.frameInterval = setInterval(() => {
             this.stepFrame();
             if (this.isRunning === false) {
                 this.stop();
             }
-            if (callbackEnable) {
-                callback(this);
-            }
-        }, 1000 / 120);
+        }, 1000 / 60);
+        setInterval(()=>{
+            console.log(this.getFPS());
+        }, 3000)
+    },
+
+    getFPS: function() {
+        let now = +new Date();
+        let fps = null;
+        if (this.lastFpsTime) {
+            fps = this.fpsFrameCount / ((now - this.lastFpsTime) / 1000);
+        }
+        this.fpsFrameCount = 0;
+        this.lastFpsTime = now;
+        return fps;
     },
 
     setMapper: function (mapperType) {
@@ -107,7 +120,7 @@ NES.prototype = {
                 this.mapper = new Mapper2(this);
                 break;
             default:
-                throw new Error("unsupported mapper " + mapperType);
+                // throw new Error("unsupported mapper " + mapperType);
         }
     }
 };

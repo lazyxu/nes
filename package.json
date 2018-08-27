@@ -26,6 +26,7 @@
   "homepage": "https://github.com/MeteorKL/nes",
   "devDependencies": {},
   "dependencies": {
+    "cpu-profiler": "^2.1.1",
     "express": "^4.16.2",
     "webpack": "^3.10.0"
   }

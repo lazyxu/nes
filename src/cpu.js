@@ -244,7 +244,7 @@ CPU.prototype = {
                 let hexDump;
                 switch (size) {
                     case 0:
-                        throw new Error("invalid instruction");
+                        // throw new Error("invalid instruction");
                     case 1:
                         hexDump = util.sprintf("%02X", opcode);
                         break;
@@ -541,7 +541,7 @@ CPU.prototype = {
         if (address >= 0x6000) {
             return this.nes.mapper.read(address);
         }
-        throw new Error("unhandled cpu memory read at address: " + address.toString(16));
+        // throw new Error("unhandled cpu memory read at address: " + address.toString(16));
     },
 
     write: function (address, value) {
@@ -589,7 +589,7 @@ CPU.prototype = {
             this.nes.mapper.write(address, value);
             return;
         }
-        throw new Error("unhandled cpu memory write at address: " + address.toString(16));
+        // throw new Error("unhandled cpu memory write at address: " + address.toString(16));
     },
 
     // read16 reads two bytes using read to return a double-word value
@@ -1055,19 +1055,19 @@ CPU.prototype = {
 
     // illegal opcodes below
     AHX: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     ALR: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     ANC: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     ARR: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     AXS: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     DCP: function (address, pc, mode) {
         this.DEC(address, pc, mode);
@@ -1078,10 +1078,10 @@ CPU.prototype = {
         this.SBC(address, pc, mode);
     },
     KIL: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     LAS: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     LAX: function (address, pc, mode) {
         let value = this.read(address);
@@ -1101,10 +1101,10 @@ CPU.prototype = {
         this.write(address, this.A & this.X);
     },
     SHX: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     SHY: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     SLO: function (address, pc, mode) {
         this.ASL(address, pc, mode);
@@ -1115,10 +1115,10 @@ CPU.prototype = {
         this.EOR(address, pc, mode);
     },
     TAS: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     },
     XAA: function (address, pc, mode) {
-        throw new Error("illegal instruction");
+        // throw new Error("illegal instruction");
     }
 };
 

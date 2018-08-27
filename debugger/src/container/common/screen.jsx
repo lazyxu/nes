@@ -61,15 +61,16 @@ class component extends React.Component {
 
 
         let audioCtx = new AudioContext();
+        let buffer = audioCtx.createBuffer(1, nes.apu.sampleBuffer.length, 44100);
+        let channelLeft = buffer.getChannelData(0);
+        let source;
         nes.apu.writeSamples = (samples) => {
-            let buffer = audioCtx.createBuffer(1, samples.length, audioCtx.sampleRate);
-            let channelLeft = buffer.getChannelData(0);
             // let channelRight = buffer.getChannelData(1);
             for (let i = 0; i < samples.length; i++) {
                 channelLeft[i] = samples[i];
                 // channelRight[i] = samples[i];
             }
-            let source = audioCtx.createBufferSource();
+            source = audioCtx.createBufferSource();
             source.buffer = buffer;
             source.connect(audioCtx.destination);
             source.start();

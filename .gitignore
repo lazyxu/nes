@@ -14,7 +14,9 @@ public/roms
 debugger/node_modules
 nes-test-roms
 /test
-
+*.log
+*.txt
+roms
 /src/PAPU.JS
 /src/apu/tmp
 /src/ANESE

@@ -561,7 +561,7 @@ PPU.prototype = {
         if (address < 0x4000) {
             return this.readPaletteIndex(address % 32);
         }
-        throw new Error("unhandled ppu memory read at address: " + address.toString(16));
+        // throw new Error("unhandled ppu memory read at address: " + address.toString(16));
     },
 
     /**
@@ -585,7 +585,7 @@ PPU.prototype = {
             this.writePaletteIndex(address % 0x20, value);
             return;
         }
-        throw new Error("unhandled ppu memory write at address: " + address.toString(16));
+        // throw new Error("unhandled ppu memory write at address: " + address.toString(16));
     },
 
     /**
@@ -597,25 +597,25 @@ PPU.prototype = {
         // console.warn('ppu register read', address.toString(16));
         switch (address) {
             case 0x2000:
-                throw new Error("invalid ppu register read at address: " + address.toString(16));
+                // throw new Error("invalid ppu register read at address: " + address.toString(16));
             case 0x2001:
-                throw new Error("invalid ppu register read at address: " + address.toString(16));
+                // throw new Error("invalid ppu register read at address: " + address.toString(16));
             case 0x2002:
                 return this.readStatus();
             case 0x2003:
-                throw new Error("invalid ppu register read at address: " + address.toString(16));
+                // throw new Error("invalid ppu register read at address: " + address.toString(16));
             case 0x2004:
                 return this.readOAMData();
             case 0x2005:
-                throw new Error("invalid ppu register read at address: " + address.toString(16));
+                // throw new Error("invalid ppu register read at address: " + address.toString(16));
             case 0x2006:
-                throw new Error("invalid ppu register read at address: " + address.toString(16));
+                // throw new Error("invalid ppu register read at address: " + address.toString(16));
             case 0x2007:
                 return this.readData();
             case 0x4014:
-                throw new Error("invalid ppu register read at address: " + address.toString(16));
+                // throw new Error("invalid ppu register read at address: " + address.toString(16));
             default:
-                throw new Error("unhandled ppu register read at address: " + address.toString(16));
+                // throw new Error("unhandled ppu register read at address: " + address.toString(16));
         }
     },
 
@@ -636,7 +636,7 @@ PPU.prototype = {
                 this.writeMask(value);
                 return;
             case 0x2002:
-                throw new Error("invalid ppu register write at address: " + address.toString(16));
+                // throw new Error("invalid ppu register write at address: " + address.toString(16));
             case 0x2003:
                 this.writeOAMAddress(value);
                 return;
@@ -656,7 +656,7 @@ PPU.prototype = {
                 this.write_OAM_DMA(value);
                 return;
             default:
-                throw new Error("unhandled ppu register write at address: " + address.toString(16));
+                // throw new Error("unhandled ppu register write at address: " + address.toString(16));
         }
     },
 
