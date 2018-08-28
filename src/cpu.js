@@ -15,6 +15,7 @@ const modeZeroPageY = 12;
 let modeSize = [
     3, 3, 3, 1, 2, 1, 2, 3, 2, 2, 2, 2, 2
 ];
+
 // instructionModes indicates the addressing mode for each instruction
 let instructionModes = [
     5, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
@@ -97,40 +98,35 @@ let instructionPagecycles = [
     1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0
 ];
 
+const ADC = 0, AHX = 1, ALR = 2, ANC = 3, AND = 4, ARR = 5, ASL = 6, AXS = 7;
+const BCC = 8, BCS = 9, BEQ = 10, BIT = 11, BMI = 12, BNE = 13, BPL = 14, BRK = 15;
+const BVC = 16, BVS = 17, CLC = 18, CLD = 19, CLI = 20, CLV = 21, CMP = 22, CPX = 23;
+const CPY = 24, DCP = 25, DEC = 26, DEX = 27, DEY = 28, EOR = 29, INC = 30, INX = 31;
+const INY = 32, ISB = 33, JMP = 34, JSR = 35, KIL = 36, LAS = 37, LAX = 38, LDA = 39;
+const LDX = 40, LDY = 41, LSR = 42, NOP = 43, ORA = 44, PHA = 45, PHP = 46, PLA = 47;
+const PLP = 48, RLA = 49, ROL = 50, ROR = 51, RRA = 52, RTI = 53, RTS = 54, SAX = 55;
+const SBC = 56, SEC = 57, SED = 58, SEI = 59, SHX = 60, SHY = 61, SLO = 62, SRE = 63;
+const STA = 64, STX = 65, STY = 66, TAS = 67, TAX = 68, TAY = 69, TSX = 70, TXA = 71;
+const TXS = 72, TYA = 73, XAA = 74;
+
 // instructionNames indicates the name of each instruction
-let instructionNames = [
-    "BRK", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
-    "PHP", "ORA", "ASL", "ANC", "NOP", "ORA", "ASL", "SLO",
-    "BPL", "ORA", "KIL", "SLO", "NOP", "ORA", "ASL", "SLO",
-    "CLC", "ORA", "NOP", "SLO", "NOP", "ORA", "ASL", "SLO",
-    "JSR", "AND", "KIL", "RLA", "BIT", "AND", "ROL", "RLA",
-    "PLP", "AND", "ROL", "ANC", "BIT", "AND", "ROL", "RLA",
-    "BMI", "AND", "KIL", "RLA", "NOP", "AND", "ROL", "RLA",
-    "SEC", "AND", "NOP", "RLA", "NOP", "AND", "ROL", "RLA",
-    "RTI", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE",
-    "PHA", "EOR", "LSR", "ALR", "JMP", "EOR", "LSR", "SRE",
-    "BVC", "EOR", "KIL", "SRE", "NOP", "EOR", "LSR", "SRE",
-    "CLI", "EOR", "NOP", "SRE", "NOP", "EOR", "LSR", "SRE",
-    "RTS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA",
-    "PLA", "ADC", "ROR", "ARR", "JMP", "ADC", "ROR", "RRA",
-    "BVS", "ADC", "KIL", "RRA", "NOP", "ADC", "ROR", "RRA",
-    "SEI", "ADC", "NOP", "RRA", "NOP", "ADC", "ROR", "RRA",
-    "NOP", "STA", "NOP", "SAX", "STY", "STA", "STX", "SAX",
-    "DEY", "NOP", "TXA", "XAA", "STY", "STA", "STX", "SAX",
-    "BCC", "STA", "KIL", "AHX", "STY", "STA", "STX", "SAX",
-    "TYA", "STA", "TXS", "TAS", "SHY", "STA", "SHX", "AHX",
-    "LDY", "LDA", "LDX", "LAX", "LDY", "LDA", "LDX", "LAX",
-    "TAY", "LDA", "TAX", "LAX", "LDY", "LDA", "LDX", "LAX",
-    "BCS", "LDA", "KIL", "LAX", "LDY", "LDA", "LDX", "LAX",
-    "CLV", "LDA", "TSX", "LAS", "LDY", "LDA", "LDX", "LAX",
-    "CPY", "CMP", "NOP", "DCP", "CPY", "CMP", "DEC", "DCP",
-    "INY", "CMP", "DEX", "AXS", "CPY", "CMP", "DEC", "DCP",
-    "BNE", "CMP", "KIL", "DCP", "NOP", "CMP", "DEC", "DCP",
-    "CLD", "CMP", "NOP", "DCP", "NOP", "CMP", "DEC", "DCP",
-    "CPX", "SBC", "NOP", "ISB", "CPX", "SBC", "INC", "ISB",
-    "INX", "SBC", "NOP", "SBC", "CPX", "SBC", "INC", "ISB",
-    "BEQ", "SBC", "KIL", "ISB", "NOP", "SBC", "INC", "ISB",
-    "SED", "SBC", "NOP", "ISB", "NOP", "SBC", "INC", "ISB"
+let instructionOpcodes = [
+    BRK, ORA, KIL, SLO, NOP, ORA, ASL, SLO, PHP, ORA, ASL, ANC, NOP, ORA, ASL, SLO,
+    BPL, ORA, KIL, SLO, NOP, ORA, ASL, SLO, CLC, ORA, NOP, SLO, NOP, ORA, ASL, SLO,
+    JSR, AND, KIL, RLA, BIT, AND, ROL, RLA, PLP, AND, ROL, ANC, BIT, AND, ROL, RLA,
+    BMI, AND, KIL, RLA, NOP, AND, ROL, RLA, SEC, AND, NOP, RLA, NOP, AND, ROL, RLA,
+    RTI, EOR, KIL, SRE, NOP, EOR, LSR, SRE, PHA, EOR, LSR, ALR, JMP, EOR, LSR, SRE,
+    BVC, EOR, KIL, SRE, NOP, EOR, LSR, SRE, CLI, EOR, NOP, SRE, NOP, EOR, LSR, SRE,
+    RTS, ADC, KIL, RRA, NOP, ADC, ROR, RRA, PLA, ADC, ROR, ARR, JMP, ADC, ROR, RRA,
+    BVS, ADC, KIL, RRA, NOP, ADC, ROR, RRA, SEI, ADC, NOP, RRA, NOP, ADC, ROR, RRA,
+    NOP, STA, NOP, SAX, STY, STA, STX, SAX, DEY, NOP, TXA, XAA, STY, STA, STX, SAX,
+    BCC, STA, KIL, AHX, STY, STA, STX, SAX, TYA, STA, TXS, TAS, SHY, STA, SHX, AHX,
+    LDY, LDA, LDX, LAX, LDY, LDA, LDX, LAX, TAY, LDA, TAX, LAX, LDY, LDA, LDX, LAX,
+    BCS, LDA, KIL, LAX, LDY, LDA, LDX, LAX, CLV, LDA, TSX, LAS, LDY, LDA, LDX, LAX,
+    CPY, CMP, NOP, DCP, CPY, CMP, DEC, DCP, INY, CMP, DEX, AXS, CPY, CMP, DEC, DCP,
+    BNE, CMP, KIL, DCP, NOP, CMP, DEC, DCP, CLD, CMP, NOP, DCP, NOP, CMP, DEC, DCP,
+    CPX, SBC, NOP, ISB, CPX, SBC, INC, ISB, INX, SBC, NOP, SBC, CPX, SBC, INC, ISB,
+    BEQ, SBC, KIL, ISB, NOP, SBC, INC, ISB, SED, SBC, NOP, ISB, NOP, SBC, INC, ISB
 ];
 
 const CPUFrequency = 1789773;
@@ -244,7 +240,7 @@ CPU.prototype = {
                 let hexDump;
                 switch (size) {
                     case 0:
-                        // throw new Error("invalid instruction");
+                    // throw new Error("invalid instruction");
                     case 1:
                         hexDump = util.sprintf("%02X", opcode);
                         break;
@@ -393,15 +389,423 @@ CPU.prototype = {
                 break;
         }
         this.interrupt = interruptNone;
-        let opcode = this.read(this.PC);
+        let instruction = this.read(this.PC);
 
-        let mode = instructionModes[opcode];
-        let address = this.addressing(opcode, mode);
+        let mode = instructionModes[instruction];
+        let address = this.addressing(instruction, mode);
 
-        this.PC += instructionSizes[opcode];
-        this.cycles += instructioncycles[opcode];
-        // console.log(opcode, instructionNames[opcode], address.toString(16), mode, instructioncycles[opcode], pageCrossed, instructionPagecycles[opcode]);
-        eval('this.' + instructionNames[opcode] + '(address, this.PC, mode)');
+        this.PC += instructionSizes[instruction];
+        this.cycles += instructioncycles[instruction];
+        let pc = this.PC;
+        let value, a, b, c;
+        switch (instructionOpcodes[instruction]) {
+            case ADC: // Add with Carry
+                a = this.A;
+                b = this.read(address);
+                c = this.C;
+                this.A = (a + b + c) & 0XFF;
+                this.setZN(this.A);
+                this.C = (a + b + c) > 0xFF ? 1 : 0;
+                this.V = ((a ^ b) & 0x80) === 0 && ((a ^ this.A) & 0x80) !== 0;
+                break;
+            case AHX: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case ALR: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case ANC: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case AND: // Logical AND
+                this.A = this.A & this.read(address);
+                this.setZN(this.A);
+                break;
+            case ARR: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case ASL: // Arithmetic Shift Left
+                if (mode === modeAccumulator) {
+                    this.C = (this.A >> 7) & 1;
+                    this.A = (this.A << 1) & 0xff;
+                    this.setZN(this.A);
+                } else {
+                    value = this.read(address);
+                    this.C = (value >> 7) & 1;
+                    // value <<= 1;
+                    value = (value << 1) & 0xff;
+                    this.write(address, value);
+                    this.setZN(value);
+                }
+                break;
+            case AXS: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case BCC: // Branch if Carry Clear
+                if (this.C === 0) {
+                    this.PC = address;
+                    this.addBranchCycles(address, pc);
+                }
+                break;
+            case BCS: // Branch if Carry Set
+                if (this.C !== 0) {
+                    this.PC = address;
+                    this.addBranchCycles(address, pc);
+                }
+                break;
+            case BEQ: // Branch if Equal
+                if (this.Z !== 0) {
+                    this.PC = address;
+                    this.addBranchCycles(address, pc);
+                }
+                break;
+            case BIT: // Bit Test
+                value = this.read(address);
+                this.V = (value >> 6) & 1;
+                this.setZ(value & this.A);
+                this.setN(value);
+                break;
+            case BMI: // Branch if Minus
+                if (this.N !== 0) {
+                    this.PC = address;
+                    this.addBranchCycles(address, pc);
+                }
+                break;
+            case BNE: // Branch if Not Equal
+                if (this.Z === 0) {
+                    this.PC = address;
+                    this.addBranchCycles(address, pc);
+                }
+                break;
+            case BPL: // Branch if Positive
+                if (this.N === 0) {
+                    this.PC = address;
+                    this.addBranchCycles(address, pc);
+                }
+                break;
+            case BRK: // Force Interrupt
+                this.push16(this.PC);
+                this.push(this.flags() | 0x10);
+                this.I = 1;
+                this.PC = this.read16(0xFFFE);
+                break;
+            case BVC: // Branch if Overflow Clear
+                if (this.V === 0) {
+                    this.PC = address;
+                    this.addBranchCycles(address, pc);
+                }
+                break;
+            case BVS: // Branch if Overflow Set
+                if (this.V !== 0) {
+                    this.PC = address;
+                    this.addBranchCycles(address, pc);
+                }
+                break;
+            case CLC: // Clear Carry Flag
+                this.C = 0;
+                break;
+            case CLD: // Clear Decimal Mode
+                this.D = 0;
+                break;
+            case CLI: // Clear Interrupt Disable
+                this.I = 0;
+                break;
+            case CLV: // Clear Overflow Flag
+                this.V = 0;
+                break;
+            case CMP: // Compare
+                value = this.read(address);
+                this.compare(this.A, value);
+                break;
+            case CPX: // Compare X Register
+                value = this.read(address);
+                this.compare(this.X, value);
+                break;
+            case CPY: // Compare Y Register
+                value = this.read(address);
+                this.compare(this.Y, value);
+                break;
+            case DCP: // DEC CMP
+                value = (this.read(address) - 1) & 0XFF;
+                this.write(address, value);
+                this.setZN(value);
+                value = this.read(address);
+                this.compare(this.A, value);
+                break;
+            case DEC: // Decrement Memory
+                value = (this.read(address) - 1) & 0XFF;
+                this.write(address, value);
+                this.setZN(value);
+                break;
+            case DEX: // Decrement X Register
+                this.X = (this.X - 1) & 0xff;
+                this.setZN(this.X);
+                break;
+            case DEY: // Decrement Y Register
+                this.Y = (this.Y - 1) & 0xff;
+                this.setZN(this.Y);
+                break;
+            case EOR: // Exclusive OR
+                this.A = this.A ^ this.read(address);
+                this.setZN(this.A);
+                break;
+            case INC: // Increment Memory
+                value = (this.read(address) + 1) & 0XFF;
+                this.write(address, value);
+                this.setZN(value);
+                break;
+            case INX: // Increment X Register
+                this.X = (this.X + 1) & 0xff;
+                this.setZN(this.X);
+                break;
+            case INY: // Increment Y Register
+                this.Y = (this.Y + 1) & 0xff;
+                this.setZN(this.Y);
+                break;
+            case ISB: // INC SBC
+                value = (this.read(address) + 1) & 0XFF;
+                this.write(address, value);
+                this.setZN(value);
+                a = this.A;
+                b = this.read(address);
+                c = this.C;
+                this.A = (a - b - (1 - c)) & 0XFF;
+                this.setZN(this.A);
+                this.C = (a - b - (1 - c)) >= 0 ? 1 : 0;
+                this.V =  ((a ^ b) & 0x80) !== 0 && ((a ^ this.A) & 0x80) !== 0;
+                break;
+            case JMP: // Jump
+                this.PC = address;
+                break;
+            case JSR: // Jump to Subroutine
+                this.push16(this.PC - 1);
+                this.PC = address;
+                break;
+            case KIL: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case LAS: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case LAX:
+                value = this.read(address);
+                this.A = value;
+                this.X = value;
+                this.setZN(value);
+                break;
+            case LDA: // Load Accumulator
+                this.A = this.read(address);
+                this.setZN(this.A);
+                break;
+            case LDX: // Load X Register
+                this.X = this.read(address);
+                this.setZN(this.X);
+                break;
+            case LDY: // Load Y Register
+                this.Y = this.read(address);
+                this.setZN(this.Y);
+                break;
+            case LSR: // Logical Shift Right
+                if (mode === modeAccumulator) {
+                    this.C = this.A & 1;
+                    this.A >>= 1;
+                    this.setZN(this.A);
+                } else {
+                    value = this.read(address);
+                    this.C = value & 1;
+                    value >>= 1;
+                    this.write(address, value);
+                    this.setZN(value);
+                }
+                break;
+            case NOP: // No Operation
+                break;
+            case ORA: // Logical Inclusive OR
+                this.A = this.A | this.read(address);
+                this.setZN(this.A);
+                break;
+            case PHA: // Push Accumulator
+                this.push(this.A);
+                break;
+            case PHP: // Push Processor Status
+                this.push(this.flags() | 0x10);
+                break;
+            case PLA: // Pull Accumulator
+                this.A = this.pull();
+                this.setZN(this.A);
+                break;
+            case PLP: // Pull Processor Status
+                this.setFlags(this.pull() & 0xEF | 0x20)
+                break;
+            case RLA: // ROL AND
+                c = this.C;
+                if (mode === modeAccumulator) {
+                    this.C = (this.A >> 7) & 1;
+                    this.A = ((this.A << 1) | c) & 0xff;
+                    this.setZN(this.A);
+                } else {
+                    value = this.read(address);
+                    this.C = (value >> 7) & 1;
+                    value = ((value << 1) | c) & 0xff;
+                    this.write(address, value);
+                    this.setZN(value);
+                }
+                this.A = this.A & this.read(address);
+                this.setZN(this.A);
+                break;
+            case ROL: // Rotate Left
+                c = this.C;
+                if (mode === modeAccumulator) {
+                    this.C = (this.A >> 7) & 1;
+                    this.A = ((this.A << 1) | c) & 0xff;
+                    this.setZN(this.A);
+                } else {
+                    value = this.read(address);
+                    this.C = (value >> 7) & 1;
+                    value = ((value << 1) | c) & 0xff;
+                    this.write(address, value);
+                    this.setZN(value);
+                }
+                break;
+            case ROR: // Rotate Right
+                c = this.C;
+                if (mode === modeAccumulator) {
+                    this.C = this.A & 1;
+                    this.A = ((this.A >> 1) | (c << 7)) & 0xff;
+                    this.setZN(this.A);
+                } else {
+                    value = this.read(address);
+                    this.C = value & 1;
+                    value = ((value >> 1) | (c << 7)) & 0xff;
+                    this.write(address, value);
+                    this.setZN(value);
+                }
+                break;
+            case RRA: // ROR ADC
+                c = this.C;
+                if (mode === modeAccumulator) {
+                    this.C = this.A & 1;
+                    this.A = ((this.A >> 1) | (c << 7)) & 0xff;
+                    this.setZN(this.A);
+                } else {
+                    value = this.read(address);
+                    this.C = value & 1;
+                    value = ((value >> 1) | (c << 7)) & 0xff;
+                    this.write(address, value);
+                    this.setZN(value);
+                }
+                a = this.A;
+                b = this.read(address);
+                c = this.C;
+                this.A = (a + b + c) & 0XFF;
+                this.setZN(this.A);
+                this.C = (a + b + c) > 0xFF ? 1 : 0;
+                this.V = ((a ^ b) & 0x80) === 0 && ((a ^ this.A) & 0x80) !== 0;
+                break;
+            case RTI: // Return from Interrupt
+                this.setFlags(this.pull() & 0xEF | 0x20);
+                this.PC = this.pull16();
+                break;
+            case RTS: // Return from Subroutine
+                this.PC = this.pull16() + 1;
+                break;
+            case SAX:
+                this.write(address, this.A & this.X);
+                break;
+            case SBC: // Subtract with Carry
+                a = this.A;
+                b = this.read(address);
+                c = this.C;
+                this.A = (a - b - (1 - c)) & 0XFF;
+                this.setZN(this.A);
+                this.C = (a - b - (1 - c)) >= 0 ? 1 : 0;
+                this.V =  ((a ^ b) & 0x80) !== 0 && ((a ^ this.A) & 0x80) !== 0;
+                break;
+            case SEC: // Set Carry Flag
+                this.C = 1;
+                break;
+            case SED: // Set Decimal Flag
+                this.D = 1;
+                break;
+            case SEI: // Set Interrupt Disable
+                this.I = 1;
+                break;
+            case SHX: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case SHY: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case SLO: // ASL ORA
+                if (mode === modeAccumulator) {
+                    this.C = (this.A >> 7) & 1;
+                    this.A = (this.A << 1) & 0xff;
+                    this.setZN(this.A);
+                } else {
+                    value = this.read(address);
+                    this.C = (value >> 7) & 1;
+                    // value <<= 1;
+                    value = (value << 1) & 0xff;
+                    this.write(address, value);
+                    this.setZN(value);
+                }
+                this.A = this.A | this.read(address);
+                this.setZN(this.A);
+                break;
+            case SRE: // LSR EOR
+                if (mode === modeAccumulator) {
+                    this.C = this.A & 1;
+                    this.A >>= 1;
+                    this.setZN(this.A);
+                } else {
+                    value = this.read(address);
+                    this.C = value & 1;
+                    value >>= 1;
+                    this.write(address, value);
+                    this.setZN(value);
+                }
+                this.A = this.A ^ this.read(address);
+                this.setZN(this.A);
+                break;
+            case STA: // Store Accumulator
+                this.write(address, this.A);
+                break;
+            case STX: // Store X Register
+                this.write(address, this.X);
+                break;
+            case STY: // Store Y Register
+                this.write(address, this.Y);
+                break;
+            case TAS: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+            case TAX: // Transfer Accumulator to X
+                this.X = this.A;
+                this.setZN(this.X)
+                break;
+            case TAY: // Transfer Accumulator to Y
+                this.Y = this.A;
+                this.setZN(this.Y)
+                break;
+            case TSX: // Transfer Stack Pointer to X
+                this.X = this.SP;
+                this.setZN(this.X)
+                break;
+            case TXA: // Transfer Index X to Accumulator
+                this.A = this.X;
+                this.setZN(this.A)
+                break;
+            case TXS: // Transfer Index X to Stack Pointer
+                this.SP = this.X;
+                break;
+            case TYA: // Transfer Index Y to Accumulator
+                this.A = this.Y;
+                this.setZN(this.A)
+                break;
+            case XAA: // illegal opcode
+                // throw new Error("illegal instruction");
+                break;
+        }
 
         return this.cycles - cycles;
     },
@@ -432,7 +836,7 @@ CPU.prototype = {
      */
     nmi: function () {
         this.push16(this.PC);
-        this.PHP(null);
+        this.push(this.flags() | 0x10);
         this.PC = this.read16(0xFFFA);
         this.I = 1;
         this.cycles += 7;
@@ -443,7 +847,7 @@ CPU.prototype = {
      */
     irq: function () {
         this.push16(this.PC);
-        this.PHP(null);
+        this.push(this.flags() | 0x10);
         this.PC = this.read16(0xFFFE);
         this.I = 1;
         this.cycles += 7;
@@ -454,7 +858,7 @@ CPU.prototype = {
      */
     RESET: function () {
         this.push16(this.PC);
-        this.PHP(null);
+        this.push(this.flags() | 0x10);
         this.PC = this.read16(0xFFFC);
         this.I = 1;
         this.cycles += 7;
@@ -634,47 +1038,6 @@ CPU.prototype = {
         return ((hi & 0xff) << 8) | (lo & 0xff);
     },
 
-    /* instruction -------------------------------------------------------------------------------------------------- */
-    // ADC - Add with Carry
-    ADC: function (address, pc, mode) {
-        let a = this.A;
-        let b = this.read(address);
-        let c = this.C;
-        this.A = (a + b + c) & 0XFF;
-        this.setZN(this.A);
-        this.C = (a + b + c) > 0xFF ? 1 : 0;
-        if (((a ^ b) & 0x80) === 0 && ((a ^ this.A) & 0x80) !== 0) {
-            this.V = 1;
-        } else {
-            this.V = 0;
-        }
-    },
-    address: function (PC, size) {
-        return [PC + size]
-    },
-
-    // AND - Logical AND
-    AND: function (address, pc, mode) {
-        this.A = this.A & this.read(address);
-        this.setZN(this.A);
-    },
-
-    // ASL - Arithmetic Shift Left
-    ASL: function (address, pc, mode) {
-        if (mode === modeAccumulator) {
-            this.C = (this.A >> 7) & 1;
-            this.A = (this.A << 1) & 0xff;
-            this.setZN(this.A);
-        } else {
-            let value = this.read(address);
-            this.C = (value >> 7) & 1;
-            // value <<= 1;
-            value = (value << 1) & 0xff;
-            this.write(address, value);
-            this.setZN(value);
-        }
-    },
-
     // addBranchCycles adds a cycle for taking a branch and adds another cycle if the branch jumps to a new page
     addBranchCycles: function (address, pc) {
         this.cycles++;
@@ -683,443 +1046,10 @@ CPU.prototype = {
         }
     },
 
-    // BCC - Branch if Carry Clear
-    BCC: function (address, pc, mode) {
-        if (this.C === 0) {
-            this.PC = address;
-            this.addBranchCycles(address, pc);
-        }
-    },
-
-    // BCS - Branch if Carry Set
-    BCS: function (address, pc, mode) {
-        if (this.C !== 0) {
-            this.PC = address;
-            this.addBranchCycles(address, pc);
-        }
-    },
-
-    // BEQ - Branch if Equal
-    BEQ: function (address, pc, mode) {
-        if (this.Z !== 0) {
-            this.PC = address;
-            this.addBranchCycles(address, pc);
-        }
-    },
-
-    // BIT - Bit Test
-    BIT: function (address, pc, mode) {
-        let value = this.read(address);
-        this.V = (value >> 6) & 1;
-        this.setZ(value & this.A);
-        this.setN(value);
-    },
-
-    // BMI - Branch if Minus
-    BMI: function (address, pc, mode) {
-        if (this.N !== 0) {
-            this.PC = address;
-            this.addBranchCycles(address, pc);
-        }
-    },
-
-    // BNE - Branch if Not Equal
-    BNE: function (address, pc, mode) {
-        if (this.Z === 0) {
-            this.PC = address;
-            this.addBranchCycles(address, pc);
-        }
-    },
-
-    // BPL - Branch if Positive
-    BPL: function (address, pc, mode) {
-        if (this.N === 0) {
-            this.PC = address;
-            this.addBranchCycles(address, pc);
-        }
-    },
-
-    // BRK - Force Interrupt
-    BRK: function (address, pc, mode) {
-        this.push16(this.PC);
-        this.PHP(address, pc, mode);
-        this.SEI(address, pc, mode);
-        this.PC = this.read16(0xFFFE);
-    },
-
-    // BVC - Branch if Overflow Clear
-    BVC: function (address, pc, mode) {
-        if (this.V === 0) {
-            this.PC = address;
-            this.addBranchCycles(address, pc);
-        }
-    },
-
-    // BVS - Branch if Overflow Set
-    BVS: function (address, pc, mode) {
-        if (this.V !== 0) {
-            this.PC = address;
-            this.addBranchCycles(address, pc);
-        }
-    },
-
-    // CLC - Clear Carry Flag
-    CLC: function (address, pc, mode) {
-        this.C = 0;
-    },
-
-    // CLD - Clear Decimal Mode
-    CLD: function (address, pc, mode) {
-        this.D = 0;
-    },
-
-    // CLI - Clear Interrupt Disable
-    CLI: function (address, pc, mode) {
-        this.I = 0;
-    },
-
-    // CLV - Clear Overflow Flag
-    CLV: function (address, pc, mode) {
-        this.V = 0;
-    },
-
     compare: function (a, b) {
         this.setZN(a - b);
         this.C = a >= b ? 1 : 0;
     },
-
-    // CMP - Compare
-    CMP: function (address, pc, mode) {
-        let value = this.read(address);
-        this.compare(this.A, value);
-    },
-
-    // CPX - Compare X Register
-    CPX: function (address, pc, mode) {
-        let value = this.read(address);
-        this.compare(this.X, value);
-    },
-
-    // CPY - Compare Y Register
-    CPY: function (address, pc, mode) {
-        let value = this.read(address);
-        this.compare(this.Y, value);
-    },
-
-    // DEC - Decrement Memory
-    DEC: function (address, pc, mode) {
-        let value = (this.read(address) - 1) & 0XFF;
-        this.write(address, value);
-        this.setZN(value);
-    },
-
-    // DEX - Decrement X Register
-    DEX: function (address, pc, mode) {
-        this.X = (this.X - 1) & 0xff;
-        this.setZN(this.X);
-    },
-
-    // DEY - Decrement Y Register
-    DEY: function (address, pc, mode) {
-        this.Y = (this.Y - 1) & 0xff;
-        this.setZN(this.Y);
-    },
-
-    // EOR - Exclusive OR
-    EOR: function (address, pc, mode) {
-        this.A = this.A ^ this.read(address);
-        this.setZN(this.A);
-    },
-
-    // INC - Increment Memory
-    INC: function (address, pc, mode) {
-        let value = (this.read(address) + 1) & 0XFF;
-        this.write(address, value);
-        this.setZN(value);
-    },
-
-    // INX - Increment X Register
-    INX: function (address, pc, mode) {
-        this.X = (this.X + 1) & 0xff;
-        this.setZN(this.X);
-    },
-
-    // INY - Increment Y Register
-    INY: function (address, pc, mode) {
-        this.Y = (this.Y + 1) & 0xff;
-        this.setZN(this.Y);
-    },
-
-    // JMP - Jump
-    JMP: function (address, pc, mode) {
-        this.PC = address;
-    },
-
-    // JSR - Jump to Subroutine
-    JSR: function (address, pc, mode) {
-        this.push16(this.PC - 1);
-        this.PC = address;
-    },
-
-    // LDA - Load Accumulator
-    LDA: function (address, pc, mode) {
-        this.A = this.read(address);
-        this.setZN(this.A);
-    },
-
-    // LDX - Load X Register
-    LDX: function (address, pc, mode) {
-        this.X = this.read(address);
-        this.setZN(this.X);
-    },
-
-    // LDY - Load Y Register
-    LDY: function (address, pc, mode) {
-        this.Y = this.read(address);
-        this.setZN(this.Y);
-    },
-
-    // LSR - Logical Shift Right
-    LSR: function (address, pc, mode) {
-        if (mode === modeAccumulator) {
-            this.C = this.A & 1;
-            this.A >>= 1;
-            this.setZN(this.A);
-        } else {
-            let value = this.read(address);
-            this.C = value & 1;
-            value >>= 1;
-            this.write(address, value);
-            this.setZN(value);
-        }
-    },
-
-    // NOP - No Operation
-    NOP: function (address, pc, mode) {
-    },
-
-    // ORA - Logical Inclusive OR
-    ORA: function (address, pc, mode) {
-        this.A = this.A | this.read(address);
-        this.setZN(this.A);
-    },
-
-    // PHA - Push Accumulator
-    PHA: function (address, pc, mode) {
-        this.push(this.A);
-    },
-
-    // PHP - Push Processor Status
-    PHP: function (address, pc, mode) {
-        this.push(this.flags() | 0x10);
-    },
-
-    // PLA - Pull Accumulator
-    PLA: function (address, pc, mode) {
-        this.A = this.pull();
-        this.setZN(this.A);
-    },
-
-    // PLP - Pull Processor Status
-    PLP: function (address, pc, mode) {
-        this.setFlags(this.pull() & 0xEF | 0x20)
-    },
-
-    // ROL - Rotate Left
-    ROL: function (address, pc, mode) {
-        let c = this.C;
-        if (mode === modeAccumulator) {
-            this.C = (this.A >> 7) & 1;
-            this.A = ((this.A << 1) | c) & 0xff;
-            this.setZN(this.A);
-        } else {
-            let value = this.read(address);
-            this.C = (value >> 7) & 1;
-            value = ((value << 1) | c) & 0xff;
-            this.write(address, value);
-            this.setZN(value);
-        }
-    },
-
-    // ROR - Rotate Right
-    ROR: function (address, pc, mode) {
-        let c = this.C;
-        if (mode === modeAccumulator) {
-            this.C = this.A & 1;
-            this.A = ((this.A >> 1) | (c << 7)) & 0xff;
-            this.setZN(this.A);
-        } else {
-            let value = this.read(address);
-            this.C = value & 1;
-            value = ((value >> 1) | (c << 7)) & 0xff;
-            this.write(address, value);
-            this.setZN(value);
-        }
-    },
-
-    // RTI - Return from Interrupt
-    RTI: function (address, pc, mode) {
-        this.setFlags(this.pull() & 0xEF | 0x20);
-        this.PC = this.pull16();
-    },
-
-    // RTS - Return from Subroutine
-    RTS: function (address, pc, mode) {
-        this.PC = this.pull16() + 1;
-    },
-
-    // SBC - Subtract with Carry
-    SBC: function (address, pc, mode) {
-        let a = this.A;
-        let b = this.read(address);
-        let c = this.C;
-        this.A = (a - b - (1 - c)) & 0XFF;
-        this.setZN(this.A);
-        if ((a - b - (1 - c)) >= 0) {
-            this.C = 1;
-        } else {
-            this.C = 0;
-        }
-        if (((a ^ b) & 0x80) !== 0 && ((a ^ this.A) & 0x80) !== 0) {
-            this.V = 1;
-        } else {
-            this.V = 0;
-        }
-    },
-
-    // SEC - Set Carry Flag
-    SEC: function (address, pc, mode) {
-        this.C = 1;
-    },
-
-    // SED - Set Decimal Flag
-    SED: function (address, pc, mode) {
-        this.D = 1;
-    },
-
-    // SEI - Set Interrupt Disable
-    SEI: function (address, pc, mode) {
-        this.I = 1;
-    },
-
-    // STA - Store Accumulator
-    STA: function (address, pc, mode) {
-        this.write(address, this.A);
-    },
-
-    // STX - Store X Register
-    STX: function (address, pc, mode) {
-        this.write(address, this.X);
-    },
-
-    // STY - Store Y Register
-    STY: function (address, pc, mode) {
-        this.write(address, this.Y);
-    },
-
-    // TAX - Transfer Accumulator to X
-    TAX: function (address, pc, mode) {
-        this.X = this.A;
-        this.setZN(this.X)
-
-    },
-
-    // TAY - Transfer Accumulator to Y
-    TAY: function (address, pc, mode) {
-        this.Y = this.A;
-        this.setZN(this.Y)
-    },
-
-    // TSX - Transfer Stack Pointer to X
-    TSX: function (address, pc, mode) {
-        this.X = this.SP;
-        this.setZN(this.X)
-    },
-
-    // TXA - Transfer Index X to Accumulator
-    TXA: function (address, pc, mode) {
-        this.A = this.X;
-        this.setZN(this.A)
-    },
-
-    // TXS - Transfer Index X to Stack Pointer
-    TXS: function (address, pc, mode) {
-        this.SP = this.X;
-    },
-
-    // TYA - Transfer Index Y to Accumulator
-    TYA: function (address, pc, mode) {
-        this.A = this.Y;
-        this.setZN(this.A)
-    },
-
-    // illegal opcodes below
-    AHX: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    ALR: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    ANC: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    ARR: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    AXS: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    DCP: function (address, pc, mode) {
-        this.DEC(address, pc, mode);
-        this.CMP(address, pc, mode);
-    },
-    ISB: function (address, pc, mode) {
-        this.INC(address, pc, mode);
-        this.SBC(address, pc, mode);
-    },
-    KIL: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    LAS: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    LAX: function (address, pc, mode) {
-        let value = this.read(address);
-        this.A = value;
-        this.X = value;
-        this.setZN(value);
-    },
-    RLA: function (address, pc, mode) {
-        this.ROL(address, pc, mode);
-        this.AND(address, pc, mode);
-    },
-    RRA: function (address, pc, mode) {
-        this.ROR(address, pc, mode);
-        this.ADC(address, pc, mode);
-    },
-    SAX: function (address, pc, mode) {
-        this.write(address, this.A & this.X);
-    },
-    SHX: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    SHY: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    SLO: function (address, pc, mode) {
-        this.ASL(address, pc, mode);
-        this.ORA(address, pc, mode);
-    },
-    SRE: function (address, pc, mode) {
-        this.LSR(address, pc, mode);
-        this.EOR(address, pc, mode);
-    },
-    TAS: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    },
-    XAA: function (address, pc, mode) {
-        // throw new Error("illegal instruction");
-    }
 };
 
 module.exports = CPU;
