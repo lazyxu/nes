@@ -11,6 +11,12 @@ import Screen from "./screen";
 class component extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            fps: 0
+        };
+        setInterval(()=>{
+            this.setState({fps: Math.floor(nes.getFPS())});
+        }, 1000)
     }
 
     render() {
@@ -25,6 +31,7 @@ class component extends React.Component {
                 </div>
                 <ToolBar/>
                 <Screen/>
+                <div>{this.state.fps}</div>
                 <FileSelector/>
             </div>
         )

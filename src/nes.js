@@ -55,7 +55,6 @@ NES.prototype = {
         for (; frame === this.ppu.frame;) {
             cpuCycles += this.step();
         }
-        this.onEndFrame(this);
         this.fpsFrameCount++;
         return cpuCycles;
     },
@@ -80,21 +79,16 @@ NES.prototype = {
         }, 1000 / 60);
     },
 
-    run: function (onEndFrame) {
+    run: function () {
         this.stop();
         this.isRunning = true;
-        if (typeof(onEndFrame) === "function") {
-            this.onEndFrame = onEndFrame;
-        }
         this.frameInterval = setInterval(() => {
             this.stepFrame();
+            this.onEndFrame(this);
             if (this.isRunning === false) {
                 this.stop();
             }
         }, 1000 / 60);
-        setInterval(()=>{
-            console.log(this.getFPS());
-        }, 3000)
     },
 
     getFPS: function() {
