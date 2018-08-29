@@ -1,23 +1,19 @@
-const modeAbsolute = 0;
-const modeAbsoluteX = 1;
-const modeAbsoluteY = 2;
-const modeAccumulator = 3;
-const modeImmediate = 4;
-const modeImplied = 5;
-const modeIndexedIndirect = 6;
-const modeIndirect = 7;
-const modeIndirectIndexed = 8;
-const modeRelative = 9;
-const modeZeroPage = 10;
-const modeZeroPageX = 11;
-const modeZeroPageY = 12;
+const ABSOLUTE = 0;
+const ABSOLUTE_X = 1;
+const ABSOLUTE_Y = 2;
+const ACCUMULATOR = 3;
+const IMMEDIATE = 4;
+const IMPLIED = 5;
+const INDEXED_INDIRECT = 6;
+const INDIRECT = 7;
+const INDIRECT_INDEXED = 8;
+const RELATIVE = 9;
+const ZERO_PAGE = 10;
+const ZERO_PAGE_X = 11;
+const ZERO_PAGE_Y = 12;
 
-let modeSize = [
-    3, 3, 3, 1, 2, 1, 2, 3, 2, 2, 2, 2, 2
-];
-
-// instructionModes indicates the addressing mode for each instruction
-let instructionModes = [
+// MODE indicates the addressing mode for each instruction
+const MODE = [
     5, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
     9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1,
     0, 6, 5, 6, 10, 10, 10, 10, 5, 4, 3, 4, 0, 0, 0, 0,
@@ -36,8 +32,8 @@ let instructionModes = [
     9, 8, 5, 8, 11, 11, 11, 11, 5, 2, 5, 2, 1, 1, 1, 1
 ];
 
-// instructionSizes indicates the size of each instruction in bytes
-let instructionSizes = [
+// SIZE indicates the size of each instruction in bytes
+const SIZE = [
     1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
     2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3,
     3, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 3, 3, 3, 3,
@@ -56,9 +52,9 @@ let instructionSizes = [
     2, 2, 1, 2, 2, 2, 2, 2, 1, 3, 1, 3, 3, 3, 3, 3
 ];
 
-// instructioncycles indicates the number of cycles used by each instruction,
+// CYCLE indicates the number of cycles used by each instruction,
 // not including conditional cycles
-let instructioncycles = [
+const CYCLE = [
     7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,
     2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
     6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6,
@@ -77,9 +73,8 @@ let instructioncycles = [
     2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7
 ];
 
-// instructionPagecycles indicates the number of cycles used by each
-// instruction when a page is crossed
-let instructionPagecycles = [
+// PAGE_CYCLE indicates the number of cycles used by each instruction when a page is crossed
+const PAGE_CYCLE = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -110,7 +105,7 @@ const STA = 64, STX = 65, STY = 66, TAS = 67, TAX = 68, TAY = 69, TSX = 70, TXA 
 const TXS = 72, TYA = 73, XAA = 74;
 
 // instructionNames indicates the name of each instruction
-let instructionOpcodes = [
+const OPCODE = [
     BRK, ORA, KIL, SLO, NOP, ORA, ASL, SLO, PHP, ORA, ASL, ANC, NOP, ORA, ASL, SLO,
     BPL, ORA, KIL, SLO, NOP, ORA, ASL, SLO, CLC, ORA, NOP, SLO, NOP, ORA, ASL, SLO,
     JSR, AND, KIL, RLA, BIT, AND, ROL, RLA, PLP, AND, ROL, ANC, BIT, AND, ROL, RLA,
@@ -129,22 +124,21 @@ let instructionOpcodes = [
     BEQ, SBC, KIL, ISB, NOP, SBC, INC, ISB, SED, SBC, NOP, ISB, NOP, SBC, INC, ISB
 ];
 
-const CPUFrequency = 1789773;
-
 // interrupt types
-const interruptNone = 0;
-const interruptNMI = 1;
-const interruptIRQ = 2;
-const interruptRESET = 3;
+const INT_NONE = 0;
+const INT_NMI = 1;
+const INT_IRQ = 2;
+const INT_RESET = 3;
 
 let CPU = function (nes) {
     this.nes = nes;
-    this.ram = new Array(2048);
+    this.ramBuf = new ArrayBuffer(0x800); // 2048 bytes
+    this.ram = new Uint8Array(this.ramBuf);
     for (let i = 0; i < this.ram.length; i++) {
         this.ram[i] = 0;
     }
     this.cycles = null;
-    this.stall = null;
+    this.stall = null; // number of cycles to stall
     this.PC = 0;
     this.A = 0;
     this.X = 0;
@@ -163,11 +157,12 @@ let util = require('./util');
 
 CPU.prototype = {
     CPUFrequency: 1789773, // 1.789773 MHz NTSC NES/Famicom
+
     // reset resets the CPU to its initial power_up state
     reset: function () {
         this.SP = 0xFD;
         this.setFlags(0x24);
-        this.interrupt = interruptNone;
+        this.interrupt = INT_NONE; // interrupt type to perform
         this.PC = this.read16(0xFFFC);
     },
 
@@ -175,9 +170,9 @@ CPU.prototype = {
 
     // PrintInstruction prints the current CPU state
     printInstruction: function (showOpdata = true) {
-        let opcode = this.read(this.PC);
-        let bytes = instructionSizes[opcode];
-        let operator = instructionNames[opcode];
+        let instruction = this.read(this.PC);
+        let bytes = SIZE[instruction];
+        let opcode = OPCODE[instruction];
         let w1 = "  ";
         let w2 = "  ";
         if (bytes > 1) {
@@ -186,41 +181,41 @@ CPU.prototype = {
         if (bytes > 2) {
             w2 = this.read(this.PC + 2).toString(16).toUpperCase();
         }
-        let mode = instructionModes[opcode];
+        let mode = MODE[instruction];
 
         let prefix = " ";
-        if ((operator === "NOP" && opcode !== 0xEA) ||
-            operator === "LAX" ||
-            operator === "SAX" ||
-            operator === "DCP" ||
-            operator === "ISB" ||
-            operator === "SLO" ||
-            operator === "RLA" ||
-            operator === "SRE" ||
-            operator === "RRA" ||
-            (opcode === 0xEB)) {
+        if ((opcode === "NOP" && instruction !== 0xEA) ||
+            opcode === "LAX" ||
+            opcode === "SAX" ||
+            opcode === "DCP" ||
+            opcode === "ISB" ||
+            opcode === "SLO" ||
+            opcode === "RLA" ||
+            opcode === "SRE" ||
+            opcode === "RRA" ||
+            (instruction === 0xEB)) {
             prefix = "*";
         }
         let opdata = this.opdataDisassembly(this.PC, mode);
-        let address = this.addressing(opcode, mode, false);
-        if (operator === "STA") {
+        let address = this.addressing(instruction, mode, false);
+        if (opcode === "STA") {
             opdata += util.sprintf(" = %02s", this.A.toString(16).toUpperCase());
         }
-        if (operator === "STX") {
+        if (opcode === "STX") {
             opdata += util.sprintf(" = %02s", this.X.toString(16).toUpperCase());
         }
-        if (operator === "STY") {
+        if (opcode === "STY") {
             opdata += util.sprintf(" = %02s", this.Y.toString(16).toUpperCase());
         }
-        if (operator === "BIT" ||
-            operator === "LDA" ||
-            operator === "LDX" ||
-            operator === "LDY") {
+        if (opcode === "BIT" ||
+            opcode === "LDA" ||
+            opcode === "LDX" ||
+            opcode === "LDY") {
             opdata += util.sprintf(" = %02s", this.read(address).toString(16).toUpperCase());
         }
         return console.log(util.sprintf("%04X  %02s %02s %02s %01s%s %-28s" +
             "A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3d",
-            this.PC, opcode.toString(16).toUpperCase(), w1, w2, prefix, operator, showOpdata ? opdata : "",
+            this.PC, instruction.toString(16).toUpperCase(), w1, w2, prefix, opcode, showOpdata ? opdata : "",
             this.A, this.X, this.Y, this.flags(), this.SP, (this.cycles * 3) % 341));
     },
 
@@ -236,7 +231,7 @@ CPU.prototype = {
             console.log("from ", PC.toString(16), " to ", end.toString(16));
             for (; PC < end;) {
                 let opcode = this.read(PC);
-                let size = instructionSizes[opcode];
+                let size = SIZE[opcode];
                 let hexDump;
                 switch (size) {
                     case 0:
@@ -252,7 +247,7 @@ CPU.prototype = {
                         break;
                 }
                 let operator = instructionNames[opcode];
-                let mode = instructionModes[opcode];
+                let mode = MODE[opcode];
                 let opdata = this.opdataDisassembly(PC, mode);
                 if (operator === "NOP") {
                     opdata = "";
@@ -273,26 +268,26 @@ CPU.prototype = {
 
     opdataDisassembly: function (PC, mode) {
         switch (mode) {
-            case modeAbsolute:
+            case ABSOLUTE:
                 return util.sprintf("$%04X", this.read16(PC + 1));
-            case modeAbsoluteX:
+            case ABSOLUTE_X:
                 return util.sprintf("$%04X, X", this.read16(PC + 1));
-            case modeAbsoluteY:
+            case ABSOLUTE_Y:
                 return util.sprintf("$%04X, Y", this.read16(PC + 1));
-            case modeAccumulator:
+            case ACCUMULATOR:
                 return "A";
-            case modeImmediate:
+            case IMMEDIATE:
                 return util.sprintf("#$%02X", this.read(PC + 1));
             // return util.sprintf("#%02X", this.read(PC + 1));
-            case modeImplied:
+            case IMPLIED:
                 return "";
-            case modeIndexedIndirect:
+            case INDEXED_INDIRECT:
                 return util.sprintf("($%02X, X)", this.read(PC + 1));
-            case modeIndirect:
+            case INDIRECT:
                 return util.sprintf("($%04X)", this.read16(PC + 1));
-            case modeIndirectIndexed:
+            case INDIRECT_INDEXED:
                 return util.sprintf("($%02X), Y", this.read(PC + 1));
-            case modeRelative:
+            case RELATIVE:
                 let address;
                 let offset = this.read(PC + 1);
                 if (offset < 0x80) {
@@ -301,50 +296,50 @@ CPU.prototype = {
                     address = (PC + 2 + offset - 0x100) & 0xFFFF;
                 }
                 return util.sprintf("$%04X", address);
-            case modeZeroPage:
+            case ZERO_PAGE:
                 return util.sprintf("$%02X", this.read(PC + 1));
-            case modeZeroPageX:
+            case ZERO_PAGE_X:
                 return util.sprintf("$%02X, X", this.read(PC + 1));
-            case modeZeroPageY:
+            case ZERO_PAGE_Y:
                 return util.sprintf("$%02X, Y", this.read(PC + 1));
         }
     },
 
-    addressing: function (opcode, mode, addCycle = true) {
+    addressing: function (mode, pageCycle, addCycle = true) {
         let address = null;
         let pageCrossed = null;
         switch (mode) {
-            case modeAbsolute:
+            case ABSOLUTE:
                 address = this.read16(this.PC + 1);
                 break;
-            case modeAbsoluteX:
+            case ABSOLUTE_X:
                 address = this.read16(this.PC + 1) + this.X;
                 pageCrossed = this.pagesDiffer(address - this.X, address);
                 break;
-            case modeAbsoluteY:
+            case ABSOLUTE_Y:
                 address = this.read16(this.PC + 1) + this.Y;
                 pageCrossed = this.pagesDiffer(address - this.Y, address);
                 break;
-            case modeAccumulator:
+            case ACCUMULATOR:
                 address = 0;
                 break;
-            case modeImmediate:
+            case IMMEDIATE:
                 address = this.PC + 1;
                 break;
-            case modeImplied:
+            case IMPLIED:
                 address = 0;
                 break;
-            case modeIndexedIndirect:
+            case INDEXED_INDIRECT:
                 address = this.read16bug((this.read(this.PC + 1) + this.X) & 0xff);
                 break;
-            case modeIndirect:
+            case INDIRECT:
                 address = this.read16bug(this.read16(this.PC + 1));
                 break;
-            case modeIndirectIndexed:
+            case INDIRECT_INDEXED:
                 address = this.read16bug(this.read(this.PC + 1)) + this.Y;
                 pageCrossed = this.pagesDiffer(address - this.Y, address);
                 break;
-            case modeRelative:
+            case RELATIVE:
                 let offset = this.read(this.PC + 1);
                 if (offset < 0x80) {
                     address = (this.PC + 2 + offset) & 0xFFFF;
@@ -352,19 +347,19 @@ CPU.prototype = {
                     address = (this.PC + 2 + offset - 0x100) & 0xFFFF;
                 }
                 break;
-            case modeZeroPage:
+            case ZERO_PAGE:
                 address = this.read(this.PC + 1);
                 break;
-            case modeZeroPageX:
+            case ZERO_PAGE_X:
                 address = (this.read(this.PC + 1) + this.X) & 0xff;
                 break;
-            case modeZeroPageY:
+            case ZERO_PAGE_Y:
                 address = (this.read(this.PC + 1) + this.Y) & 0xff;
                 break;
         }
         if (addCycle) {
             if (pageCrossed) {
-                this.cycles += instructionPagecycles[opcode];
+                this.cycles += pageCycle;
             }
         }
         return address;
@@ -381,24 +376,25 @@ CPU.prototype = {
 
         // interrupt
         switch (this.interrupt) {
-            case interruptIRQ:
+            case INT_IRQ:
                 this.irq();
                 break;
-            case interruptNMI:
+            case INT_NMI:
                 this.nmi();
                 break;
         }
-        this.interrupt = interruptNone;
+        this.interrupt = INT_NONE;
         let instruction = this.read(this.PC);
 
-        let mode = instructionModes[instruction];
-        let address = this.addressing(instruction, mode);
+        let mode = MODE[instruction];
+        let pageCycle = PAGE_CYCLE[instruction];
+        let address = this.addressing(mode, pageCycle);
 
-        this.PC += instructionSizes[instruction];
-        this.cycles += instructioncycles[instruction];
+        this.PC += SIZE[instruction];
+        this.cycles += CYCLE[instruction];
         let pc = this.PC;
         let value, a, b, c;
-        switch (instructionOpcodes[instruction]) {
+        switch (OPCODE[instruction]) {
             case ADC: // Add with Carry
                 a = this.A;
                 b = this.read(address);
@@ -425,7 +421,7 @@ CPU.prototype = {
                 // throw new Error("illegal instruction");
                 break;
             case ASL: // Arithmetic Shift Left
-                if (mode === modeAccumulator) {
+                if (mode === ACCUMULATOR) {
                     this.C = (this.A >> 7) & 1;
                     this.A = (this.A << 1) & 0xff;
                     this.setZN(this.A);
@@ -572,7 +568,7 @@ CPU.prototype = {
                 this.A = (a - b - (1 - c)) & 0XFF;
                 this.setZN(this.A);
                 this.C = (a - b - (1 - c)) >= 0 ? 1 : 0;
-                this.V =  ((a ^ b) & 0x80) !== 0 && ((a ^ this.A) & 0x80) !== 0;
+                this.V = ((a ^ b) & 0x80) !== 0 && ((a ^ this.A) & 0x80) !== 0;
                 break;
             case JMP: // Jump
                 this.PC = address;
@@ -606,7 +602,7 @@ CPU.prototype = {
                 this.setZN(this.Y);
                 break;
             case LSR: // Logical Shift Right
-                if (mode === modeAccumulator) {
+                if (mode === ACCUMULATOR) {
                     this.C = this.A & 1;
                     this.A >>= 1;
                     this.setZN(this.A);
@@ -639,7 +635,7 @@ CPU.prototype = {
                 break;
             case RLA: // ROL AND
                 c = this.C;
-                if (mode === modeAccumulator) {
+                if (mode === ACCUMULATOR) {
                     this.C = (this.A >> 7) & 1;
                     this.A = ((this.A << 1) | c) & 0xff;
                     this.setZN(this.A);
@@ -655,7 +651,7 @@ CPU.prototype = {
                 break;
             case ROL: // Rotate Left
                 c = this.C;
-                if (mode === modeAccumulator) {
+                if (mode === ACCUMULATOR) {
                     this.C = (this.A >> 7) & 1;
                     this.A = ((this.A << 1) | c) & 0xff;
                     this.setZN(this.A);
@@ -669,7 +665,7 @@ CPU.prototype = {
                 break;
             case ROR: // Rotate Right
                 c = this.C;
-                if (mode === modeAccumulator) {
+                if (mode === ACCUMULATOR) {
                     this.C = this.A & 1;
                     this.A = ((this.A >> 1) | (c << 7)) & 0xff;
                     this.setZN(this.A);
@@ -683,7 +679,7 @@ CPU.prototype = {
                 break;
             case RRA: // ROR ADC
                 c = this.C;
-                if (mode === modeAccumulator) {
+                if (mode === ACCUMULATOR) {
                     this.C = this.A & 1;
                     this.A = ((this.A >> 1) | (c << 7)) & 0xff;
                     this.setZN(this.A);
@@ -719,7 +715,7 @@ CPU.prototype = {
                 this.A = (a - b - (1 - c)) & 0XFF;
                 this.setZN(this.A);
                 this.C = (a - b - (1 - c)) >= 0 ? 1 : 0;
-                this.V =  ((a ^ b) & 0x80) !== 0 && ((a ^ this.A) & 0x80) !== 0;
+                this.V = ((a ^ b) & 0x80) !== 0 && ((a ^ this.A) & 0x80) !== 0;
                 break;
             case SEC: // Set Carry Flag
                 this.C = 1;
@@ -737,7 +733,7 @@ CPU.prototype = {
                 // throw new Error("illegal instruction");
                 break;
             case SLO: // ASL ORA
-                if (mode === modeAccumulator) {
+                if (mode === ACCUMULATOR) {
                     this.C = (this.A >> 7) & 1;
                     this.A = (this.A << 1) & 0xff;
                     this.setZN(this.A);
@@ -753,7 +749,7 @@ CPU.prototype = {
                 this.setZN(this.A);
                 break;
             case SRE: // LSR EOR
-                if (mode === modeAccumulator) {
+                if (mode === ACCUMULATOR) {
                     this.C = this.A & 1;
                     this.A >>= 1;
                     this.setZN(this.A);
@@ -816,7 +812,7 @@ CPU.prototype = {
      * triggerNMI causes a Non-Maskable Interrupt to occur on the next cycle
      */
     triggerNMI: function () {
-        this.interrupt = interruptNMI;
+        this.interrupt = INT_NMI;
     },
 
     /**
@@ -824,7 +820,7 @@ CPU.prototype = {
      */
     triggerIRQ: function () {
         if (this.I === 0) {
-            this.interrupt = interruptIRQ;
+            this.interrupt = INT_IRQ;
         }
     },
 
@@ -891,20 +887,18 @@ CPU.prototype = {
 
     // setZ sets the zero flag if the argument is zero
     setZ: function (value) {
-        value &= 0xff;
         this.Z = value === 0 ? 1 : 0;
     },
 
     // setN sets the negative flag if the argument is negative (high bit is set)
     setN: function (value) {
-        value &= 0xff;
         this.N = (value & 0x80) !== 0 ? 1 : 0;
     },
 
     // setZN sets the zero flag and the negative flag
     setZN: function (value) {
-        this.setZ(value);
-        this.setN(value);
+        this.Z = value === 0 ? 1 : 0;
+        this.N = (value & 0x80) !== 0 ? 1 : 0;
     },
 
     /* memory ------------------------------------------------------------------------------------------------------- */
@@ -913,87 +907,82 @@ CPU.prototype = {
         return (a & 0xFF00) !== (b & 0xFF00);
     },
 
+    // addBranchCycles adds a cycle for taking a branch and adds another cycle if the branch jumps to a new page
+    addBranchCycles: function (address, pc) {
+        this.cycles += this.pagesDiffer(pc, address) ? 2 : 1;
+    },
+
+    compare: function (a, b) {
+        this.setZN(a - b);
+        this.C = a >= b ? 1 : 0;
+    },
+
     read: function (address) {
         address &= 0xFFFF;
-        // console.warn('cpu memory read', address.toString(16));
-        if (address < 0x2000) {
-            // console.warn('cpu memory read', address.toString(16));
-            return this.ram[address % 0x800];
+        switch (true) {
+            case address < 0x2000:
+                return this.ram[address % 0x800];
+            case address < 0x4000:
+                return this.nes.ppu.readRegister(0x2000 + (address - 0x2000) % 8);
+            case address < 0x4020:
+                switch (address) {
+                    case 0x4014:
+                        return this.nes.ppu.readRegister(address);
+                    case 0x4015:
+                        return this.nes.apu.readRegister(address, value);
+                    case 0x4016:
+                        return this.nes.controller[0].read();
+                    case 0x4017:
+                        return this.nes.controller[1].read();
+                    default:
+                        // console.warn("unhandled I/O Registers II read at address: " + address.toString(16));
+                        return;
+                }
+            case address < 0x6000:
+                return;
+            default:
+                return this.nes.mapper.read(address);
         }
-        if (address < 0x4000) {
-            return this.nes.ppu.readRegister(0x2000 + (address - 0x2000) % 8);
-        }
-        if (address < 0x4020) {
-            switch (address) {
-                case 0x4014:
-                    return this.nes.ppu.readRegister(address);
-                case 0x4015:
-                    return this.nes.apu.readRegister(address, value);
-                case 0x4016:
-                    return this.nes.controller[0].read();
-                case 0x4017:
-                    return this.nes.controller[1].read();
-                default:
-                    // console.warn("unhandled I/O Registers II read at address: " + address.toString(16));
-                    return;
-            }
-        }
-        if (address < 0x6000) {
-            // console.warn("unhandled Expansion ROM read at address: " + address.toString(16));
-            return;
-        }
-        if (address >= 0x6000) {
-            return this.nes.mapper.read(address);
-        }
-        // throw new Error("unhandled cpu memory read at address: " + address.toString(16));
     },
 
     write: function (address, value) {
         address &= 0xFFFF;
         value &= 0xff;
-        // console.warn('cpu memory write', address.toString(16), value.toString(16));
-        if (address < 0x2000) {
-            // console.warn('cpu memory write', address.toString(16), value.toString(16));16
-            this.ram[address % 0x800] = value;
-            return;
-        }
-        if (address < 0x4000) {
-            this.nes.ppu.writeRegister(0x2000 + (address - 0x2000) % 8, value);
-            return;
-        }
-        if (address < 0x4020) {
-            if (address < 0x4014) {
+        switch (true) {
+            case address < 0x2000:
+                this.ram[address % 0x800] = value;
+                return;
+            case address < 0x4000:
+                this.nes.ppu.writeRegister(0x2000 + (address - 0x2000) % 8, value);
+                return;
+            case address < 0x4014:
                 this.nes.apu.writeRegister(address, value);
                 return;
-            }
-            switch (address) {
-                case 0x4014:
-                    this.nes.ppu.writeRegister(address, value);
-                    return;
-                case 0x4015:
-                    this.nes.apu.writeRegister(address, value);
-                    return;
-                case 0x4016:
-                    this.nes.controller[0].write(value);
-                    this.nes.controller[1].write(value);
-                    return;
-                case 0x4017:
-                    this.nes.apu.writeRegister(address, value);
-                    return;
-                default:
-                    // console.warn("unhandled I/O Registers II write at address: " + address.toString(16));
-                    return;
-            }
+            case address < 0x4020:
+                switch (address) {
+                    case 0x4014:
+                        this.nes.ppu.writeRegister(address, value);
+                        return;
+                    case 0x4015:
+                        this.nes.apu.writeRegister(address, value);
+                        return;
+                    case 0x4016:
+                        this.nes.controller[0].write(value);
+                        this.nes.controller[1].write(value);
+                        return;
+                    case 0x4017:
+                        this.nes.apu.writeRegister(address, value);
+                        return;
+                    default:
+                        // console.warn("unhandled I/O Registers II read at address: " + address.toString(16));
+                        return;
+                }
+            case address < 0x6000:
+                return;
+            default:
+                this.nes.mapper.write(address, value);
+                return;
         }
-        if (address < 0x6000) {
-            // console.warn("unhandled Expansion ROM write at address: " + address.toString(16));
-            return;
-        }
-        if (address >= 0x6000) {
-            this.nes.mapper.write(address, value);
-            return;
-        }
-        // throw new Error("unhandled cpu memory write at address: " + address.toString(16));
     },
 
     // read16 reads two bytes using read to return a double-word value
@@ -1036,19 +1025,6 @@ CPU.prototype = {
         let lo = this.pull();
         let hi = this.pull();
         return ((hi & 0xff) << 8) | (lo & 0xff);
-    },
-
-    // addBranchCycles adds a cycle for taking a branch and adds another cycle if the branch jumps to a new page
-    addBranchCycles: function (address, pc) {
-        this.cycles++;
-        if (this.pagesDiffer(pc, address)) {
-            this.cycles++;
-        }
-    },
-
-    compare: function (a, b) {
-        this.setZN(a - b);
-        this.C = a >= b ? 1 : 0;
     },
 };
 

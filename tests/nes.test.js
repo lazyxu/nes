@@ -12,6 +12,9 @@ function run(file) {
             } else {
                 nes.load(file);
                 nes.run();
+                setInterval(() => {
+                    console.log(Math.floor(nes.getFPS()));
+                }, 1000)
             }
         }
     );
