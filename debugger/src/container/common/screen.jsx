@@ -1,5 +1,6 @@
 import React from 'react'
 import {connect} from 'react-redux'
+import RingBuffer from "ringbufferjs";
 
 import './screen.scss'
 
@@ -46,7 +47,7 @@ class component extends React.Component {
                 for (let x = 0; x < 256; ++x) {
                     i = y * 256 + x;
                     // Convert pixel from NES BGR to canvas ABGR
-                    this.buf32[i] = 0xFF000000 | nes.ppu.buffer[x][y]; // Full alpha
+                    this.buf32[i] = 0xFF000000 | nes.ppu.palette[nes.ppu.pixPaletteIndex[y * 256 + x]]; // Full alpha
                 }
             }
             this.canvasImageData.data.set(this.buf8);
@@ -60,21 +61,31 @@ class component extends React.Component {
         });
 
 
-        let audioCtx = new AudioContext();
-        let buffer = audioCtx.createBuffer(1, nes.apu.sampleBuffer.length, 44100);
-        let channelLeft = buffer.getChannelData(0);
-        let source;
-        nes.apu.writeSamples = (samples) => {
-            // let channelRight = buffer.getChannelData(1);
-            for (let i = 0; i < samples.length; i++) {
-                channelLeft[i] = samples[i];
-                // channelRight[i] = samples[i];
-            }
-            source = audioCtx.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioCtx.destination);
-            source.start();
+        let bufferSize = 8192;
+        let buffer = new RingBuffer(bufferSize);
+
+        nes.apu.writeSample = sample => {
+            buffer.enq(sample);
         };
+
+        let audioCtx = new AudioContext();
+        let scriptNode = audioCtx.createScriptProcessor(1024, 0, 1);
+        scriptNode.onaudioprocess = e => {
+            let left = e.outputBuffer.getChannelData(0);
+            let size = left.length;
+            try {
+                var samples = buffer.deqN(size);
+            } catch (e) {
+                for (let i = 0; i < size; i++) {
+                    left[i] = 0;
+                }
+                return;
+            }
+            for (let i = 0; i < size; i++) {
+                left[i] = samples[i];
+            }
+        };
+        scriptNode.connect(audioCtx.destination);
     }
 
     updateKey(keyCode, value) {

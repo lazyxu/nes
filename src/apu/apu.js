@@ -16,7 +16,6 @@ let APU = function (cpu) {
         tndTable[i] = 163.67 / (24329.0 / i + 100);
     }
 
-    this.sampleRate = 44100.0;
     // 2个方波，1个三角波，1个噪声，1个差值调制通道（DMC）
     this.pulse1 = new Pulse(1);
     this.pulse2 = new Pulse(2);
@@ -36,10 +35,7 @@ let APU = function (cpu) {
         Filter.HighPassFilter(44100, 440),
         Filter.LowPassFilter(44100, 14000)
     ];
-    this.bufferSize = 44100;
-    this.sampleBuffer = new Array(this.bufferSize);
-    this.bufferIndex = 0;
-    this.writeSamples = function () {
+    this.writeSample = function (sample) {
 
     };
 };
@@ -71,11 +67,7 @@ APU.prototype = {
         for (let i = 0; i < this.filters.length; i++) {
             x = this.filters[i].step(x);
         }
-        this.sampleBuffer[this.bufferIndex++] = x;
-        if (this.bufferIndex === this.sampleBuffer.length) {
-            this.writeSamples(this.sampleBuffer);
-            this.bufferIndex = 0;
-        }
+        this.writeSample(x);
     },
 
     /**

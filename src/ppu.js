@@ -21,20 +21,24 @@ let PPU = function (nes) {
     this.nes = nes;
     this.cycle = 0;    // 0-340
     this.scanLine = 0; // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
-    this.buffer = new Array(256);
-    for (i = 0; i < this.buffer.length; i++) {
-        this.buffer[i] = new Array(240);
+    this.pixPaletteIndexBuf = new ArrayBuffer(256*240); // 256*240 bytes
+    this.pixPaletteIndex = new Uint8Array(this.pixPaletteIndexBuf); //  the image palette ($3F00-$3F0F) and the sprite palette ($3F10-$3F1F)
+    for (i = 0; i < this.pixPaletteIndex.length; i++) {
+        this.pixPaletteIndex[i] = 0;
     }
     this.frame = 0;    // frame counter
-    this.paletteIndex = new Array(0x20); //  the image palette ($3F00-$3F0F) and the sprite palette ($3F10-$3F1F)
+    this.paletteIndexBuf = new ArrayBuffer(0x20); // 32 bytes
+    this.paletteIndex = new Uint8Array(this.paletteIndexBuf); //  the image palette ($3F00-$3F0F) and the sprite palette ($3F10-$3F1F)
     for (i = 0; i < this.paletteIndex.length; i++) {
         this.paletteIndex[i] = 0;
     }
-    this.nameTableData = new Array(0x800);
+    this.nameTableDataBuf = new ArrayBuffer(0x800); // 2048 bytes
+    this.nameTableData = new Uint8Array(this.nameTableDataBuf);
     for (i = 0; i < this.nameTableData.length; i++) {
         this.nameTableData[i] = 0;
     }
-    this.oamData = new Array(0x100); // SPR-RAM
+    this.oamDataBuf = new ArrayBuffer(0x100); // 256 bytes
+    this.oamData = new Uint8Array(this.oamDataBuf); // SPR-RAM
     for (i = 0; i < this.oamData.length; i++) {
         this.oamData[i] = 0;
     }
@@ -202,7 +206,7 @@ PPU.prototype = {
                 color = backgroundColor;
             }
         }
-        this.buffer[x][y] = this.palette[this.readPaletteIndex(color) % 64];
+        this.pixPaletteIndex[y*256+x] = this.readPaletteIndex(color);
     },
 
     /**
