@@ -17,6 +17,6 @@ nes-test-roms
 *.log
 *.txt
 roms
-/src/PAPU.JS
+/src/papu.js
 /src/apu/tmp
 /src/ANESE

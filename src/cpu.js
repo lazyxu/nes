@@ -132,8 +132,8 @@ const INT_RESET = 3;
 
 let CPU = function (nes) {
     this.nes = nes;
-    this.ramBuf = new ArrayBuffer(0x800); // 2048 bytes
-    this.ram = new Uint8Array(this.ramBuf);
+    let ramBuf = new ArrayBuffer(0x800); // 2048 bytes
+    this.ram = new Uint8Array(ramBuf);
     for (let i = 0; i < this.ram.length; i++) {
         this.ram[i] = 0;
     }

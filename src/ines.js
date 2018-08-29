@@ -96,7 +96,8 @@ INES.prototype = {
         // Following the header is the 512-byte trainer, if one is present, otherwise the ROM banks
         // begin here, starting with PRG-ROM then CHR-ROM.
         if (trainerExist) {
-            this.trainer = new Array(512);
+            let trainerBuf = new ArrayBuffer(0x200); // 512 bytes
+            this.trainer = new Uint8Array(trainerBuf);
             for (i = 0; i < 0x200; i++) {
                 this.trainer[i] = data.charCodeAt(i) & 0xff;
             }
@@ -106,7 +107,8 @@ INES.prototype = {
         this.prgRom = new Array(numPrgRom);
         let offset = 16;
         for (i = 0; i < numPrgRom; i++) {
-            this.prgRom[i] = new Array(16384);
+            let prgRomBuf = new ArrayBuffer(0x4000); // 16384 bytes
+            this.prgRom[i] = new Uint8Array(prgRomBuf);
             for (j = 0; j < 0x4000; j++) {
                 if (offset + j >= data.length) {
                     break;
@@ -120,7 +122,8 @@ INES.prototype = {
             // Load CHR-ROM banks:
             this.chrRom = new Array(numChrRom);
             for (i = 0; i < numChrRom; i++) {
-                this.chrRom[i] = new Array(8192);
+                let chrRomBuf = new ArrayBuffer(0x2000); // 8192 bytes
+                this.chrRom[i] = new Uint8Array(chrRomBuf);
                 for (j = 0; j < 0x2000; j++) {
                     if (offset + j >= data.length) {
                         break;
@@ -133,7 +136,8 @@ INES.prototype = {
             numChrRom = 1;
             this.chrRom = new Array(numChrRom);
             for (i = 0; i < numChrRom; i++) {
-                this.chrRom[i] = new Array(8192);
+                let chrRomBuf = new ArrayBuffer(0x2000); // 8192 bytes
+                this.chrRom[i] = new Uint8Array(chrRomBuf);
                 for (j = 0; j < 0x2000; j++) {
                     if (offset + j >= data.length) {
                         break;
@@ -142,7 +146,8 @@ INES.prototype = {
                 }
                 offset += 0x2000;
             }
-            this.chrRam = new Array(8192);
+            let chrRomBuf = new ArrayBuffer(0x2000); // 8192 bytes
+            this.chrRam = new Uint8Array(chrRomBuf);
             for (i = 0; i < 0x1000; i++) {
                 this.chrRam[i] = data.charCodeAt(offset + i) & 0xff;
             }
