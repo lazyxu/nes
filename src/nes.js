@@ -40,10 +40,10 @@ NES.prototype = {
     step: function () {
         let i;
         let cpuCycles = this.cpu.step();
-        for (i = 0; i < cpuCycles * 3; i++) {
+        for (i = 0; i < cpuCycles * 3; ++i) {
             this.ppu.step();
         }
-        for (i = 0; i < cpuCycles; i++) {
+        for (i = 0; i < cpuCycles; ++i) {
             this.apu.step();
         }
         return cpuCycles;

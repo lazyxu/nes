@@ -27,7 +27,7 @@ let Mapper = function (nes) {
     this.chrLowerBank = 0;
     this.chrUpperBank = 0;
     this.prgRam = new Array(32 * 1024); // PRG RAM: 32K
-    for (i = 0; i < this.prgRam.length; i++) {
+    for (i = 0; i < this.prgRam.length; ++i) {
         this.prgRam[i] = 0;
     }
 

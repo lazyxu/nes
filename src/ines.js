@@ -31,7 +31,7 @@ INES.prototype = {
         let i, j;
         this.data = data;
         let header = new Array(16);
-        for (i = 0; i < 16; i++) {
+        for (i = 0; i < 16; ++i) {
             header[i] = data.charCodeAt(i) & 0xff;
         }
         //  identify the file as an iNES file: NES\x1a
@@ -87,7 +87,7 @@ INES.prototype = {
         let numPrgRam = header[8];
 
         // Reserved for future usage and should all be 0.
-        for (i = 9; i < 16; i++) {
+        for (i = 9; i < 16; ++i) {
             if (header[i] !== 0) {
                 // throw new Error("Reserved for future usage and should all be 0.");
             }
@@ -98,7 +98,7 @@ INES.prototype = {
         if (trainerExist) {
             let trainerBuf = new ArrayBuffer(0x200); // 512 bytes
             this.trainer = new Uint8Array(trainerBuf);
-            for (i = 0; i < 0x200; i++) {
+            for (i = 0; i < 0x200; ++i) {
                 this.trainer[i] = data.charCodeAt(i) & 0xff;
             }
         }
@@ -106,7 +106,7 @@ INES.prototype = {
         // Load PRG-ROM banks:
         this.prgRom = new Array(numPrgRom);
         let offset = 16;
-        for (i = 0; i < numPrgRom; i++) {
+        for (i = 0; i < numPrgRom; ++i) {
             let prgRomBuf = new ArrayBuffer(0x4000); // 16384 bytes
             this.prgRom[i] = new Uint8Array(prgRomBuf);
             for (j = 0; j < 0x4000; j++) {
@@ -121,7 +121,7 @@ INES.prototype = {
         if (numChrRom !== 0) {
             // Load CHR-ROM banks:
             this.chrRom = new Array(numChrRom);
-            for (i = 0; i < numChrRom; i++) {
+            for (i = 0; i < numChrRom; ++i) {
                 let chrRomBuf = new ArrayBuffer(0x2000); // 8192 bytes
                 this.chrRom[i] = new Uint8Array(chrRomBuf);
                 for (j = 0; j < 0x2000; j++) {
@@ -135,7 +135,7 @@ INES.prototype = {
         } else {
             numChrRom = 1;
             this.chrRom = new Array(numChrRom);
-            for (i = 0; i < numChrRom; i++) {
+            for (i = 0; i < numChrRom; ++i) {
                 let chrRomBuf = new ArrayBuffer(0x2000); // 8192 bytes
                 this.chrRom[i] = new Uint8Array(chrRomBuf);
                 for (j = 0; j < 0x2000; j++) {
@@ -148,7 +148,7 @@ INES.prototype = {
             }
             let chrRomBuf = new ArrayBuffer(0x2000); // 8192 bytes
             this.chrRam = new Uint8Array(chrRomBuf);
-            for (i = 0; i < 0x1000; i++) {
+            for (i = 0; i < 0x1000; ++i) {
                 this.chrRam[i] = data.charCodeAt(offset + i) & 0xff;
             }
         }

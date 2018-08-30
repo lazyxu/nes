@@ -19,7 +19,7 @@ let Mapper = function (nes) {
     this.prgRomUpperBank = this.prgRomBanks - 1;
     this.prgRomLowerBank = 0;
     this.prgRam = new Array(4096); // PRG RAM: 2K or 4K in Family Basic only
-    for (i = 0; i < this.prgRam.length; i++) {
+    for (i = 0; i < this.prgRam.length; ++i) {
         this.prgRam[i] = 0;
     }
 };

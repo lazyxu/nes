@@ -9,10 +9,10 @@ let tndTable = new Array(203);
 let APU = function (cpu) {
     this.cpu = cpu;
     let i;
-    for (i = 0; i < 31; i++) {
+    for (i = 0; i < 31; ++i) {
         pulseTable[i] = 95.52 / (8128.0 / i + 100);
     }
-    for (i = 0; i < 203; i++) {
+    for (i = 0; i < 203; ++i) {
         tndTable[i] = 163.67 / (24329.0 / i + 100);
     }
 
@@ -64,7 +64,7 @@ APU.prototype = {
 
     sample: function () {
         let x = this.output();
-        for (let i = 0; i < this.filters.length; i++) {
+        for (let i = 0; i < this.filters.length; ++i) {
             x = this.filters[i].step(x);
         }
         this.writeSample(x);

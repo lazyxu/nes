@@ -21,25 +21,23 @@ let PPU = function (nes) {
     this.nes = nes;
     this.cycle = 0;    // 0-340
     this.scanLine = 0; // 0-261, 0-239=visible, 240=post, 241-260=vblank, 261=pre
-    let pixPaletteIndexBuf = new ArrayBuffer(256*240); // 256*240 bytes
-    this.pixPaletteIndex = new Uint8Array(pixPaletteIndexBuf); //  the image palette ($3F00-$3F0F) and the sprite palette ($3F10-$3F1F)
-    for (i = 0; i < this.pixPaletteIndex.length; i++) {
-        this.pixPaletteIndex[i] = 0;
+    this.writePix = function (color) {
+
     }
     this.frame = 0;    // frame counter
     let paletteIndexBuf = new ArrayBuffer(0x20); // 32 bytes
     this.paletteIndex = new Uint8Array(paletteIndexBuf); //  the image palette ($3F00-$3F0F) and the sprite palette ($3F10-$3F1F)
-    for (i = 0; i < this.paletteIndex.length; i++) {
+    for (i = 0; i < this.paletteIndex.length; ++i) {
         this.paletteIndex[i] = 0;
     }
     let nameTableDataBuf = new ArrayBuffer(0x800); // 2048 bytes
     this.nameTableData = new Uint8Array(nameTableDataBuf);
-    for (i = 0; i < this.nameTableData.length; i++) {
+    for (i = 0; i < this.nameTableData.length; ++i) {
         this.nameTableData[i] = 0;
     }
     let oamDataBuf = new ArrayBuffer(0x100); // 256 bytes
     this.oamData = new Uint8Array(oamDataBuf); // SPR-RAM
-    for (i = 0; i < this.oamData.length; i++) {
+    for (i = 0; i < this.oamData.length; ++i) {
         this.oamData[i] = 0;
     }
     // used for debugger
@@ -82,7 +80,7 @@ let PPU = function (nes) {
     this.backgroundPix = new Array(16);
 
     this.result = new Array(16);
-    for (i = 0; i < this.result.length; i++) {
+    for (i = 0; i < this.result.length; ++i) {
         this.result[i] = i;
     }
 };
@@ -157,7 +155,7 @@ PPU.prototype = {
         let spriteIndex = 0, spriteColor = 0;
         // spritePixel
         if (this.flagShowSprites !== 0) {
-            for (let i = 0; i < this.spriteCount; i++) {
+            for (let i = 0; i < this.spriteCount; ++i) {
                 let offset = x - this.spriteXs[i];
                 if (offset < 0 || offset > 7) {
                     continue;
@@ -206,7 +204,7 @@ PPU.prototype = {
                 color = backgroundColor;
             }
         }
-        this.pixPaletteIndex[y*256+x] = this.readPaletteIndex(color);
+        this.writePix(y * 256 + x, 0xff000000 | this.palette[this.readPaletteIndex(color)]);
     },
 
     /**
@@ -253,7 +251,7 @@ PPU.prototype = {
         let lowTileByte = this.read(address);
         let highTileByte = this.read(address + 8);
         let data = 0;
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 8; ++i) {
             let p1, p2;
             if (flipHorizontally) {
                 p1 = (lowTileByte & 1) << 0;
@@ -283,7 +281,7 @@ PPU.prototype = {
             h = 16;
         }
         let count = 0;
-        for (let i = 0; i < 64; i++) {
+        for (let i = 0; i < 64; ++i) {
             let y = this.oamData[i * 4];     // Byte 0: Y position of top of sprite
             let a = this.oamData[i * 4 + 2];
             let x = this.oamData[i * 4 + 3];
@@ -406,13 +404,13 @@ PPU.prototype = {
                         let a = this.attribute2 << 2;
                         // this.shifters = 0;
                         data = 0;
-                        for (let i = 0; i < 8; i++) {
+                        for (let i = 0; i < 8; ++i) {
                             data <<= 2;
                             data |= this.attribute2;
                         }
                         this.shifterRegister8 |= data;
                         data = 0;
-                        for (let i = 0; i < 8; i++) {
+                        for (let i = 0; i < 8; ++i) {
                             let p1 = (this.lowTileByte & 0x80) >> 7;
                             let p2 = (this.highTileByte & 0x80) >> 6;
                             this.lowTileByte <<= 1;
@@ -600,26 +598,26 @@ PPU.prototype = {
     readRegister: function (address) {
         // console.warn('ppu register read', address.toString(16));
         switch (address) {
-            case 0x2000:
-                // throw new Error("invalid ppu register read at address: " + address.toString(16));
-            case 0x2001:
-                // throw new Error("invalid ppu register read at address: " + address.toString(16));
+            // case 0x2000:
+            // throw new Error("invalid ppu register read at address: " + address.toString(16));
+            // case 0x2001:
+            // throw new Error("invalid ppu register read at address: " + address.toString(16));
             case 0x2002:
                 return this.readStatus();
-            case 0x2003:
-                // throw new Error("invalid ppu register read at address: " + address.toString(16));
+            // case 0x2003:
+            // throw new Error("invalid ppu register read at address: " + address.toString(16));
             case 0x2004:
                 return this.readOAMData();
-            case 0x2005:
-                // throw new Error("invalid ppu register read at address: " + address.toString(16));
-            case 0x2006:
-                // throw new Error("invalid ppu register read at address: " + address.toString(16));
+            // case 0x2005:
+            // throw new Error("invalid ppu register read at address: " + address.toString(16));
+            // case 0x2006:
+            // throw new Error("invalid ppu register read at address: " + address.toString(16));
             case 0x2007:
                 return this.readData();
-            case 0x4014:
-                // throw new Error("invalid ppu register read at address: " + address.toString(16));
-            default:
-                // throw new Error("unhandled ppu register read at address: " + address.toString(16));
+            // case 0x4014:
+            // throw new Error("invalid ppu register read at address: " + address.toString(16));
+            // default:
+            // throw new Error("unhandled ppu register read at address: " + address.toString(16));
         }
     },
 
@@ -639,8 +637,8 @@ PPU.prototype = {
             case 0x2001:
                 this.writeMask(value);
                 return;
-            case 0x2002:
-                // throw new Error("invalid ppu register write at address: " + address.toString(16));
+            // case 0x2002:
+            // throw new Error("invalid ppu register write at address: " + address.toString(16));
             case 0x2003:
                 this.writeOAMAddress(value);
                 return;
@@ -660,7 +658,7 @@ PPU.prototype = {
                 this.write_OAM_DMA(value);
                 return;
             default:
-                // throw new Error("unhandled ppu register write at address: " + address.toString(16));
+            // throw new Error("unhandled ppu register write at address: " + address.toString(16));
         }
     },
 
@@ -903,7 +901,7 @@ PPU.prototype = {
     write_OAM_DMA: function (value) {
         let cpu = this.nes.cpu;
         let address = value << 8;
-        for (let i = 0; i < 256; i++) { // $XX00-$XXFF
+        for (let i = 0; i < 256; ++i) { // $XX00-$XXFF
             this.oamData[this.oamAddress] = cpu.read(address);
             this.oamAddress++;
             address++;

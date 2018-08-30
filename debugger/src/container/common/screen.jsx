@@ -42,14 +42,10 @@ class component extends React.Component {
 
         let i = 0;
         let nes = window.nes;
-        nes.onEndFrame = (nes) => {
-            for (let y = 0; y < 240; ++y) {
-                for (let x = 0; x < 256; ++x) {
-                    i = y * 256 + x;
-                    // Convert pixel from NES BGR to canvas ABGR
-                    this.buf32[i] = 0xFF000000 | nes.ppu.palette[nes.ppu.pixPaletteIndex[y * 256 + x]]; // Full alpha
-                }
-            }
+        nes.ppu.writePix = (offset, color) => {
+            this.buf32[offset] = color;
+        };
+        nes.onEndFrame = nes => {
             this.canvasImageData.data.set(this.buf8);
             this.canvasContext.putImageData(this.canvasImageData, 0, 0);
         };

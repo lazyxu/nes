@@ -134,7 +134,7 @@ let CPU = function (nes) {
     this.nes = nes;
     let ramBuf = new ArrayBuffer(0x800); // 2048 bytes
     this.ram = new Uint8Array(ramBuf);
-    for (let i = 0; i < this.ram.length; i++) {
+    for (let i = 0; i < this.ram.length; ++i) {
         this.ram[i] = 0;
     }
     this.cycles = null;
@@ -225,7 +225,7 @@ CPU.prototype = {
         start.sort(function (a, b) {
             return a > b;
         });
-        for (let i = 0; i < start.length; i++) {
+        for (let i = 0; i < start.length; ++i) {
             let PC = start[i];
             let end = i === start.length - 1 ? 0xFFFA : start[i + 1];
             console.log("from ", PC.toString(16), " to ", end.toString(16));

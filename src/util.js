@@ -13,8 +13,7 @@ exports.sprintf = function() {
             o.push('%');
         }
         else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f)) {
-            if (((a = arguments[m[1] || i++]) == null) || (a == undefined)) {
-                console.log(arguments);
+            if (((a = arguments[m[1] || i++]) == null) || (a === undefined)) {
                 // throw('Too few arguments.');
             }
             if (/[^s]/.test(m[7]) && (typeof(a) != 'number')) {
