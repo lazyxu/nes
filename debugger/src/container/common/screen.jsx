@@ -66,12 +66,19 @@ class component extends React.Component {
 
         let audioCtx = new AudioContext();
         let scriptNode = audioCtx.createScriptProcessor(1024, 0, 1);
+        let audioDelayCount = 0;
         scriptNode.onaudioprocess = e => {
             let left = e.outputBuffer.getChannelData(0);
             let size = left.length;
             try {
                 var samples = buffer.deqN(size);
             } catch (e) {
+                if (audioDelayCount < 3) {
+                    console.log("audio delayed", i+1);
+                    nes.stepFrame();
+                    audioDelayCount = 0;
+                }
+                audioDelayCount++;
                 for (let i = 0; i < size; i++) {
                     left[i] = 0;
                 }
@@ -80,6 +87,7 @@ class component extends React.Component {
             for (let i = 0; i < size; i++) {
                 left[i] = samples[i];
             }
+            audioDelayCount = 0;
         };
         scriptNode.connect(audioCtx.destination);
     }

@@ -50,12 +50,16 @@ NES.prototype = {
     },
 
     stepFrame: function () {
+        if (this.isRunning === false) {
+            this.stop();
+        }
         let cpuCycles = 0;
         let frame = this.ppu.frame;
         for (; frame === this.ppu.frame;) {
             cpuCycles += this.step();
         }
         this.fpsFrameCount++;
+        this.onEndFrame(this);
         return cpuCycles;
     },
 
@@ -84,10 +88,6 @@ NES.prototype = {
         this.isRunning = true;
         this.frameInterval = setInterval(() => {
             this.stepFrame();
-            this.onEndFrame(this);
-            if (this.isRunning === false) {
-                this.stop();
-            }
         }, 1000 / 60);
     },
 
