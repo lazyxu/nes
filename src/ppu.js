@@ -11,11 +11,6 @@ let mirrorLookup = [
     [0, 1, 2, 3]
 ];
 
-function mirrorAddress(mode, address) {
-    address = (address - 0x2000) % 0x1000;
-    return 0x2000 + mirrorLookup[mode][Math.floor(address / 0x0400)] * 0x0400 + address % 0x0400;
-}
-
 let PPU = function (nes) {
     let i;
     this.nes = nes;
@@ -545,6 +540,14 @@ PPU.prototype = {
         this.paletteIndex[address] = value;
     },
 
+    updateMirroring: function (mode) {
+        this.mirrorLookup = mirrorLookup[mode];
+    },
+
+    mirroringAddress: function (address) {
+        address &= 0xfff;
+        return (this.mirrorLookup[address >> 10] << 10) | (address & 0x03ff);
+    },
     /**
      * Reads PPU Memory.
      * @param address: 16bit.
@@ -552,13 +555,12 @@ PPU.prototype = {
      */
     read: function (address) {
         // console.warn('ppu read', address.toString(16));
-        address = address % 0x4000;
+        // address = address % 0x4000;
         if (address < 0x2000) {
             return this.nes.mapper.read(address);
         }
         if (address < 0x3F00) {
-            let mode = this.nes.ines.mirroring;
-            return this.nameTableData[mirrorAddress(mode, address) % 0x800];
+            return this.nameTableData[this.mirroringAddress(address)];
         }
         if (address < 0x4000) {
             return this.readPaletteIndex(address % 32);
@@ -579,8 +581,7 @@ PPU.prototype = {
             return;
         }
         if (address < 0x3F00) {
-            let mode = this.nes.ines.mirroring;
-            this.nameTableData[mirrorAddress(mode, address) % 0x800] = value;
+            this.nameTableData[this.mirroringAddress(address)] = value;
             return;
         }
         if (address < 0x4000) {

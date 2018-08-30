@@ -291,9 +291,9 @@ CPU.prototype = {
                 let address;
                 let offset = this.read(PC + 1);
                 if (offset < 0x80) {
-                    address = (PC + 2 + offset) & 0xFFFF;
+                    address = PC + 2 + offset;
                 } else {
-                    address = (PC + 2 + offset - 0x100) & 0xFFFF;
+                    address = PC + 2 + offset - 0x100;
                 }
                 return util.sprintf("$%04X", address);
             case ZERO_PAGE:
@@ -342,9 +342,9 @@ CPU.prototype = {
             case RELATIVE:
                 let offset = this.read(this.PC + 1);
                 if (offset < 0x80) {
-                    address = (this.PC + 2 + offset) & 0xFFFF;
+                    address = this.PC + 2 + offset;
                 } else {
-                    address = (this.PC + 2 + offset - 0x100) & 0xFFFF;
+                    address = this.PC + 2 + offset - 0x100;
                 }
                 break;
             case ZERO_PAGE:

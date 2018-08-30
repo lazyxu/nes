@@ -9,14 +9,13 @@
 // The format has since been used by most emulators and is the most common format for ROM
 // images. INES format files should have the file extension *.nes. The format provides a 16 byte
 // header at the start of the file which contains important information.
-let INES = function () {
-    let i;
+let INES = function (nes) {
+    this.nes = nes;
     this.prgRom = null; // rom
     this.chrRom = null; // vrom
     this.chrRam = null;
     this.trainer = null;
     this.mapperType = null;
-    this.mirroring = null;
     this.batteryRam = null;
 };
 
@@ -65,9 +64,9 @@ INES.prototype = {
         // • Bits 4-7 - Four lower bits of the mapper number.
         let control1 = header[6];
 
-        this.mirroring = control1 & 1;
+        this.nes.ppu.updateMirroring(control1 & 1);
         if (control1 & 8) {
-            this.mirroring = this.FOURSCREEN_MIRRORING;
+            this.nes.ppu.updateMirroring(this.FOURSCREEN_MIRRORING);
         }
 
         this.batteryRam = (control1 & 2) !== 0 ? 1 : 0;
