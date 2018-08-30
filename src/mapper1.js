@@ -21,7 +21,7 @@
 let Mapper = function (nes) {
     let i;
     this.nes = nes;
-    this.prgRomBanks = this.nes.ines.prgRom.length;
+    this.prgRomBanks = this.nes.ines.numPrgRom;
     this.prgRomUpperBank = this.prgRomBanks - 1;
     this.prgRomLowerBank = 0;
     this.chrLowerBank = 0;
@@ -51,10 +51,10 @@ Mapper.prototype = {
                 this.nes.ines.chrRom[this.chrUpperBank * 0x1000];
         }
         if (address >= 0xc000) {
-            return this.nes.ines.prgRom[this.prgRomUpperBank][address - 0xc000] & 0xff;
+            return this.nes.ines.prgRom[this.prgRomUpperBank * 0x4000 + address - 0xc000] & 0xff;
         }
         if (address >= 0x8000) {
-            return this.nes.ines.prgRom[this.prgRomLowerBank][address - 0x8000] & 0xff;
+            return this.nes.ines.prgRom[this.prgRomLowerBank * 0x4000 + address - 0x8000] & 0xff;
         }
         if (address >= 0x6000) {
             address = 0x6000 + (address - 0x6000) % this.prgRam.length;

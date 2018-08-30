@@ -15,7 +15,7 @@
 let Mapper = function (nes) {
     let i;
     this.nes = nes;
-    this.prgRomBanks = this.nes.ines.prgRom.length;
+    this.prgRomBanks = this.nes.ines.numPrgRom;
     this.prgRomUpperBank = this.prgRomBanks - 1;
     this.prgRomLowerBank = 0;
     this.prgRam = new Array(4096); // PRG RAM: 2K or 4K in Family Basic only
@@ -30,13 +30,13 @@ Mapper.prototype = {
         address &= 0xFFFF;
         // console.warn('mapper0 read', address.toString(16));
         if (address < 0x2000) {
-            return this.nes.ines.chrRom[0][address] & 0xff;
+            return this.nes.ines.chrRom[address] & 0xff;
         }
         if (address >= 0xc000) {
-            return this.nes.ines.prgRom[this.prgRomUpperBank][address - 0xc000] & 0xff;
+            return this.nes.ines.prgRom[this.prgRomUpperBank * 0x4000 + address - 0xc000] & 0xff;
         }
         if (address >= 0x8000) {
-            return this.nes.ines.prgRom[this.prgRomLowerBank][address - 0x8000] & 0xff;
+            return this.nes.ines.prgRom[this.prgRomLowerBank * 0x4000 + address - 0x8000] & 0xff;
         }
         if (address >= 0x6000) {
             address = 0x6000 + (address - 0x6000) % this.prgRam.length;
@@ -50,7 +50,7 @@ Mapper.prototype = {
         value &= 0xff;
         // console.warn('mapper0 write', address.toString(16), value.toString(16));
         if (address < 0x2000) {
-            this.nes.ines.chrRom[0][address] = value;
+            this.nes.ines.chrRom[address] = value;
             return;
         }
         if (address >= 0x8000) {

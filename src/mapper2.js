@@ -18,7 +18,7 @@
 
 let Mapper = function (nes) {
     this.nes = nes;
-    this.prgRomBanks = this.nes.ines.prgRom.length;
+    this.prgRomBanks = this.nes.ines.numPrgRom;
     this.prgRomUpperBank = this.prgRomBanks - 1;
     this.prgRomLowerBank = 0;
 };
@@ -28,13 +28,13 @@ Mapper.prototype = {
     read: function (address) {
         // console.warn('mapper2 read', address.toString(16));
         if (address < 0x2000) {
-            return this.nes.ines.chrRom[0][address];
+            return this.nes.ines.chrRom[address];
         }
         if (address >= 0xc000) {
-            return this.nes.ines.prgRom[this.prgRomUpperBank][address - 0xc000] & 0xff;
+            return this.nes.ines.prgRom[this.prgRomUpperBank * 0x4000 + address - 0xc000] & 0xff;
         }
         if (address >= 0x8000) {
-            return this.nes.ines.prgRom[this.prgRomLowerBank][address - 0x8000] & 0xff;
+            return this.nes.ines.prgRom[this.prgRomLowerBank * 0x4000 + address - 0x8000] & 0xff;
         }
         if (address >= 0x6000) {
             // throw new Error("invalid SRAM read in mapper2 at address: " + address.toString(16));
@@ -43,9 +43,10 @@ Mapper.prototype = {
     },
 
     write: function (address, value) {
+        value &= 0xff;
         // console.warn('mapper2 write', address.toString(16), value.toString(16));
         if (address < 0x2000) {
-            this.nes.ines.chrRom[0][address] = value;
+            this.nes.ines.chrRom[address] = value;
             return;
         }
         if (address >= 0x8000) {
