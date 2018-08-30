@@ -60,10 +60,10 @@ NES.prototype = {
     },
 
     stop: function () {
-        if (typeof(this.frameInterval) !== "undefined" && this.frameInterval !== null) {
-            clearInterval(this.frameInterval);
-        }
-        this.frameInterval = null;
+        // if (typeof(this.frameInterval) !== "undefined" && this.frameInterval !== null) {
+        //     clearInterval(this.frameInterval);
+        // }
+        // this.frameInterval = null;
         this.isRunning = false;
     },
 
@@ -82,13 +82,16 @@ NES.prototype = {
     run: function () {
         this.stop();
         this.isRunning = true;
-        this.frameInterval = setInterval(() => {
-            this.stepFrame();
-            this.onEndFrame(this);
-            if (this.isRunning === false) {
-                this.stop();
-            }
-        }, 1000 / 60);
+        this.requestAnimationFrame();
+    },
+
+    requestAnimationFrame: function() {
+        this.stepFrame();
+        this.onEndFrame(this);
+        if (this.isRunning === false) {
+            this.stop();
+        }
+        window.requestAnimationFrame(()=>{this.requestAnimationFrame()});
     },
 
     getFPS: function() {
