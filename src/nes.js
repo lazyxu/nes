@@ -36,29 +36,21 @@ NES.prototype = {
         this.isRunning = true;
     },
 
-    // cpu step
-    step: function () {
-        let i;
-        let cpuCycles = this.cpu.step();
-        for (i = 0; i < cpuCycles; ++i) {
-            this.ppu.step();
-            this.ppu.step();
-            this.ppu.step();
-        }
-        for (i = 0; i < cpuCycles; ++i) {
-            this.apu.step();
-        }
-        return cpuCycles;
-    },
-
     stepFrame: function () {
-        let cpuCycles = 0;
         let frame = this.ppu.frame;
         for (; frame === this.ppu.frame;) {
-            cpuCycles += this.step();
+            let i;
+            let cpuCycles = this.cpu.step();
+            for (i = 0; i < cpuCycles; ++i) {
+                this.ppu.step();
+                this.ppu.step();
+                this.ppu.step();
+            }
+            for (i = 0; i < cpuCycles; ++i) {
+                this.apu.step();
+            }
         }
         this.fpsFrameCount++;
-        return cpuCycles;
     },
 
     stop: function () {

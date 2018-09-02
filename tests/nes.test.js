@@ -3,6 +3,10 @@ let path = require("path");
 let nesEmulator = require('../src/index');
 // var profiler = require('cpu-profiler');
 
+// easy-monitor
+const easyMonitor = require('easy-monitor');
+easyMonitor('nes');
+
 let nes = new nesEmulator.NES();
 
 function run(file) {

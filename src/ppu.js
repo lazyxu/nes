@@ -155,7 +155,7 @@ PPU.prototype = {
                     continue;
                 }
                 let color = (this.spritePatterns[i] >> ((7 - offset) * 4)) & 0x0F;
-                if ((color &3) === 0) {
+                if ((color & 3) === 0) {
                     continue;
                 }
                 spriteIndex = i;
@@ -181,8 +181,8 @@ PPU.prototype = {
          *   1-3           1-3            0        Sprite
          *   1-3           1-3            1        BG
          */
-        let b = (backgroundColor &3)!== 0;
-        let s = (spriteColor &3) !== 0;
+        let b = (backgroundColor & 3) !== 0;
+        let s = (spriteColor & 3) !== 0;
         let color;
         if (b === false && s === false) {
             color = 0;
@@ -200,7 +200,7 @@ PPU.prototype = {
                 color = backgroundColor;
             }
         }
-        this.writePix(y * 256 + x, this.palette[this.readPaletteIndex(color)]);
+        this.writePix((y << 8) + x, this.palette[this.readPaletteIndex(color)]);
     },
 
     /**
@@ -231,7 +231,7 @@ PPU.prototype = {
                 row = 7 - row;
             }
             let table = this.flagSpriteTable;
-            address = 0x1000 * table + tileIndex * 16 + row;
+            address = (table << 12) + tileIndex * 16 + row;
         } else {
             if (flipVertically) {
                 row = 15 - row;
@@ -242,7 +242,7 @@ PPU.prototype = {
                 tileIndex++;
                 row -= 8;
             }
-            address = 0x1000 * table + tileIndex * 16 + row;
+            address = (table << 12) + tileIndex * 16 + row;
         }
         let lowTileByte = this.read(address);
         let highTileByte = this.read(address + 8);
@@ -369,7 +369,7 @@ PPU.prototype = {
                 let data;
                 this.shifterRegister16 <<= 2;
                 this.shifterRegister8 <<= 2;
-                switch (this.cycle &7) {
+                switch (this.cycle & 7) {
                     case 1: // Nametable byte
                         address = 0x2000 | (v & 0x0FFF);
                         this.nameTableByte = this.read(address);
@@ -387,11 +387,11 @@ PPU.prototype = {
                         this.attribute2 = (this.read(address) >> shift) & 3;
                         break;
                     case 5: // Tile bitmap low
-                        address = 0x1000 * table + tileIndex * 16 + fineY;
+                        address = (table << 12) + tileIndex * 16 + fineY;
                         this.lowTileByte = this.read(address);
                         break;
                     case 7: // Tile bitmap high (+8 bytes from tile bitmap low)
-                        address = 0x1000 * table + tileIndex * 16 + fineY;
+                        address = (table << 12) + tileIndex * 16 + fineY;
                         this.highTileByte = this.read(address + 8);
                         break;
                     case 0:
@@ -434,7 +434,7 @@ PPU.prototype = {
                 }
             }
             if (renderLine) {
-                if (fetchCycle && (this.cycle &7) === 0) {
+                if (fetchCycle && (this.cycle & 7) === 0) {
                     this.incrementX();
                 }
                 if (this.cycle === 256) {
