@@ -107,7 +107,7 @@ PPU.prototype = {
     tick: function () {
         if (this.nmiDelay > 0) {
             this.nmiDelay--;
-            if (this.nmiDelay === 0 && this.nmiOutput && this.nmiOccurred) {
+            if (this.nmiDelay === 0 && this.nmiOutput === true && this.nmiOccurred === true) {
                 this.nes.cpu.triggerNMI();
             }
         }
@@ -116,8 +116,8 @@ PPU.prototype = {
         // (this is done internally by jumping directly from (339,261) to (0,0),
         // replacing the idle tick at the beginning of the first visible scanLine with the last tick of the last dummy nametable fetch).
         // For even frames, the last cycle occurs normally.
-        if (this.scanLine === 261 && this.cycle === 339 && this.oddFrameFlag === 1) {
-            if (this.flagShowBackground !== 0 || this.flagShowSprites !== 0) {
+        if (this.cycle === 339 && this.scanLine === 261 && this.oddFrameFlag === 1) {
+            if (this.renderingEnabled === true) {
                 this.cycle = 0;
                 this.scanLine = 0;
                 this.frame++;
@@ -223,17 +223,17 @@ PPU.prototype = {
         let attributes = this.oamData[i * 4 + 2]; // Byte 2: Attributes
         let paletteBase = (attributes & 3) << 2;
         let priority = (attributes >> 5) & 1;
-        let flipHorizontally = (attributes >> 6) & 1;
-        let flipVertically = (attributes >> 7) & 1;
+        let flipHorizontally = (attributes & 0x40) === 0x40;
+        let flipVertically = (attributes & 0x80) === 0x80;
         let address;
         if (this.flagSpriteSize === 0) {
-            if (flipVertically) {
+            if (flipVertically === true) {
                 row = 7 - row;
             }
             let table = this.flagSpriteTable;
             address = (table << 12) + tileIndex * 16 + row;
         } else {
-            if (flipVertically) {
+            if (flipVertically === true) {
                 row = 15 - row;
             }
             let table = tileIndex & 1;
@@ -249,7 +249,7 @@ PPU.prototype = {
         let data = 0;
         for (let i = 0; i < 8; ++i) {
             let p1, p2;
-            if (flipHorizontally) {
+            if (flipHorizontally === true) {
                 p1 = (lowTileByte & 1) << 0;
                 p2 = (highTileByte & 1) << 1;
                 lowTileByte >>= 1;
@@ -344,7 +344,6 @@ PPU.prototype = {
 
         this.tick();
 
-        let renderingEnabled = this.flagShowBackground !== 0 || this.flagShowSprites !== 0;
         let preLine = this.scanLine === 261;
         let visibleLine = this.scanLine < 240; // Visible scanLines (0-239)
         let renderLine = preLine || visibleLine;
@@ -352,27 +351,25 @@ PPU.prototype = {
         let visibleCycle = this.cycle >= 1 && this.cycle <= 256;
         let fetchCycle = preFetchCycle || visibleCycle;
 
-        if (renderingEnabled) {
+        if (this.renderingEnabled === true) {
             // Visible scanlines (0-239)
-            if (visibleLine && visibleCycle) {
+            if (visibleLine === true && visibleCycle === true) {
                 this.renderPixel();
             }
             // prepare tile data of the next scanLine
-            if (renderLine && fetchCycle) {
+            if (renderLine === true && fetchCycle === true) {
                 // The data for each tile is fetched during this phase.
                 // Each memory access takes 2 PPU cycles to complete, and 4 must be performed per tile:
-                let address;
+
                 let v = this.v;
                 let table = this.flagBackgroundTable;
                 let tileIndex = this.nameTableByte;
-                let fineY = (v >> 12) & 7;
                 let data;
                 this.shifterRegister16 <<= 2;
                 this.shifterRegister8 <<= 2;
                 switch (this.cycle & 7) {
                     case 1: // Nametable byte
-                        address = 0x2000 | (v & 0x0FFF);
-                        this.nameTableByte = this.read(address);
+                        this.nameTableByte = this.read(0x2000 | (v & 0x0FFF));
                         break;
                     case 3: // Attribute table byte
                         /**
@@ -382,17 +379,14 @@ PPU.prototype = {
                          *            b     a
                          *                 ba0 - shift
                          */
-                        address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
                         let shift = ((v >> 4) & 4) | (v & 2);
-                        this.attribute2 = (this.read(address) >> shift) & 3;
+                        this.attribute2 = (this.read(0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07)) >> shift) & 3;
                         break;
                     case 5: // Tile bitmap low
-                        address = (table << 12) + tileIndex * 16 + fineY;
-                        this.lowTileByte = this.read(address);
+                        this.lowTileByte = this.read((table << 12) + tileIndex * 16 + ((v >> 12) & 7));
                         break;
                     case 7: // Tile bitmap high (+8 bytes from tile bitmap low)
-                        address = (table << 12) + tileIndex * 16 + fineY;
-                        this.highTileByte = this.read(address + 8);
+                        this.highTileByte = this.read((table << 12) + tileIndex * 16 + ((v >> 12) & 7) + 8);
                         break;
                     case 0:
                         // The data fetched from these accesses is placed into internal latches,
@@ -421,7 +415,7 @@ PPU.prototype = {
 
             // Pre-render scanLine (-1, 261)
             // During pixels 280 through 304 of the Pre-render scanLine, the vertical scroll bits are reloaded if rendering is enabled.
-            if (preLine) {
+            if (preLine === true) {
                 if (this.cycle > 279 && this.cycle < 305) {
                     // During dots 280 to 304 of the pre-render scanline (end of vblank)
                     // If rendering is enabled, at the end of vBlank,
@@ -433,8 +427,8 @@ PPU.prototype = {
                     this.v = (this.v & 0x841F) | (this.t & 0x7BE0);
                 }
             }
-            if (renderLine) {
-                if (fetchCycle && (this.cycle & 7) === 0) {
+            if (renderLine === true) {
+                if (fetchCycle === true && (this.cycle & 7) === 0) {
                     this.incrementX();
                 }
                 if (this.cycle === 256) {
@@ -457,7 +451,7 @@ PPU.prototype = {
             // Cycles 257-320: Sprite fetches (8 sprites total, 8 cycles per sprite)
             // evaluate sprites of the next scanLine
             if (this.cycle === 257) {
-                if (visibleLine) {
+                if (visibleLine === true) {
                     this.fetchSprites();
                 } else {
                     this.spriteCount = 0;
@@ -465,17 +459,17 @@ PPU.prototype = {
             }
         }
 
-        if (this.cycle === 0 && this.scanLine === 239) {
-            this.debuggerScrollX = (this.v & 0b11111) - 1;
-            this.debuggerScrollY = (this.v >> 5) & 0b11111;
-            this.debuggerNameTable = (this.v >> 10) & 0b11;
-            this.debuggerX = this.x;
-        }
+        // if (this.cycle === 0 && this.scanLine === 239) {
+        //     this.debuggerScrollX = (this.v & 0b11111) - 1;
+        //     this.debuggerScrollY = (this.v >> 5) & 0b11111;
+        //     this.debuggerNameTable = (this.v >> 10) & 0b11;
+        //     this.debuggerX = this.x;
+        // }
 
         // Post-render scanLine (240)
         // The PPU just idles during this scanLine.
         // Even though accessing PPU memory from the program would be safe here, the VBlank flag isn't set until after this scanLine.
-        let postLine = this.scanLine === 240;
+        // let postLine = this.scanLine === 240;
 
         // Vertical blanking lines (241-260)
         // The VBlank flag of the PPU is set at tick 1 (the second tick) of scanLine 241, where the VBlank NMI also occurs.
@@ -484,7 +478,7 @@ PPU.prototype = {
             this.startVerticalBlank();
         }
 
-        if (preLine && this.cycle === 1) {
+        if (preLine === true && this.cycle === 1) {
             this.endVerticalBlank();
             this.flagSpriteZeroHit = 0;
             this.flagSpriteOverflow = 0;
@@ -499,7 +493,7 @@ PPU.prototype = {
      */
     nmiChange: function () {
         let nmi = this.nmiOutput && this.nmiOccurred;
-        if (nmi && !this.nmiPrevious) {
+        if (nmi === true && this.nmiPrevious === false) {
             // TODO: this fixes some games but the delay shouldn't have to be so
             // long, so the timings are off somewhere
             this.nmiDelay = 15;
@@ -704,7 +698,7 @@ PPU.prototype = {
         this.flagMasterSlave = (value >> 6) & 1;
         // Bit 7 - Indicates whether a NMI should occur upon V-Blank.
         // Write to PPUCTRL: Set NMI_output to bit 7.
-        this.nmiOutput = ((value >> 7) & 1) === 1;
+        this.nmiOutput = (value & 0x80) === 0x80;
         // When turning on the NMI flag in bit 7, if the PPU is currently in vertical blank and the PPUSTATUS ($2002) vblank flag is set, an NMI will be generated immediately.
         this.nmiChange();
         // In the following, d refers to the data written to the port, and A through H to individual bits of a value.
@@ -745,6 +739,7 @@ PPU.prototype = {
         this.flagShowBackground = (value >> 3) & 1;
         // Bit 4 - If this is 0, sprites should not be displayed.
         this.flagShowSprites = (value >> 4) & 1;
+        this.renderingEnabled = this.flagShowBackground !== 0 || this.flagShowSprites !== 0;
         // Bits 5-7 - Indicates background colour in monochrome mode or colour intensity in colour mode.
         this.flagRedEmphasize = (value >> 5) & 1;
         this.flagGreenEmphasize = (value >> 6) & 1;
@@ -769,7 +764,7 @@ PPU.prototype = {
         // Reading the status register will clear D7 mentioned above and also the address latch used by PPUSCROLL and PPUADDR.
         // It does not clear the sprite 0 hit or overflow bit.
         // Read PPUSTATUS: Return old status of NMI_occurred in bit 7, then set NMI_occurred to false.
-        if (this.nmiOccurred) {
+        if (this.nmiOccurred === true) {
             value |= 1 << 7;
         }
         this.nmiOccurred = false;

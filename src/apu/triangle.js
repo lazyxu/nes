@@ -23,7 +23,7 @@ let Triangle = function () {
 Triangle.prototype = {
 
     writeControl: function (value) {
-        this.lengthEnabled = (value >> 7) & 1 === 0;
+        this.lengthEnabled = (value & 0x80) === 0;
         this.counterPeriod = value & 0x7F;
     },
 
@@ -50,24 +50,24 @@ Triangle.prototype = {
     },
 
     stepLength: function () {
-        if (this.lengthEnabled && this.lengthValue > 0) {
+        if (this.lengthEnabled === true && this.lengthValue > 0) {
             this.lengthValue--;
         }
     },
 
     stepCounter: function () {
-        if (this.counterReload) {
+        if (this.counterReload === true) {
             this.counterValue = this.counterPeriod;
         } else if (this.counterValue > 0) {
             this.counterValue--;
         }
-        if (this.lengthEnabled) {
+        if (this.lengthEnabled === true) {
             this.counterReload = false;
         }
     },
 
     output: function () {
-        if (!this.enabled) {
+        if(this.enabled === false) {
             return 0;
         }
         if (this.lengthValue === 0) {

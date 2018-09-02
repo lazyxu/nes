@@ -27,7 +27,6 @@ let Mapper = function (nes) {
 Mapper.prototype = {
 
     read: function (address) {
-        address &= 0xFFFF;
         // console.warn('mapper0 read', address.toString(16));
         if (address < 0x2000) {
             return this.nes.ines.chrRom[address] & 0xff;
@@ -46,7 +45,6 @@ Mapper.prototype = {
     },
 
     write: function (address, value) {
-        address &= 0xFFFF;
         value &= 0xff;
         // console.warn('mapper0 write', address.toString(16), value.toString(16));
         if (address < 0x2000) {

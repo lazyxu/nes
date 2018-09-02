@@ -137,8 +137,8 @@ let CPU = function (nes) {
     for (let i = 0; i < this.ram.length; ++i) {
         this.ram[i] = 0;
     }
-    this.cycles = null;
-    this.stall = null; // number of cycles to stall
+    this.cycles = 0;
+    this.stall = 0; // number of cycles to stall
     this.PC = 0;
     this.A = 0;
     this.X = 0;
@@ -918,7 +918,6 @@ CPU.prototype = {
     },
 
     read: function (address) {
-        address &= 0xFFFF;
         switch (true) {
             case address < 0x2000:
                 return this.ram[address & 0x7ff];
@@ -946,7 +945,6 @@ CPU.prototype = {
     },
 
     write: function (address, value) {
-        address &= 0xFFFF;
         value &= 0xff;
         switch (true) {
             case address < 0x2000:

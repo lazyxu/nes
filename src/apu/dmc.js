@@ -47,7 +47,7 @@ DMC.prototype = {
     },
 
     stepTimer: function () {
-        if (!this.enabled) {
+        if(this.enabled === false) {
             return;
         }
         this.stepReader();
@@ -69,7 +69,7 @@ DMC.prototype = {
                 this.currentAddress = 0x8000;
             }
             this.currentLength--;
-            if (this.currentLength === 0 && this.loop) {
+            if (this.currentLength === 0 && this.loop === true) {
                 this.restart();
             }
         }

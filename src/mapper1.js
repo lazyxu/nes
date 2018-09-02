@@ -43,7 +43,6 @@ let Mapper = function (nes) {
 Mapper.prototype = {
 
     read: function (address) {
-        address &= 0xFFFF;
         // console.warn('mapper1 read', address.toString(16));
         if (address < 0x2000) {
             return address < 0x1000 ?
@@ -64,7 +63,6 @@ Mapper.prototype = {
     },
 
     write: function (address, value) {
-        address &= 0xFFFF;
         value &= 0xff;
         // console.warn('mapper1 write', address.toString(16), value.toString(16));
         if (address < 0x2000) {
@@ -80,7 +78,7 @@ Mapper.prototype = {
                 this.shiftRegister = 0x10;
                 this.writeControl(this.control | 0x0C);
             } else {
-                let complete = this.shiftRegister & 1 === 1;
+                let complete = (this.shiftRegister & 1) === 1;
                 this.shiftRegister >>= 1;
                 this.shiftRegister |= (value & 1) << 4;
                 if (complete) {

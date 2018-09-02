@@ -152,7 +152,7 @@ APU.prototype = {
     },
 
     stepTimer: function () {
-        if ((this.cycle &1) === 0) {
+        if ((this.cycle & 1) === 0) {
             this.pulse1.stepTimer();
             this.pulse2.stepTimer();
             this.noise.stepTimer();
@@ -181,7 +181,7 @@ APU.prototype = {
     },
 
     fireIRQ: function () {
-        if (this.frameIRQ) {
+        if (this.frameIRQ === true) {
             this.cpu.triggerIRQ();
         }
     },
@@ -310,19 +310,19 @@ APU.prototype = {
         this.triangle.enabled = (value & 4) === 4;
         this.noise.enabled = (value & 8) === 8;
         this.dmc.enabled = (value & 16) === 16;
-        if (!this.pulse1.enabled) {
+        if (this.pulse1.enabled === false) {
             this.pulse1.lengthValue = 0;
         }
-        if (!this.pulse2.enabled) {
+        if (this.pulse2.enabled === false) {
             this.pulse2.lengthValue = 0;
         }
-        if (!this.triangle.enabled) {
+        if (this.triangle.enabled === false) {
             this.triangle.lengthValue = 0;
         }
-        if (!this.noise.enabled) {
+        if (this.noise.enabled === false) {
             this.noise.lengthValue = 0;
         }
-        if (!this.dmc.enabled) { // If the DMC bit is clear, the DMC bytes remaining will be set to 0 and the DMC will silence when it empties.
+        if (this.dmc.enabled === false) { // If the DMC bit is clear, the DMC bytes remaining will be set to 0 and the DMC will silence when it empties.
             this.dmc.currentLength = 0;
         } else {
             // If the DMC bit is set, the DMC sample will be restarted only if its bytes remaining is 0.
@@ -343,7 +343,7 @@ APU.prototype = {
      */
     writeFrameCounter: function (value) {
         this.framePeriod = ((value >> 7) & 1) === 0 ? 4 : 5;
-        this.frameIRQ = (value >> 6) & 1 === 0;
+        this.frameIRQ = (value & 0x40) === 0;
         // this.frameValue = 0;
         if (this.framePeriod === 5) {
             this.stepEnvelope();

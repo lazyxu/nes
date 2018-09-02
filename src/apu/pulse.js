@@ -68,14 +68,14 @@ Pulse.prototype = {
          * If the envelope is not looped, the length counter must be enabled (making it redundant if longer than the envelope).
          * The envelope starts at a volume of 15 and decrements every time the unit is clocked, stopping at 0 if not looped.
          */
-        this.envelopeLoop = (value >> 5) & 1 === 1;
-        this.lengthEnabled = (value >> 5) & 1 === 0;
+        this.envelopeLoop = (value & 0x20) === 0x20;
+        this.lengthEnabled = (value & 0x20) === 0;
         /**
          * The channel volume is a 4-bit value that is either constant, or controlled by an envelope (chosen by $4000/4004 bit 4).
          * If using the envelope, the 4-bit value in $4000/4004 is the period of the envelope, otherwise it is the direct volume.
          */
-        this.envelopeEnabled = (value >> 4) & 1 === 0;
-        if (this.envelopeEnabled) {
+        this.envelopeEnabled = (value & 0x10) === 0;
+        if (this.envelopeEnabled === true) {
             this.envelopePeriod = value & 0b1111;
         } else {
             this.constantVolume = value & 0b1111;
@@ -93,9 +93,9 @@ Pulse.prototype = {
      * @param value: 8bit
      */
     writeSweep: function (value) {
-        this.sweepEnabled = (value >> 7) & 1 === 1;
+        this.sweepEnabled = (value & 0x80) === 0x80;
         this.sweepPeriod = ((value >> 4) & 7) + 1;
-        this.sweepNegate = (value >> 3) & 1 === 1;
+        this.sweepNegate = (value & 0x08) === 0x08;
         this.sweepShift = value & 0b111;
         this.sweepReload = true;
     },
@@ -135,7 +135,7 @@ Pulse.prototype = {
     },
 
     stepEnvelope: function () {
-        if (this.envelopeStart) {
+        if (this.envelopeStart === true) {
             // Reset envelope
             this.envelopeStart = false;
             this.envelopeCounter = this.envelopePeriod;
@@ -146,7 +146,7 @@ Pulse.prototype = {
             } else {
                 if (this.envelopeVolume > 0) {
                     this.envelopeVolume--;
-                } else if (this.envelopeLoop) {
+                } else if (this.envelopeLoop === true) {
                     this.envelopeVolume = 0XF;
                     // this.envelopeStart = true;
                 }
@@ -156,8 +156,8 @@ Pulse.prototype = {
     },
 
     stepSweep: function () {
-        if (this.sweepReload) {
-            if (this.sweepEnabled && this.sweepCounter === 0) {
+        if (this.sweepReload === true) {
+            if (this.sweepEnabled === true && this.sweepCounter === 0) {
                 this.sweep();
             }
             this.sweepCounter = this.sweepPeriod;
@@ -166,7 +166,7 @@ Pulse.prototype = {
             if (this.sweepCounter > 0) {
                 this.sweepCounter--;
             } else {
-                if (this.sweepEnabled) {
+                if (this.sweepEnabled === true) {
                     this.sweep();
                 }
                 this.sweepCounter = this.sweepPeriod;
@@ -178,14 +178,14 @@ Pulse.prototype = {
      * The length counter simply silences the channel when it counts down to 0.
      */
     stepLength: function () {
-        if (this.lengthEnabled && this.lengthValue > 0) {
+        if (this.lengthEnabled === true && this.lengthValue > 0) {
             this.lengthValue--;
         }
     },
 
     sweep: function () {
         let delta = this.timerPeriod >> this.sweepShift;
-        if (this.sweepNegate) {
+        if (this.sweepNegate === true) {
             this.timerPeriod -= delta;
             if (this.channel === 1) {
                 this.timerPeriod--;
@@ -196,7 +196,7 @@ Pulse.prototype = {
     },
 
     output: function () {
-        if ((!this.enabled)
+        if ((!this.enabled === true)
             || this.lengthValue === 0
             || dutyTable[this.dutyMode][this.dutyCounter] === 0) {
             return 0;
@@ -207,7 +207,7 @@ Pulse.prototype = {
         // if (!this.sweepNegate && this.timerPeriod + (this.timerPeriod >> this.sweepShift) > 0x7FF) {
         //     return 0;
         // }
-        if (this.envelopeEnabled) {
+        if (this.envelopeEnabled === true) {
             return this.envelopeVolume;
         } else {
             return this.constantVolume;

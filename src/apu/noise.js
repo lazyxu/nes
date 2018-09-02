@@ -27,9 +27,9 @@ let Noise = function () {
 Noise.prototype = {
 
     writeControl: function (value) {
-        this.lengthEnabled = (value >> 5) & 1 === 0;
-        this.envelopeLoop = (value >> 5) & 1 === 1;
-        this.envelopeEnabled = (value >> 4) & 1 === 0;
+        this.lengthEnabled = (value & 0x20) === 0;
+        this.envelopeLoop = (value & 0x20) === 0x20;
+        this.envelopeEnabled = (value & 0x10) === 0;
         this.envelopePeriod = value & 15;
         this.constantVolume = value & 15;
         this.envelopeStart = true;
@@ -59,7 +59,7 @@ Noise.prototype = {
     },
 
     stepEnvelope: function () {
-        if (this.envelopeStart) {
+        if (this.envelopeStart === true) {
             this.envelopeVolume = 15;
             this.envelopeCounter = this.envelopePeriod;
             this.envelopeStart = false;
@@ -68,7 +68,7 @@ Noise.prototype = {
         } else {
             if (this.envelopeVolume > 0) {
                 this.envelopeVolume--;
-            } else if (this.envelopeLoop) {
+            } else if (this.envelopeLoop === true) {
                 this.envelopeVolume = 15;
             }
             this.envelopeCounter = this.envelopePeriod;
@@ -76,13 +76,13 @@ Noise.prototype = {
     },
 
     stepLength: function () {
-        if (this.lengthEnabled && this.lengthValue > 0) {
+        if (this.lengthEnabled === true && this.lengthValue > 0) {
             this.lengthValue--;
         }
     },
 
     output: function () {
-        if (!this.enabled) {
+        if(this.enabled === false) {
             return 0;
         }
         if (this.lengthValue === 0) {
