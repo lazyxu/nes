@@ -921,9 +921,9 @@ CPU.prototype = {
         address &= 0xFFFF;
         switch (true) {
             case address < 0x2000:
-                return this.ram[address % 0x800];
+                return this.ram[address & 0x7ff];
             case address < 0x4000:
-                return this.nes.ppu.readRegister(0x2000 + (address - 0x2000) % 8);
+                return this.nes.ppu.readRegister(0x2000 + ((address - 0x2000) & 7));
             case address < 0x4020:
                 switch (address) {
                     case 0x4014:
@@ -950,10 +950,10 @@ CPU.prototype = {
         value &= 0xff;
         switch (true) {
             case address < 0x2000:
-                this.ram[address % 0x800] = value;
+                this.ram[address & 0x7ff] = value;
                 return;
             case address < 0x4000:
-                this.nes.ppu.writeRegister(0x2000 + (address - 0x2000) % 8, value);
+                this.nes.ppu.writeRegister(0x2000 + ((address - 0x2000) & 7), value);
                 return;
             case address < 0x4014:
                 this.nes.apu.writeRegister(address, value);

@@ -72,7 +72,6 @@ let PPU = function (nes) {
     this.spriteIndexes = new Array(8);
 
     this.flagBackgroundTable = 0;
-    this.backgroundPix = new Array(16);
 
     this.result = new Array(16);
     for (i = 0; i < this.result.length; ++i) {
@@ -82,14 +81,14 @@ let PPU = function (nes) {
 
 PPU.prototype = {
     palette: [
-        0x525252, 0xB40000, 0xA00000, 0xB1003D, 0x740069, 0x00005B, 0x00005F, 0x001840,
-        0x002F10, 0x084A08, 0x006700, 0x124200, 0x6D2800, 0x000000, 0x000000, 0x000000,
-        0xC4D5E7, 0xFF4000, 0xDC0E22, 0xFF476B, 0xD7009F, 0x680AD7, 0x0019BC, 0x0054B1,
-        0x006A5B, 0x008C03, 0x00AB00, 0x2C8800, 0xA47200, 0x000000, 0x000000, 0x000000,
-        0xF8F8F8, 0xFFAB3C, 0xFF7981, 0xFF5BC5, 0xFF48F2, 0xDF49FF, 0x476DFF, 0x00B4F7,
-        0x00E0FF, 0x00E375, 0x03F42B, 0x78B82E, 0xE5E218, 0x787878, 0x000000, 0x000000,
-        0xFFFFFF, 0xFFF2BE, 0xF8B8B8, 0xF8B8D8, 0xFFB6FF, 0xFFC3FF, 0xC7D1FF, 0x9ADAFF,
-        0x88EDF8, 0x83FFDD, 0xB8F8B8, 0xF5F8AC, 0xFFFFB0, 0xF8D8F8, 0x000000, 0x000000
+        0xFF525252, 0xFFB40000, 0xFFA00000, 0xFFB1003D, 0xFF740069, 0xFF00005B, 0xFF00005F, 0xFF001840,
+        0xFF002F10, 0xFF084A08, 0xFF006700, 0xFF124200, 0xFF6D2800, 0xFF000000, 0xFF000000, 0xFF000000,
+        0xFFC4D5E7, 0xFFFF4000, 0xFFDC0E22, 0xFFFF476B, 0xFFD7009F, 0xFF680AD7, 0xFF0019BC, 0xFF0054B1,
+        0xFF006A5B, 0xFF008C03, 0xFF00AB00, 0xFF2C8800, 0xFFA47200, 0xFF000000, 0xFF000000, 0xFF000000,
+        0xFFF8F8F8, 0xFFFFAB3C, 0xFFFF7981, 0xFFFF5BC5, 0xFFFF48F2, 0xFFDF49FF, 0xFF476DFF, 0xFF00B4F7,
+        0xFF00E0FF, 0xFF00E375, 0xFF03F42B, 0xFF78B82E, 0xFFE5E218, 0xFF787878, 0xFF000000, 0xFF000000,
+        0xFFFFFFFF, 0xFFFFF2BE, 0xFFF8B8B8, 0xFFF8B8D8, 0xFFFFB6FF, 0xFFFFC3FF, 0xFFC7D1FF, 0xFF9ADAFF,
+        0xFF88EDF8, 0xFF83FFDD, 0xFFB8F8B8, 0xFFF5F8AC, 0xFFFFFFB0, 0xFFF8D8F8, 0xFF000000, 0xFF000000
     ],
 
     reset: function () {
@@ -117,8 +116,8 @@ PPU.prototype = {
         // (this is done internally by jumping directly from (339,261) to (0,0),
         // replacing the idle tick at the beginning of the first visible scanLine with the last tick of the last dummy nametable fetch).
         // For even frames, the last cycle occurs normally.
-        if (this.flagShowBackground !== 0 || this.flagShowSprites !== 0) {
-            if (this.oddFrameFlag === 1 && this.scanLine === 261 && this.cycle === 339) {
+        if (this.scanLine === 261 && this.cycle === 339 && this.oddFrameFlag === 1) {
+            if (this.flagShowBackground !== 0 || this.flagShowSprites !== 0) {
                 this.cycle = 0;
                 this.scanLine = 0;
                 this.frame++;
@@ -144,9 +143,9 @@ PPU.prototype = {
     renderPixel: function () {
         let x = this.cycle - 1;
         let y = this.scanLine;
-        let high2bit = (this.shifterRegister8 >> ((15 - this.x) * 2)) & 0b11;
+        let high2bit = (this.shifterRegister8 >> ((14 - this.x) * 2)) & 0b1100;
         let low2bit = (this.shifterRegister16 >> ((15 - this.x) * 2)) & 0b11;
-        let backgroundColor = high2bit << 2 | low2bit;
+        let backgroundColor = high2bit | low2bit;
         let spriteIndex = 0, spriteColor = 0;
         // spritePixel
         if (this.flagShowSprites !== 0) {
@@ -156,7 +155,7 @@ PPU.prototype = {
                     continue;
                 }
                 let color = (this.spritePatterns[i] >> ((7 - offset) * 4)) & 0x0F;
-                if (color % 4 === 0) {
+                if ((color &3) === 0) {
                     continue;
                 }
                 spriteIndex = i;
@@ -165,11 +164,13 @@ PPU.prototype = {
             }
         }
 
-        if (x < 8 && this.flagShowLeftBackground === 0) {
-            backgroundColor = 0;
-        }
-        if (x < 8 && this.flagShowLeftSprites === 0) {
-            spriteColor = 0;
+        if (x < 8) {
+            if (this.flagShowLeftBackground === 0) {
+                backgroundColor = 0;
+            }
+            if (this.flagShowLeftSprites === 0) {
+                spriteColor = 0;
+            }
         }
         /**
          * Priority multiplexer decision table
@@ -180,26 +181,26 @@ PPU.prototype = {
          *   1-3           1-3            0        Sprite
          *   1-3           1-3            1        BG
          */
-        let b = backgroundColor % 4 !== 0;
-        let s = spriteColor % 4 !== 0;
+        let b = (backgroundColor &3)!== 0;
+        let s = (spriteColor &3) !== 0;
         let color;
-        if (!b && !s) {
+        if (b === false && s === false) {
             color = 0;
-        } else if (!b && s) {
+        } else if (b === false && s === true) {
             color = spriteColor | 0x10;
-        } else if (b && !s) {
+        } else if (b === true && s === false) {
             color = backgroundColor;
         } else {
-            if (this.spriteIndexes[spriteIndex] === 0 && x < 255) {
-                this.flagSpriteZeroHit = 1;
-            }
             if (this.spritePriorities[spriteIndex] === 0) {
+                if (x < 255) {
+                    this.flagSpriteZeroHit = 1;
+                }
                 color = spriteColor | 0x10;
             } else {
                 color = backgroundColor;
             }
         }
-        this.writePix(y * 256 + x, 0xff000000 | this.palette[this.readPaletteIndex(color)]);
+        this.writePix(y * 256 + x, this.palette[this.readPaletteIndex(color)]);
     },
 
     /**
@@ -368,7 +369,7 @@ PPU.prototype = {
                 let data;
                 this.shifterRegister16 <<= 2;
                 this.shifterRegister8 <<= 2;
-                switch (this.cycle % 8) {
+                switch (this.cycle &7) {
                     case 1: // Nametable byte
                         address = 0x2000 | (v & 0x0FFF);
                         this.nameTableByte = this.read(address);
@@ -421,7 +422,7 @@ PPU.prototype = {
             // Pre-render scanLine (-1, 261)
             // During pixels 280 through 304 of the Pre-render scanLine, the vertical scroll bits are reloaded if rendering is enabled.
             if (preLine) {
-                if (this.cycle >= 280 && this.cycle <= 304) {
+                if (this.cycle > 279 && this.cycle < 305) {
                     // During dots 280 to 304 of the pre-render scanline (end of vblank)
                     // If rendering is enabled, at the end of vBlank,
                     // shortly after the horizontal bits are copied from t to v at dot 257,
@@ -433,7 +434,7 @@ PPU.prototype = {
                 }
             }
             if (renderLine) {
-                if (fetchCycle && this.cycle % 8 === 0) {
+                if (fetchCycle && (this.cycle &7) === 0) {
                     this.incrementX();
                 }
                 if (this.cycle === 256) {
@@ -563,7 +564,7 @@ PPU.prototype = {
             return this.nameTableData[this.mirroringAddress(address)];
         }
         if (address < 0x4000) {
-            return this.readPaletteIndex(address % 32);
+            return this.readPaletteIndex(address & 31);
         }
         // throw new Error("unhandled ppu memory read at address: " + address.toString(16));
     },
@@ -575,7 +576,7 @@ PPU.prototype = {
      */
     write: function (address, value) {
         // console.warn('ppu write', address.toString(16), value.toString(16));
-        address = address % 0x4000;
+        address = address & 0x3ffff;
         if (address < 0x2000) {
             this.nes.mapper.write(address, value);
             return;
@@ -585,7 +586,7 @@ PPU.prototype = {
             return;
         }
         if (address < 0x4000) {
-            this.writePaletteIndex(address % 0x20, value);
+            this.writePaletteIndex(address & 0x1f, value);
             return;
         }
         // throw new Error("unhandled ppu memory write at address: " + address.toString(16));
@@ -862,7 +863,7 @@ PPU.prototype = {
      */
     readData: function () {
         let value = this.read(this.v);
-        if (this.v % 0x4000 < 0x3F00) {
+        if ((this.v & 0x3fff) < 0x3F00) {
             let buffered = this.readBufferData;
             this.readBufferData = value;
             value = buffered;
@@ -908,7 +909,7 @@ PPU.prototype = {
             address++;
         }
         cpu.stall += 513;
-        if (cpu.cycles % 2 === 1) {
+        if ((cpu.cycles & 1) === 1) {
             cpu.stall++;
         }
     }

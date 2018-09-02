@@ -114,7 +114,7 @@ APU.prototype = {
     stepFrameCounter: function () {
         switch (this.framePeriod) {
             case 4:
-                this.frameValue = (this.frameValue + 1) % 4;
+                this.frameValue = (this.frameValue + 1) & 3;
                 switch (this.frameValue) {
                     case 0:
                     case 2:
@@ -152,7 +152,7 @@ APU.prototype = {
     },
 
     stepTimer: function () {
-        if (this.cycle % 2 === 0) {
+        if ((this.cycle &1) === 0) {
             this.pulse1.stepTimer();
             this.pulse2.stepTimer();
             this.noise.stepTimer();

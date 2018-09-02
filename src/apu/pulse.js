@@ -128,7 +128,7 @@ Pulse.prototype = {
     stepTimer: function () {
         if (this.timerCounter === 0) {
             this.timerCounter = this.timerPeriod;
-            this.dutyCounter = (this.dutyCounter + 1) % 8;
+            this.dutyCounter = (this.dutyCounter + 1) & 7;
         } else {
             this.timerCounter--;
         }

@@ -42,7 +42,7 @@ Triangle.prototype = {
         if (this.timerCounter === 0) {
             this.timerCounter = this.timerPeriod;
             if (this.lengthValue > 0 && this.counterValue > 0) {
-                this.dutyCounter = (this.dutyCounter + 1) % 32;
+                this.dutyCounter = (this.dutyCounter + 1) & 31;
             }
         } else {
             this.timerCounter--;
