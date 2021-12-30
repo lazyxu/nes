@@ -26,15 +26,34 @@ module.exports = {
         extensions: ['', '.js', '.jsx']
     },
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.jsx?$/,
-                loaders: ['babel'],
+                use: {
+                    loader: 'babel-loader',
+                },
                 include: APP_PATH
             },
             {
                 test: /\.scss$/,
-                loaders: ['style', 'css', 'sass']
+                exclude: /node_modules/,
+                use: [
+                    {
+                        loader: 'style-loader',
+                    },
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            sourceMap: true,
+                        },
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            sourceMap: true,
+                        },
+                    },
+                ],
             }
         ]
     },
@@ -45,10 +64,10 @@ module.exports = {
             filename: '../debugger.html',
             // template: 'index.html' // 模板路径
         }),
-        new webpack.optimize.CommonsChunkPlugin({
-            name: ["react", 'manifest'],
-            minChunks: Infinity,
-        }),
+        // new webpack.optimize.CommonsChunkPlugin({
+        //     name: ["react", 'manifest'],
+        //     minChunks: Infinity,
+        // }),
         // new webpack.HotModuleReplacementPlugin(),
         // new webpack.NoErrorsPlugin(),
         // new webpack.optimize.UglifyJsPlugin({

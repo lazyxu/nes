@@ -1,8 +1,9 @@
-var path = require('path');
-var webpack = require('webpack');
+const path = require('path');
+const webpack = require('webpack');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
-var ROOT_PATH = path.resolve(__dirname);
-var BUILD_PATH = path.resolve(ROOT_PATH, './public/js');
+const ROOT_PATH = path.resolve(__dirname);
+const BUILD_PATH = path.resolve(ROOT_PATH, './public/js');
 function resolve(dir) {
     return path.join(__dirname, '..', dir)
 }
@@ -29,7 +30,7 @@ module.exports = {
         ]
     },
     plugins: [
-        new webpack.optimize.UglifyJsPlugin({
+        new UglifyJsPlugin({
             include: /\.min\.js$/,
             sourceMap: true,
             cache: false,

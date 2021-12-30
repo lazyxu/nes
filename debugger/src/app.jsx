@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import {Provider} from 'react-redux'
-import {HashRouter, Route} from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { HashRouter, Route, Routes } from 'react-router-dom'
 
 import './app.scss'
 import cpu from './container/cpu/cpu'
@@ -24,15 +24,15 @@ ReactDOM.render(
         <Provider store={store}>
             <HashRouter>
                 <div className="App">
-                    <Common/>
-                    <div className="Page">
-                        <Route exact path="/" component={cpu}/>
-                        <Route path="/cpu" component={cpu}/>
-                        <Route path="/ppu" component={ppu}/>
-                        <Route path="/apu" component={apu}/>
-                        <Route path="/mem" component={mem}/>
-                        <Route path="/joystick" component={joystick}/>
-                    </div>
+                    <Common />
+                    <Routes className="Page">
+                        <Route exact path="/" component={cpu} />
+                        <Route path="/cpu" component={cpu} />
+                        <Route path="/ppu" component={ppu} />
+                        <Route path="/apu" component={apu} />
+                        <Route path="/mem" component={mem} />
+                        <Route path="/joystick" component={joystick} />
+                    </Routes>
                 </div>
             </HashRouter>
         </Provider>
