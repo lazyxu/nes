@@ -1,6 +1,7 @@
 import React from 'react'
-import {connect} from 'react-redux'
+import { connect } from 'react-redux'
 import RingBuffer from "ringbufferjs";
+import { getRender } from "./canvas";
 
 import './screen.scss'
 
@@ -23,31 +24,25 @@ class component extends React.Component {
     }
 
     componentDidMount() {
-        this.canvasContext = this.refs.Screen.getContext('2d');
-        this.canvasImageData = this.canvasContext.getImageData(0, 0, 256, 240);
+        // this.canvasContext = this.refs.Screen.getContext('2d');
+        // this.canvasImageData = this.canvasContext.getImageData(0, 0, 256, 240);
         // Get the canvas this.buffer in 8bit and 32bit
-        this.buf = new ArrayBuffer(this.canvasImageData.data.length);
-        this.buf8 = new Uint8ClampedArray(this.buf);
-        this.buf32 = new Uint32Array(this.buf);
-
-        // Fill the canvas with black
-        this.canvasContext.fillStyle = 'black';
-        // set alpha to opaque
-        this.canvasContext.fillRect(0, 0, 256, 240);
+        this.buf = new Uint8Array(256 * 240);
 
         // Set alpha
-        for (let i = 0; i < this.buf32.length; ++i) {
-            this.buf32[i] = 0xFF000000;
+        for (let i = 0; i < this.buf.length; ++i) {
+            this.buf[i] = 0;
         }
-
         let i = 0;
         let nes = window.nes;
         nes.ppu.writePix = (offset, color) => {
-            this.buf32[offset] = color;
+            this.buf[offset] = color;
         };
+        const render = getRender(this.refs.Screen, this.buf);
         nes.onEndFrame = nes => {
-            this.canvasImageData.data.set(this.buf8);
-            this.canvasContext.putImageData(this.canvasImageData, 0, 0);
+            render();
+            // this.canvasImageData.data.set(this.buf8);
+            // this.canvasContext.putImageData(this.canvasImageData, 0, 0);
         };
         document.addEventListener('keydown', evt => {
             this.updateKey(evt.keyCode, true);
@@ -64,24 +59,33 @@ class component extends React.Component {
             buffer.enq(sample);
         };
 
-        let audioCtx = new AudioContext();
-        let scriptNode = audioCtx.createScriptProcessor(1024, 0, 1);
-        scriptNode.onaudioprocess = e => {
-            let left = e.outputBuffer.getChannelData(0);
-            let size = left.length;
-            try {
-                var samples = buffer.deqN(size);
-            } catch (e) {
-                for (let i = 0; i < size; i++) {
-                    left[i] = 0;
-                }
-                return;
-            }
-            for (let i = 0; i < size; i++) {
-                left[i] = samples[i];
-            }
-        };
-        scriptNode.connect(audioCtx.destination);
+        // (async function () {
+        //     const audioContext = new AudioContext()
+        //     await audioContext.audioWorklet.addModule('sound.js')
+        //     while(1) {
+        //         const myAudioNode = new AudioWorkletNode(audioContext, 'my-audio-processor', { buffer })
+        //         myAudioNode.connect(audioContext.destination);
+        //     }
+        // })();
+
+        // let audioCtx = new AudioContext();
+        // let scriptNode = audioCtx.createScriptProcessor(1024, 0, 1);
+        // scriptNode.onaudioprocess = e => {
+        //     let left = e.outputBuffer.getChannelData(0);
+        //     let size = left.length;
+        //     try {
+        //         var samples = buffer.deqN(size);
+        //     } catch (e) {
+        //         for (let i = 0; i < size; i++) {
+        //             left[i] = 0;
+        //         }
+        //         return;
+        //     }
+        //     for (let i = 0; i < size; i++) {
+        //         left[i] = samples[i];
+        //     }
+        // };
+        // scriptNode.connect(audioCtx.destination);
     }
 
     updateKey(keyCode, value) {
@@ -116,7 +120,7 @@ class component extends React.Component {
 
     render() {
         return (
-            <canvas ref='Screen' width="256" height="240"/>
+            <canvas ref='Screen' width="256" height="240" />
         )
     }
 }

@@ -4,11 +4,11 @@ import { Provider } from 'react-redux'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 
 import './app.scss'
-import cpu from './container/cpu/cpu'
-import ppu from './container/ppu/ppu'
-import apu from './container/apu'
-import mem from './container/mem'
-import joystick from './container/joystick'
+import Cpu from './container/cpu/cpu'
+import Ppu from './container/ppu/ppu'
+import Apu from './container/apu'
+import Mem from './container/mem'
+import Joystick from './container/joystick'
 import store from './utils/store.js'
 import nesEmulator from '../../src/index'
 
@@ -25,14 +25,15 @@ ReactDOM.render(
             <HashRouter>
                 <div className="App">
                     <Common />
-                    <Routes className="Page">
-                        <Route exact path="/" component={cpu} />
-                        <Route path="/cpu" component={cpu} />
-                        <Route path="/ppu" component={ppu} />
-                        <Route path="/apu" component={apu} />
-                        <Route path="/mem" component={mem} />
-                        <Route path="/joystick" component={joystick} />
-                    </Routes>
+                    <div className="Page">
+                        <Routes>
+                            <Route path="/cpu" element={<Cpu />} />
+                            <Route path="/ppu" element={<Ppu />} />
+                            <Route path="/apu" element={<Apu />} />
+                            <Route path="/mem" element={<Mem />} />
+                            <Route path="/joystick" element={<Joystick />} />
+                        </Routes>
+                    </div>
                 </div>
             </HashRouter>
         </Provider>

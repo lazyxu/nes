@@ -200,7 +200,7 @@ PPU.prototype = {
                 color = backgroundColor;
             }
         }
-        this.writePix((y << 8) + x, this.palette[this.readPaletteIndex(color)]);
+        this.writePix((y << 8) + x, this.readPaletteIndex(color));
     },
 
     /**
