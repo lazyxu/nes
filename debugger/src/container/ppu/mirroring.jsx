@@ -91,6 +91,8 @@ class component extends React.Component {
         let ctx = this.refs["L"].getContext('2d');
         let x = ppu.debuggerScrollX * 8 + (ppu.debuggerNameTable & 1) * 256 + ppu.debuggerX;
         let y = (ppu.debuggerScrollY - 29) * 8 + ((ppu.debuggerNameTable >> 1) & 1) * 240;
+        // let x = ppu.xScroll;
+        // let y = ppu.yScroll;
         ctx.strokeStyle = "#00FF00";
         ctx.lineWidth = 4;
         ctx.beginPath();
@@ -99,12 +101,12 @@ class component extends React.Component {
         ctx.lineTo(x, y);
         ctx.lineTo(x + len, y);
 
-        let x1 = (x + 256) % 512;
+        let x1 = (x + 255) % 512;
         ctx.moveTo(x1 - len, y);
         ctx.lineTo(x1, y);
         ctx.lineTo(x1, y + len);
 
-        let y1 = (y + 240) % 480;
+        let y1 = (y + 239) % 480;
         ctx.moveTo(x, y1 - len);
         ctx.lineTo(x, y1);
         ctx.lineTo(x + len, y1);

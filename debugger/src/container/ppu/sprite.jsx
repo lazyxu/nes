@@ -1,5 +1,5 @@
 import React from 'react'
-import {connect} from 'react-redux'
+import { connect } from 'react-redux'
 
 import './sprite.scss'
 import util from '../../../../src/util'
@@ -43,6 +43,8 @@ class component extends React.Component {
                 let attribute = nes.ppu.oamData[base + 2];
                 let x2 = nes.ppu.oamData[base + 3];
                 let highTwoBit = (attribute & 0b11) << 2;
+                // let flagSpriteSize = (attribute & 0b100);
+                let flagSpriteSize = nes.ppu.spriteSize[y1 * 16 + x1];
                 let overBackground = (attribute >> 5) & 1;
                 let flipHorizontally = (attribute >> 6) & 1;
                 let flipVertically = (attribute >> 7) & 1;
@@ -61,12 +63,12 @@ class component extends React.Component {
                         index += flipHorizontally ? (7 - x) : x;
                         buf32[index] = 0xFF000000 |
                             nes.ppu.palette[
-                                nes.ppu.readPaletteIndex(
-                                    paletteOffset + (
+                            nes.ppu.readPaletteIndex(
+                                paletteOffset + (
                                     highTwoBit & 0b1100 |
                                     (highTileByte >> 6) & 0b10 |
                                     (lowTileByte >> 7) & 1))
-                                ];
+                            ];
                         lowTileByte <<= 1;
                         highTileByte <<= 1;
                     }
@@ -77,8 +79,7 @@ class component extends React.Component {
                 if (overBackground === 1) {
                     continue;
                 }
-
-                if (nes.ppu.flagSpriteSize === 0) {
+                if (flagSpriteSize === 0) {
                     for (let y = 0; y < 8; y++) {
                         let lowTileByte = nes.ppu.read(address + y);
                         let highTileByte = nes.ppu.read(address + y + 8);
@@ -87,12 +88,12 @@ class component extends React.Component {
                             index += flipHorizontally ? (7 - x) : x;
                             buf32[index] = 0xFF000000 |
                                 nes.ppu.palette[
-                                    nes.ppu.readPaletteIndex(
-                                        paletteOffset + (
+                                nes.ppu.readPaletteIndex(
+                                    paletteOffset + (
                                         highTwoBit & 0b1100 |
                                         (highTileByte >> 6) & 0b10 |
                                         (lowTileByte >> 7) & 1))
-                                    ];
+                                ];
                             lowTileByte <<= 1;
                             highTileByte <<= 1;
                         }
@@ -104,16 +105,16 @@ class component extends React.Component {
                         let lowTileByte = nes.ppu.read(address + y);
                         let highTileByte = nes.ppu.read(address + y + 8);
                         for (let x = 0; x < 8; x++) {
-                            let index = flipVertically ? (7 - y) * 8 : y * 8;
+                            let index = flipVertically ? (15 - y) * 8 : y * 8;
                             index += flipHorizontally ? (7 - x) : x;
                             buf32[index] = 0xFF000000 |
                                 nes.ppu.palette[
-                                    nes.ppu.readPaletteIndex(
-                                        paletteOffset + (
+                                nes.ppu.readPaletteIndex(
+                                    paletteOffset + (
                                         highTwoBit & 0b1100 |
                                         (highTileByte >> 6) & 0b10 |
                                         (lowTileByte >> 7) & 1))
-                                    ];
+                                ];
                             lowTileByte <<= 1;
                             highTileByte <<= 1;
                         }
@@ -123,16 +124,16 @@ class component extends React.Component {
                         let lowTileByte = nes.ppu.read(address + y);
                         let highTileByte = nes.ppu.read(address + y + 8);
                         for (let x = 0; x < 8; x++) {
-                            let index = flipVertically ? (7 - y) * 8 : y * 8;
+                            let index = flipVertically ? (7 - y) * 8 : (y + 8) * 8;
                             index += flipHorizontally ? (7 - x) : x;
                             buf32[index] = 0xFF000000 |
                                 nes.ppu.palette[
-                                    nes.ppu.readPaletteIndex(
-                                        paletteOffset + (
+                                nes.ppu.readPaletteIndex(
+                                    paletteOffset + (
                                         highTwoBit & 0b1100 |
                                         (highTileByte >> 6) & 0b10 |
                                         (lowTileByte >> 7) & 1))
-                                    ];
+                                ];
                             lowTileByte <<= 1;
                             highTileByte <<= 1;
                         }
@@ -149,8 +150,8 @@ class component extends React.Component {
         return (
             <div className="Sprite">
                 <p>sprite RAM</p>
-                <canvas ref='spriteRam' width="256" height="64"/>
-                <canvas ref='sprite' width="256" height="240"/>
+                <canvas ref='sprite' width="256" height="240" />
+                <canvas ref='spriteRam' width="256" height="64" />
             </div>
         )
     }

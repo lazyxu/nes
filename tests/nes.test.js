@@ -1,7 +1,7 @@
 let fs = require('fs');
 let path = require("path");
 let nesEmulator = require('../src/index');
-// var profiler = require('cpu-profiler');
+var profiler = require('cpu-profiler');
 
 // easy-monitor
 const easyMonitor = require('easy-monitor');
@@ -25,12 +25,12 @@ function run(file) {
 }
 
 let arguments = process.argv.splice(2);
-// profiler.startProfiling("1")                   // start cpu profiling
+profiler.startProfiling("1")                   // start cpu profiling
 run(arguments[0])
-//
-// process.on('SIGINT', function() {
-//     console.log("Caught interrupt signal");
-//     var cpuProfile = profiler.stopProfiling("1")   // stop cpu profiling
-//     console.log(cpuProfile)
-//     process.exit();
-// });
+
+process.on('SIGINT', function() {
+    console.log("Caught interrupt signal");
+    var cpuProfile = profiler.stopProfiling("1")   // stop cpu profiling
+    console.log(cpuProfile)
+    process.exit();
+});

@@ -1,5 +1,5 @@
 import React from 'react'
-import {connect} from 'react-redux'
+import { connect } from 'react-redux'
 
 import './data.scss'
 import util from '../../../../src/util'
@@ -8,9 +8,12 @@ class component extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            t: 0,
-            v:0,
-            flagSpriteSize: 0,
+            xScroll: 0,
+            yScroll: 0,
+            debuggerScrollX: 0,
+            debuggerScrollY: 0,
+            debuggerNameTable: 0,
+            debuggerX: 0,
         };
         this.frame = 0;
     }
@@ -30,9 +33,12 @@ class component extends React.Component {
     update() {
         let nes = window.nes;
         this.setState({
-            t: nes.ppu.t,
-            v: nes.ppu.v,
-            flagSpriteSize: nes.ppu.flagSpriteSize,
+            xScroll: nes.ppu.xScroll,
+            yScroll: nes.ppu.yScroll,
+            debuggerScrollX: nes.ppu.debuggerScrollX,
+            debuggerScrollY: nes.ppu.debuggerScrollY,
+            debuggerNameTable: nes.ppu.debuggerNameTable,
+            debuggerX: nes.ppu.debuggerX,
         });
     }
 
@@ -40,12 +46,12 @@ class component extends React.Component {
         return (
             <div className="Data">
                 <p>frame: {this.props.frame}</p>
-                <p>tmpVram addr: {util.sprintf("%016b", this.state.t)}</p>
-                <p>vram address: {util.sprintf("%016b", this.state.v)}</p>
-                <p>y-offset: {util.sprintf("%d", (this.state.v >> 12) & 0b111)}</p>
-                <p>x-scroll: {util.sprintf("%d", this.state.v & 0b11111)}</p>
-                <p>y-scroll: {util.sprintf("%d", (this.state.v >> 5) & 0b11111)}</p>
-                <p>flagSpriteSize: {util.sprintf("%d", this.state.flagSpriteSize)}</p>
+                <p>xScroll: {util.sprintf("%d", this.state.xScroll)}</p>
+                <p>yScroll: {util.sprintf("%d", this.state.yScroll)}</p>
+                <p>debuggerScrollX: {util.sprintf("%d", this.state.debuggerScrollX)}</p>
+                <p>debuggerScrollY: {util.sprintf("%d", this.state.debuggerScrollY)}</p>
+                <p>debuggerNameTable: {util.sprintf("%d", this.state.debuggerNameTable)}</p>
+                <p>debuggerX: {util.sprintf("%d", this.state.debuggerX)}</p>
             </div>
         )
     }

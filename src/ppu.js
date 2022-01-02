@@ -35,6 +35,10 @@ let PPU = function (nes) {
     for (i = 0; i < this.oamData.length; ++i) {
         this.oamData[i] = 0;
     }
+    this.spriteSize = new Uint8Array(64); // SPR-RAM spriteSize
+    for (i = 0; i < this.spriteSize.length; ++i) {
+        this.spriteSize[i] = 0;
+    }
     // used for debugger
     this.debuggerScrollX = 0;
     this.debuggerScrollY = 0;
@@ -200,7 +204,7 @@ PPU.prototype = {
                 color = backgroundColor;
             }
         }
-        this.writePix((y << 8) + x, this.readPaletteIndex(color));
+        this.writePix((y << 8) + x, this.palette[this.readPaletteIndex(color)]);
     },
 
     /**
@@ -227,12 +231,16 @@ PPU.prototype = {
         let flipVertically = (attributes & 0x80) === 0x80;
         let address;
         if (this.flagSpriteSize === 0) {
+            this.spriteSize[i] = 0;
+            // this.oamData[i * 4 + 2] &= ~0b100;
             if (flipVertically === true) {
                 row = 7 - row;
             }
             let table = this.flagSpriteTable;
             address = (table << 12) + tileIndex * 16 + row;
         } else {
+            this.spriteSize[i] = 1;
+            // this.oamData[i * 4 + 2] |= 0b100;
             if (flipVertically === true) {
                 row = 15 - row;
             }
@@ -459,12 +467,12 @@ PPU.prototype = {
             }
         }
 
-        // if (this.cycle === 0 && this.scanLine === 239) {
-        //     this.debuggerScrollX = (this.v & 0b11111) - 1;
-        //     this.debuggerScrollY = (this.v >> 5) & 0b11111;
-        //     this.debuggerNameTable = (this.v >> 10) & 0b11;
-        //     this.debuggerX = this.x;
-        // }
+        if (this.cycle === 0 && this.scanLine === 239) {
+            this.debuggerScrollX = (this.v & 0b11111) - 2; // (256-240)/2/4
+            this.debuggerScrollY = (this.v >> 5) & 0b11111;
+            this.debuggerNameTable = (this.v >> 10) & 0b11;
+            this.debuggerX = this.x;
+        }
 
         // Post-render scanLine (240)
         // The PPU just idles during this scanLine.
@@ -814,6 +822,7 @@ PPU.prototype = {
             // w:                   = 1
             this.t = (this.t & 0xFFE0) | ((value >> 3) & 0x1F);
             this.x = value & 0x07;
+            this.xScroll = value;
             this.w = 1;
         } else {
             // $2005 second write (w is 1): update coarse Y scroll
@@ -821,6 +830,7 @@ PPU.prototype = {
             // w:                   = 0
             this.t = (this.t & 0x8FFF) | ((value & 0x07) << 12);
             this.t = (this.t & 0xFC1F) | ((value & 0xF8) << 2);
+            this.yScroll = value;
             this.w = 0;
         }
     },

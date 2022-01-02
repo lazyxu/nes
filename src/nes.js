@@ -73,9 +73,12 @@ NES.prototype = {
         }, 1000 / 60);
     },
 
-    run: function () {
+    run: function (onEndFrame) {
         this.stop();
         this.isRunning = true;
+        if (typeof(onEndFrame) === "function") {
+            this.onEndFrame = onEndFrame;
+        }
         this.frameInterval = setInterval(() => {
             this.stepFrame();
             this.onEndFrame(this);
